@@ -1,0 +1,42 @@
+platform:
+  - x64
+
+configuration:
+  - Debug
+  - Release
+
+image:
+  - Visual Studio 2019
+
+environment:
+  matrix:
+    - TOOLSET: MSVC
+#    - TOOLSET: Clang
+
+clone_folder: c:/playlunky/
+
+before_build:
+- cmd: pip install conan --upgrade
+- cmd: conan user
+- cmd: conan --version
+- ps: >-
+    if ($ENV:TOOLSET -eq "MSVC") {
+        $ENV:TOOLSET="v142"
+    }
+    else {
+        $ENV:TOOLSET="ClangCL"
+    }
+
+    $ENV:PATH="$ENV:PATH;C:\Users\appveyor\AppData\Roaming\Python\Scripts"
+
+    mkdir build
+    
+    cd build
+    
+    cmake c:/playlunky/ -G"Visual Studio 16 2019" -A x64 -T $ENV:TOOLSET
+
+build_script:
+- cmake --build . --config %CONFIGURATION%
+
+#test_script:
+#- ctest -C %CONFIGURATION% --output-on-failure

@@ -1,0 +1,6 @@
+[requires]
+fmt/7.0.1
+
+[generators]
+cmake_multi
+cmake_find_package_multi
