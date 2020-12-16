@@ -66,5 +66,5 @@ struct DetourMainForScyllaHide
 };
 
 std::vector<DetourEntry> GetDebugDetours() {
-	return { DetourHelper<DetourMainForScyllaHide>::GetDetourEntry() };
+	return { DetourHelper<DetourMainForScyllaHide>::GetDetourEntry("Main") };
 }

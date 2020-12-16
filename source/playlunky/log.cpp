@@ -31,7 +31,7 @@ struct DetourDoLog
 };
 
 std::vector<DetourEntry> GetLogDetours() {
-	return { DetourHelper<DetourDoLog>::GetDetourEntry() };
+	return { DetourHelper<DetourDoLog>::GetDetourEntry("DoLog") };
 }
 
 void Log(const char* message, LogLevel log_level) {

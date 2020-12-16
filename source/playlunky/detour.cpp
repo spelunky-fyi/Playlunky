@@ -56,7 +56,7 @@ void Attach() {
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());
 
-	for (auto [trampoline, detour, signature] : detour_entries) {
+	for (auto [trampoline, detour, signature, function_name] : detour_entries) {
 		if (signature != nullptr) {
 			*trampoline = SigScan::FindPattern(*signature);
 			if (*trampoline != nullptr)
@@ -66,7 +66,7 @@ void Attach() {
 		}
 
 		if (*trampoline == nullptr) {
-			fmt::print("Can not detour function {}, no valid source function specified\n", detour);
+			fmt::print("Can not detour function {}, no valid source function specified\n", function_name);
 		}
 		else {
 			DetourAttach(trampoline, detour);
@@ -84,14 +84,14 @@ void Attach() {
 }
 
 void Detach() {
-	fmt::print(DLL_NAME ": Dettaching...\n");
+	fmt::print(DLL_NAME ": Detaching...\n");
 
 	std::vector<DetourEntry> detour_entries = CollectDetourEntries();
 
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());
 
-	for (auto [trampoline, detour, signature] : detour_entries) {
+	for (auto [trampoline, detour, signature, function_name] : detour_entries) {
 		DetourDetach(trampoline, detour);
 	}
 

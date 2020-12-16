@@ -55,5 +55,5 @@ struct DetourReadEncrypedFile
 };
 
 std::vector<DetourEntry> GetFileIODetours() {
-	return { DetourHelper<DetourReadEncrypedFile>::GetDetourEntry() };
+	return { DetourHelper<DetourReadEncrypedFile>::GetDetourEntry("ReadEncrypedFile") };
 }
