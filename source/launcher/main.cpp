@@ -32,7 +32,7 @@ int main(int argc, const char* argv[])
 	GetCurrentDirectoryA(MAX_PATH, dir_path);
 
 	char dll_path[MAX_PATH] = {};
-	sprintf_s(dll_path, MAX_PATH, "%s\\playlunky64.dll", dir_path);
+	sprintf_s(dll_path, MAX_PATH, "%s/playlunky64.dll", dir_path);
 
 	char cwd_path[MAX_PATH] = {};
 	if (argc > 1)
@@ -45,7 +45,7 @@ int main(int argc, const char* argv[])
 	}
 
 	char exe_path[MAX_PATH] = {};
-	sprintf_s(exe_path, MAX_PATH, "%s\\Spel2.exe", cwd_path);
+	sprintf_s(exe_path, MAX_PATH, "%s/Spel2.exe", cwd_path);
 
 	SECURITY_ATTRIBUTES sa{};
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
