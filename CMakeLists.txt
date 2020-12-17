@@ -110,11 +110,13 @@ endif()
 
 # --------------------------------------------------
 # Set debugging properties
-set_target_properties(playlunky_launcher PROPERTIES
-	VS_DEBUGGER_COMMAND_ARGUMENTS "--exe_dir \"${SPELUNKY_INSTALL_DIR}\""
-	VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX})
+if(EXISTS ${SPELUNKY_INSTALL_DIR})
+	set_target_properties(playlunky_launcher PROPERTIES
+		VS_DEBUGGER_COMMAND_ARGUMENTS "--exe_dir \"${SPELUNKY_INSTALL_DIR}\""
+		VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX})
 
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT playlunky_launcher)
+	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT playlunky_launcher)
+endif()
 
 
 # --------------------------------------------------
