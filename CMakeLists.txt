@@ -132,14 +132,6 @@ if(EXISTS ${SPELUNKY_INSTALL_DIR})
 		res/steam_appid.txt DESTINATION ${SPELUNKY_INSTALL_DIR})
 endif()
 
-
-# --------------------------------------------------
-# Install shared lib after build
-add_dependencies(playlunky64 playlunky_launcher)
-add_custom_command(
-	TARGET playlunky64 POST_BUILD
-	COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --config $<CONFIG>)
-
 	
 # --------------------------------------------------
 # Map Release config to MinSizeRel and RelWithDebInfo because conant is borked
