@@ -102,9 +102,9 @@ if(NOT EXISTS ${SPELUNKY_INSTALL_DIR}/Spel2.exe)
 	endif()
 endif()
 if(NOT EXISTS ${SPELUNKY_INSTALL_DIR})
-	message("Could not find Spelunky 2 installation, pass it to cmake via -DSPELUNKY_INSTALL_DIR='Path/To/Install/Folder' or place the Spelunky 2 folder into the publish folder")
+	message(WARNING "Could not find Spelunky 2 installation, pass it to cmake via -DSPELUNKY_INSTALL_DIR='Path/To/Install/Folder' or place the Spelunky 2 folder into the publish folder")
 else()
-	message("Found Spelunky 2 installation at '${SPELUNKY_INSTALL_DIR}'")
+	message(STATUS "Found Spelunky 2 installation at '${SPELUNKY_INSTALL_DIR}'")
 endif()
 
 
