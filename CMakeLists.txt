@@ -101,10 +101,11 @@ else()
 	message("Found Spelunky 2 installation at '${SPELUNKY_INSTALL_DIR}'")
 endif()
 
+
 # --------------------------------------------------
 # Set debugging properties
 set_target_properties(playlunky_launcher PROPERTIES
-	VS_DEBUGGER_COMMAND_ARGUMENTS ${SPELUNKY_INSTALL_DIR}
+	VS_DEBUGGER_COMMAND_ARGUMENTS "\"${SPELUNKY_INSTALL_DIR}\""
 	VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX})
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT playlunky_launcher)
