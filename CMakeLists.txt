@@ -67,9 +67,10 @@ target_include_directories(playlunky64 PRIVATE "source/playlunky" "source/shared
 # Create launcher executbale
 file(GLOB_RECURSE playlunky_launcher_sources CONFIGURE_DEPENDS "source/launcher/*.cpp")
 file(GLOB_RECURSE playlunky_launcher_headers CONFIGURE_DEPENDS "source/launcher/*.h" "source/launcher/*.inl")
-add_executable(playlunky_launcher ${playlunky_launcher_sources} ${shared_sources} ${playlunky_launcher_headers} ${shared_headers})
+set(playlunky_launcher_resourcess "res/playlunky_launcher.rc")
+add_executable(playlunky_launcher ${playlunky_launcher_sources} ${shared_sources} ${playlunky_launcher_headers} ${shared_headers} ${playlunky_launcher_resourcess})
 target_link_libraries(playlunky_launcher PRIVATE playlunky_warnings playlunky_dependencies)
-target_include_directories(playlunky_launcher PRIVATE "source/launcher" "source/shared")
+target_include_directories(playlunky_launcher PRIVATE "source/launcher" "source/shared" "res")
 
 
 # --------------------------------------------------
@@ -115,6 +116,12 @@ install(TARGETS
 	playlunky64 RUNTIME DESTINATION .)
 install(TARGETS
 	playlunky_launcher RUNTIME DESTINATION .)
+install(FILES
+	res/steam_appid.txt DESTINATION .)
+if(EXISTS ${SPELUNKY_INSTALL_DIR})
+	install(FILES
+		res/steam_appid.txt DESTINATION ${SPELUNKY_INSTALL_DIR})
+endif()
 
 
 # --------------------------------------------------
