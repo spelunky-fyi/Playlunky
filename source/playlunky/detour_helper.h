@@ -22,7 +22,7 @@ struct DetourHelper {
 		}
 		else {
 			static_assert(std::is_same_v<decltype(trampoline), decltype(detour)>);
-			return { Detour(&(void_ptr&)DetourT::Trampoline, &DetourT::Detour), nullptr, function_name };
+			return { &(void_ptr&)DetourT::Trampoline, &DetourT::Detour, nullptr, function_name };
 		}
 	}
 };

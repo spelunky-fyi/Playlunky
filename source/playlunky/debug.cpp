@@ -12,10 +12,10 @@
 
 struct DetourMainForScyllaHide
 {
-	inline static SigScan::Function<void(__stdcall*)(const char* argv)> Trampoline{
-		.Signature = "\x40\x53\x48\x83\xec\x30\x48\x8b\xd9\x48\x8d\x4c\x24\x50\xe8\x2a\x2a\x2a\x2a\x90\xff\x2a\x2a\x2a\x2a\x2a"
+	inline static SigScan::Function<int(__stdcall*)(HINSTANCE, HINSTANCE, LPSTR, int)> Trampoline{
+		.Signature = "\x40\x53\x48\x83\xec\x20\x49\x8b\xd8\xff\x2a\x2a\x2a\x2a\x00\x48\x8b\xc8\xba\x02\x00\x00\x00\xff\x15\x2a\x2a\x2a\x2a"
 	};
-	static void Detour(const char* argv)
+	static int Detour(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 	{
 		LogInfo("Trying to inject ScyllaHide...");
 		if (std::filesystem::exists("ScyllaHide/InjectorCLIx64.exe")) {
@@ -61,10 +61,10 @@ struct DetourMainForScyllaHide
 			LogInfo("Could not find ScyllaHide in game directory...");
 		}
 
-		Trampoline(argv);
+		return Trampoline(hInstance, hPrevInstance, lpCmdLine, nShowCmd);
 	}
 };
 
 std::vector<DetourEntry> GetDebugDetours() {
-	return { DetourHelper<DetourMainForScyllaHide>::GetDetourEntry("Main") };
+	return { DetourHelper<DetourMainForScyllaHide>::GetDetourEntry("WinMain") };
 }
