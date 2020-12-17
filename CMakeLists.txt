@@ -24,6 +24,7 @@ run_conan()
 # --------------------------------------------------
 # Find packages
 find_package(fmt REQUIRED)
+find_package(structopt REQUIRED)
 
 
 # --------------------------------------------------
@@ -59,7 +60,9 @@ file(GLOB_RECURSE shared_headers CONFIGURE_DEPENDS "source/shared/*.h" "source/s
 file(GLOB_RECURSE playlunky64_sources CONFIGURE_DEPENDS "source/playlunky/*.cpp")
 file(GLOB_RECURSE playlunky64_headers CONFIGURE_DEPENDS "source/playlunky/*.h" "source/playlunky/*.inl")
 add_library(playlunky64 SHARED ${playlunky64_sources} ${shared_sources} ${playlunky64_headers} ${shared_headers})
-target_link_libraries(playlunky64 PRIVATE playlunky_warnings playlunky_dependencies)
+target_link_libraries(playlunky64 PRIVATE
+	playlunky_warnings
+	playlunky_dependencies)
 target_include_directories(playlunky64 PRIVATE "source/playlunky" "source/shared")
 
 
@@ -69,7 +72,10 @@ file(GLOB_RECURSE playlunky_launcher_sources CONFIGURE_DEPENDS "source/launcher/
 file(GLOB_RECURSE playlunky_launcher_headers CONFIGURE_DEPENDS "source/launcher/*.h" "source/launcher/*.inl")
 set(playlunky_launcher_resourcess "res/playlunky_launcher.rc")
 add_executable(playlunky_launcher ${playlunky_launcher_sources} ${shared_sources} ${playlunky_launcher_headers} ${shared_headers} ${playlunky_launcher_resourcess})
-target_link_libraries(playlunky_launcher PRIVATE playlunky_warnings playlunky_dependencies)
+target_link_libraries(playlunky_launcher PRIVATE
+	playlunky_warnings
+	playlunky_dependencies
+	structopt::structopt)
 target_include_directories(playlunky_launcher PRIVATE "source/launcher" "source/shared" "res")
 
 
@@ -105,7 +111,7 @@ endif()
 # --------------------------------------------------
 # Set debugging properties
 set_target_properties(playlunky_launcher PROPERTIES
-	VS_DEBUGGER_COMMAND_ARGUMENTS "\"${SPELUNKY_INSTALL_DIR}\""
+	VS_DEBUGGER_COMMAND_ARGUMENTS "--exe_dir \"${SPELUNKY_INSTALL_DIR}\""
 	VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX})
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT playlunky_launcher)

@@ -1,5 +1,6 @@
 [requires]
 fmt/7.0.1
+structopt/0.1.1
 
 [generators]
 cmake_multi
