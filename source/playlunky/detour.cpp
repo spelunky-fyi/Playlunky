@@ -41,8 +41,12 @@ std::vector<DetourEntry> CollectDetourEntries() {
 
 	std::vector<DetourEntry> detour_entries;
 	append(detour_entries, GetLogDetours());
-	append(detour_entries, GetDebugDetours());
 	append(detour_entries, GetFileIODetours());
+
+	if (IsDebuggerPresent()) {
+		append(detour_entries, GetDebugDetours());
+	}
+
 	return detour_entries;
 }
 
