@@ -26,11 +26,12 @@ struct DetourReadEncrypedFile
 
 			struct AssetInfo {
 				void* Data{ nullptr };
-				int FrameCount_0{ 0 };
+				int _member_1{ 0 };
 				int AssetSize{ 0 };
 				int AllocationSize{ 0 };
-				int FrameCount_1{ 0 };
+				int _member_4{ 0 };
 			};
+
 			const auto allocation_size = size + static_cast<decltype(size)>(sizeof(AssetInfo));
 			if (void* buf = alloc_fun(allocation_size)) {
 
@@ -43,10 +44,8 @@ struct DetourReadEncrypedFile
 				AssetInfo* asset_info = new (buf) AssetInfo();
 				*asset_info = {
 					.Data = data,
-					.FrameCount_0 = 0,
 					.AssetSize = size,
-					.AllocationSize = allocation_size,
-					.FrameCount_1 = 0
+					.AllocationSize = allocation_size
 				};
 
 				return buf;
