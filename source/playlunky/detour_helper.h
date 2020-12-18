@@ -18,11 +18,21 @@ struct DetourHelper {
 			auto trampoline_func = DetourT::Trampoline.Func;
 			static_assert(std::is_same_v<decltype(trampoline_func), decltype(detour)>);
 
-			return { &(void_ptr&)DetourT::Trampoline.Func, &DetourT::Detour, &DetourT::Trampoline.Signature, function_name };
+			return {
+				.Trampoline = &(void_ptr&)DetourT::Trampoline.Func,
+				.Detour = &DetourT::Detour,
+				.Signature = &DetourT::Trampoline.Signature,
+				.FunctionName = function_name
+			};
 		}
 		else {
 			static_assert(std::is_same_v<decltype(trampoline), decltype(detour)>);
-			return { &(void_ptr&)DetourT::Trampoline, &DetourT::Detour, nullptr, function_name };
+			return {
+				.Trampoline = &(void_ptr&)DetourT::Trampoline,
+				.Detour = &DetourT::Detour,
+				.Signature = nullptr,
+				.FunctionName = function_name
+			};
 		}
 	}
 };

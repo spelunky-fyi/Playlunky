@@ -25,11 +25,11 @@ struct DetourReadEncrypedFile
 			fseek(file, 0, SEEK_SET);
 
 			struct AssetInfo {
-				void* Data;
-				int FrameCount_0;
-				int AssetSize;
-				int AllocationSize;
-				int FrameCount_1;
+				void* Data{ nullptr };
+				int FrameCount_0{ 0 };
+				int AssetSize{ 0 };
+				int AllocationSize{ 0 };
+				int FrameCount_1{ 0 };
 			};
 			const auto allocation_size = size + static_cast<decltype(size)>(sizeof(AssetInfo));
 			if (void* buf = alloc_fun(allocation_size)) {
@@ -40,12 +40,14 @@ struct DetourReadEncrypedFile
 					LogInfo("Could not load asset {}, this will either crash or cause glitches...", file_path);
 				}
 
-				AssetInfo& asset_info = *static_cast<AssetInfo*>(buf);
-				asset_info.Data = data;
-				asset_info.FrameCount_0 = 0;
-				asset_info.AssetSize = size;
-				asset_info.AllocationSize = allocation_size;
-				asset_info.FrameCount_1 = 0;
+				AssetInfo* asset_info = new (buf) AssetInfo();
+				*asset_info = {
+					.Data = data,
+					.FrameCount_0 = 0,
+					.AssetSize = size,
+					.AllocationSize = allocation_size,
+					.FrameCount_1 = 0
+				};
 
 				return buf;
 			}
