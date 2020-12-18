@@ -24,12 +24,19 @@ struct fmt::formatter<ByteStr> {
 	}
 
 	template <typename FormatContext>
-	auto format(const ByteStr& byte_str, FormatContext& ctx) {
-		std::span<uint8_t> byte_span{ (uint8_t*)byte_str.Str, strlen(byte_str.Str) };
+	auto format(ByteStr byte_str, FormatContext& ctx) {
 		auto out = ctx.out();
-		for (uint8_t c : byte_span) {
-			out = format_to(out, "\\0x{:x}", c);
+
+		const auto num_bytes = strlen(byte_str.Str);
+		if (num_bytes > 0) {
+			out = format_to(out, "{:x}", byte_str.Str[0]);
+
+			std::span<uint8_t> remainder_byte_span{ (uint8_t*)byte_str.Str + 1, num_bytes - 1 };
+			for (uint8_t c : remainder_byte_span) {
+				out = format_to(out, " {:x}", c);
+			}
 		}
+
 		return out;
 	}
 };
@@ -65,7 +72,7 @@ void Attach() {
 			*trampoline = SigScan::FindPattern(*signature);
 			if (*trampoline != nullptr)
 			{
-				fmt::print("Found function with signature {}\n\t\tat address {}\n", ByteStr{ .Str = *signature }, *trampoline);
+				fmt::print("Found function {}:\n\tsig: {}\n\t at: {}\n", function_name, ByteStr{ .Str = *signature }, *trampoline);
 			}
 		}
 
