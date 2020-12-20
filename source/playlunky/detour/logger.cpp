@@ -1,4 +1,5 @@
-#include "log.h"
+#include "logger.h"
+#include "../log.h"
 
 #include "detour_entry.h"
 #include "detour_helper.h"
@@ -24,7 +25,8 @@ struct DetourDoLog
 	}
 
 	static void Log(const char* message, LogLevel log_level) {
-		DetourDoLog::Detour(s_Stream, message, nullptr, log_level);
+		const std::string adjusted_message = fmt::format("Playlunky :: {}", message);
+		DetourDoLog::Detour(s_Stream, adjusted_message.c_str(), nullptr, log_level);
 	}
 
 	inline static std::ofstream* s_Stream{ nullptr };

@@ -6,6 +6,8 @@
 #include "log.h"
 #include "util.h"
 
+#include "../log.h"
+
 #include <Windows.h>
 #include <cstdint>
 #include <filesystem>

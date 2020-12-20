@@ -1,10 +1,6 @@
 #pragma once
 
-#include <vector>
-
 #include <fmt/format.h>
-
-std::vector<struct DetourEntry> GetLogDetours();
 
 enum class LogLevel {
 	Info = 0,

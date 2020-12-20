@@ -4,7 +4,7 @@
 #include "sigscan.h"
 #include "debug.h"
 #include "file_io.h"
-#include "log.h"
+#include "logger.h"
 #include "win_main.h"
 
 #include <Windows.h>
