@@ -30,7 +30,13 @@ struct fmt::formatter<ByteStr> {
 
 		const auto num_bytes = strlen(byte_str.Str);
 		if (num_bytes > 0) {
-			out = format_to(out, "{:02x}", byte_str.Str[0]);
+			const uint8_t first_byte = byte_str.Str[0];
+			if (first_byte == '*') {
+				out = format_to(out, "??");
+			}
+			else {
+				out = format_to(out, "{:02x}", first_byte);
+			}
 
 			std::span<uint8_t> remainder_byte_span{ (uint8_t*)byte_str.Str + 1, num_bytes - 1 };
 			for (uint8_t c : remainder_byte_span) {
