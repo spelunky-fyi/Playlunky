@@ -6,6 +6,9 @@
   <a href="https://ci.appveyor.com/project/Malacath-92/playlunky">
       <img src="https://ci.appveyor.com/api/projects/status/yhlybe62omlpbxj3?svg=true">
   </a>
+  <a href="https://github.com/Malacath-92/playlunky/actions">
+      <img src="https://github.com/Malacath-92/playlunky/workflows/Github%20Actions%20CI/badge.svg">
+  </a>
   <a href="https://opensource.org/licenses/MIT" >
       <img src="https://img.shields.io/apm/l/vim-mode.svg">
   </a>
@@ -18,7 +21,7 @@ This is mainly a personal playground to learn the tricks and trades of video gam
 Only Windows build is supported:
 ```sh
 git clone git@github.com:Malacath-92/Playlunky.git
-cd Playlunky
+cd playlunky
 mkdir build
 cd build
 cmake ..
