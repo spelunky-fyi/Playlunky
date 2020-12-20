@@ -1,5 +1,5 @@
 #include "util.h"
-#include "detour.h"
+#include "detour/detour.h"
 
 #include <thread>
 

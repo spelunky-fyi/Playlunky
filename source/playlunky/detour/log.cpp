@@ -30,8 +30,22 @@ struct DetourDoLog
 	inline static std::ofstream* s_Stream{ nullptr };
 };
 
+struct DetourConstructLog
+{
+	inline static SigScan::Function<std::ofstream* (__stdcall*)(void*)> Trampoline{
+		.Signature = "\x48\x89\x5c\x24\x20\x48\x89\x4c\x24\x08\x57\x48\x83\xec\x40\x48\x8b\xf9\xc7\x44\x24\x20\x00\x00\x00\x00"
+	};
+	static std::ofstream* Detour(void* memory) {
+		DetourDoLog::s_Stream = Trampoline(memory);
+		return DetourDoLog::s_Stream;
+	}
+};
+
 std::vector<DetourEntry> GetLogDetours() {
-	return { DetourHelper<DetourDoLog>::GetDetourEntry("DoLog") };
+	return {
+		DetourHelper<DetourDoLog>::GetDetourEntry("DoLog"),
+		DetourHelper<DetourConstructLog>::GetDetourEntry("ConstructLog")
+	};
 }
 
 void Log(const char* message, LogLevel log_level) {

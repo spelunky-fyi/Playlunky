@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "file_io.h"
 #include "log.h"
+#include "win_main.h"
 
 #include <Windows.h>
 
@@ -29,11 +30,16 @@ struct fmt::formatter<ByteStr> {
 
 		const auto num_bytes = strlen(byte_str.Str);
 		if (num_bytes > 0) {
-			out = format_to(out, "{:x}", byte_str.Str[0]);
+			out = format_to(out, "{:02x}", byte_str.Str[0]);
 
 			std::span<uint8_t> remainder_byte_span{ (uint8_t*)byte_str.Str + 1, num_bytes - 1 };
 			for (uint8_t c : remainder_byte_span) {
-				out = format_to(out, " {:x}", c);
+				if (c == '*') {
+					out = format_to(out, " ??");
+				}
+				else {
+					out = format_to(out, " {:02x}", c);
+				}
 			}
 		}
 
@@ -49,6 +55,7 @@ std::vector<DetourEntry> CollectDetourEntries() {
 	std::vector<DetourEntry> detour_entries;
 	append(detour_entries, GetLogDetours());
 	append(detour_entries, GetFileIODetours());
+	append(detour_entries, GetMainDetours());
 
 	if (IsDebuggerPresent()) {
 		append(detour_entries, GetDebugDetours());

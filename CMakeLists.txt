@@ -70,13 +70,42 @@ target_include_directories(playlunky64 PRIVATE "source/playlunky" "source/shared
 # Create launcher executbale
 file(GLOB_RECURSE playlunky_launcher_sources CONFIGURE_DEPENDS "source/launcher/*.cpp")
 file(GLOB_RECURSE playlunky_launcher_headers CONFIGURE_DEPENDS "source/launcher/*.h" "source/launcher/*.inl")
-set(playlunky_launcher_resourcess "res/playlunky_launcher.rc")
-add_executable(playlunky_launcher ${playlunky_launcher_sources} ${shared_sources} ${playlunky_launcher_headers} ${shared_headers} ${playlunky_launcher_resourcess})
+set(playlunky_launcher_resources "res/playlunky_launcher.rc")
+add_executable(playlunky_launcher ${playlunky_launcher_sources} ${shared_sources} ${playlunky_launcher_headers} ${shared_headers} ${playlunky_launcher_resources})
 target_link_libraries(playlunky_launcher PRIVATE
 	playlunky_warnings
 	playlunky_dependencies
 	structopt::structopt)
 target_include_directories(playlunky_launcher PRIVATE "source/launcher" "source/shared" "res")
+
+
+# --------------------------------------------------
+# Merge files from source and include in the IDE
+function(group_files sources)
+	foreach(FILE ${sources})
+		# Get the directory of the source file
+		get_filename_component(PARENT_DIR "${FILE}" DIRECTORY)
+
+		# Remove common directory prefix to make the group
+		string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "" GROUP "${PARENT_DIR}")
+
+		# Make sure we are using windows slashes
+		string(REPLACE "/" "\\" GROUP "${GROUP}")
+
+		# Strip the root parts for each possible component
+		if("${FILE}" MATCHES "source/launcher/.*")
+			string(SUBSTRING ${GROUP} 16 -1 GROUP)
+		elseif("${FILE}" MATCHES "source/playlunky/.*")
+			string(SUBSTRING ${GROUP} 17 -1 GROUP)
+		elseif("${FILE}" MATCHES "source/.*")
+			string(SUBSTRING ${GROUP} 7 -1 GROUP)
+		endif()
+
+		# Do the grouping
+		source_group("${GROUP}" FILES "${FILE}")
+	endforeach()
+endfunction()
+group_files("${playlunky64_sources};${playlunky_launcher_sources};${shared_sources};${playlunky64_headers};${playlunky_launcher_headers};${shared_headers};${playlunky_launcher_resources}")
 
 
 # --------------------------------------------------
