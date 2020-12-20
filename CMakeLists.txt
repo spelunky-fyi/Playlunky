@@ -71,7 +71,7 @@ target_include_directories(playlunky64 PRIVATE "source/playlunky" "source/shared
 file(GLOB_RECURSE playlunky_launcher_sources CONFIGURE_DEPENDS "source/launcher/*.cpp")
 file(GLOB_RECURSE playlunky_launcher_headers CONFIGURE_DEPENDS "source/launcher/*.h" "source/launcher/*.inl")
 set(playlunky_launcher_resources "res/playlunky_launcher.rc")
-add_executable(playlunky_launcher ${playlunky_launcher_sources} ${shared_sources} ${playlunky_launcher_headers} ${shared_headers} ${playlunky_launcher_resources})
+add_executable(playlunky_launcher WIN32 ${playlunky_launcher_sources} ${shared_sources} ${playlunky_launcher_headers} ${shared_headers} ${playlunky_launcher_resources})
 target_link_libraries(playlunky_launcher PRIVATE
 	playlunky_warnings
 	playlunky_dependencies
@@ -141,7 +141,7 @@ endif()
 # Set debugging properties
 if(EXISTS ${SPELUNKY_INSTALL_DIR})
 	set_target_properties(playlunky_launcher PROPERTIES
-		VS_DEBUGGER_COMMAND_ARGUMENTS "--exe_dir \"${SPELUNKY_INSTALL_DIR}\""
+		VS_DEBUGGER_COMMAND_ARGUMENTS "--console --exe_dir \"${SPELUNKY_INSTALL_DIR}\""
 		VS_DEBUGGER_WORKING_DIRECTORY $<TARGET_FILE_DIR:playlunky_launcher>)
 
 	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT playlunky_launcher)
