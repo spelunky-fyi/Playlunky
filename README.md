@@ -40,11 +40,12 @@ Build artifacts are found in the `publish` folder.
 Copy all build artifacts into your Spelunky 2 folder, from there you can launch `playlunky_launcher.exe` to launch the game with the dll injected.
 
 ## Features
+This project is currently compatible with 1.19.8c
 * Loose loading of resources    
     * The game still loads files packed in the exe
     * Prioritizes loose files over files packed in the exe
 * Anti-anti-debug injection
-    * If ScyllaHide exists next to the exe it will inject that to circumvent any anti-debugging measures that might exist in the exe (there appear to be none in version 1.9.18c, but there were in pervious versions)
+    * If ScyllaHide exists next to the exe it will inject that to circumvent any anti-debugging measures that might exist in the exe (there appear to be none in this version, but there were in pervious versions)
     * Only tries to inject ScyllaHide if a debugger is attached to the exe on boot
 * Logging to console
     * Creates a console window if started with `--console` that grabs all of the games logging output for easier debugging 
