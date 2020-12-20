@@ -7,6 +7,14 @@ configuration:
 
 image:
   - Visual Studio 2019
+skip_commits:
+  files:
+    - README.md
+    - LICENSE
+    - CODE_OF_CONDUCT.md
+    - .gitignore
+    - .github/*
+    - '**/*.html'
 
 environment:
   matrix:
