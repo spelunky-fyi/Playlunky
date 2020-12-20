@@ -3,7 +3,7 @@
   <a href="https://isocpp.org/">
       <img src="https://img.shields.io/badge/language-C%2B%2B20-blue.svg">
   </a>
-  <a href="https://ci.appveyor.com/project/Malacath-92/playlunky/branch/master">
+  <a href="https://ci.appveyor.com/project/Malacath-92/playlunky">
       <img src="https://ci.appveyor.com/api/projects/status/yhlybe62omlpbxj3?svg=true">
   </a>
   <a href="https://opensource.org/licenses/MIT" >
