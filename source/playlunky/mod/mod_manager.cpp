@@ -1,13 +1,14 @@
 #include "mod_manager.h"
 
 #include "mod_database.h"
+#include "virtual_filesystem.h"
 
 #include "algorithms.h"
 #include "../log.h"
 
 #include <filesystem>
 
-ModManager::ModManager(std::string_view mods_root) {
+ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 	namespace fs = std::filesystem;
 
 	LogInfo("Initializing Mod Manger...");
@@ -43,12 +44,21 @@ ModManager::ModManager(std::string_view mods_root) {
 		}(mods_root_path);
 
 		for (const fs::path& mod_folder : mod_folders) {
-			ModDatabase mod_db{ mod_folder };
-			mod_db.UpdateDatabase();
-			mod_db.ForEachOutdatedFile([](const fs::path& asset_path) {
-				LogInfo("File {} is outdated...", asset_path.string());
-			});
-			mod_db.WriteDatabase();
+			{
+				ModDatabase mod_db{ mod_folder };
+				mod_db.UpdateDatabase();
+				mod_db.ForEachOutdatedFile([](const fs::path& asset_path) {
+					if (asset_path.extension() == ".png") {
+						//LogInfo("Converting file '{}' to be readable by the game...", asset_path.string());
+					}
+				});
+				mod_db.WriteDatabase();
+			}
+
+			vfs.MountFolder(mod_folder.string(), 0);
+			//vfs.MountFolder((mod_folder / ".db").string(), 0);
+
+			mMods.push_back(mod_folder.stem().string());
 		}
 	}
 }

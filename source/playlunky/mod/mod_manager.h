@@ -7,7 +7,7 @@
 
 class ModManager {
 public:
-	ModManager(std::string_view mods_root);
+	ModManager(std::string_view mods_root, class VirtualFilesystem& vfs);
 	~ModManager() = default;
 
 	ModManager() = delete;
@@ -17,7 +17,6 @@ public:
 	ModManager& operator=(ModManager&&) = delete;
 
 private:
-
 	static inline constexpr std::array<std::string_view, 4> mReservedFolders{
 		".compressed",
 		"Extracted",

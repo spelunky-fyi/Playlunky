@@ -2,10 +2,13 @@
 
 #include "log.h"
 #include "mod/mod_manager.h"
+#include "mod/virtual_filesystem.h"
 #include "detour/detour.h"
+#include "detour/file_io.h"
 
 struct Playlunky::PlaylunkyImpl {
 	HMODULE GameModule;
+	std::unique_ptr<VirtualFilesystem> Vfs;
 	std::unique_ptr<ModManager> Manager;
 };
 
@@ -44,7 +47,10 @@ void Playlunky::Destroy() {
 void Playlunky::Init() {
 	LogInfo("Initializing Playlunky...");
 
-	mImpl->Manager = std::make_unique<ModManager>("Mods");
+	mImpl->Vfs = std::make_unique<VirtualFilesystem>();
+	mImpl->Manager = std::make_unique<ModManager>("Mods", *mImpl->Vfs);
+
+	SetVfs(mImpl->Vfs.get());
 }
 
 Playlunky::Playlunky(HMODULE game_module)

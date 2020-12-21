@@ -6,6 +6,8 @@
 #include "log.h"
 #include "util.h"
 
+#include "mod/virtual_filesystem.h"
+
 #include <cstdint>
 
 struct DetourReadEncrypedFile
@@ -15,46 +17,23 @@ struct DetourReadEncrypedFile
 	};
 	static void* Detour(const char* file_path, void* (*alloc_fun)(size_t size))
 	{
-		FILE* file{ nullptr };
-		auto error = fopen_s(&file, file_path, "rb");
-		if (error == 0 && file != nullptr) {
-			auto close_file = OnScopeExit{ [file]() { fclose(file); } };
-
-			fseek(file, 0, SEEK_END);
-			const auto size = ftell(file);
-			fseek(file, 0, SEEK_SET);
-
-			struct AssetInfo {
-				void* Data{ nullptr };
-				int _member_1{ 0 };
-				int AssetSize{ 0 };
-				int AllocationSize{ 0 };
-				int _member_4{ 0 };
-			};
-
-			const auto allocation_size = size + static_cast<decltype(size)>(sizeof(AssetInfo));
-			if (void* buf = alloc_fun(allocation_size)) {
-
-				void* data = static_cast<void*>(reinterpret_cast<char*>(buf) + 24);
-				const auto size_read = fread(data, 1, size, file);
-				if (size_read != size) {
-					LogInfo("Could not load asset {}, this will either crash or cause glitches...", file_path);
-				}
-
-				AssetInfo* asset_info = new (buf) AssetInfo();
-				*asset_info = {
-					.Data = data,
-					.AssetSize = size,
-					.AllocationSize = allocation_size
-				};
-
-				return buf;
+		if (s_Vfs) {
+			if (auto* file_info = s_Vfs->LoadFile(file_path, alloc_fun)) {
+				return file_info;
 			}
 		}
+
 		return Trampoline(file_path, alloc_fun);
 	}
+
+	inline static VirtualFilesystem* s_Vfs{ nullptr };
 };
 
 std::vector<DetourEntry> GetFileIODetours() {
 	return { DetourHelper<DetourReadEncrypedFile>::GetDetourEntry("ReadEncrypedFile") };
+}
+
+void SetVfs(VirtualFilesystem* vfs)
+{
+	DetourReadEncrypedFile::s_Vfs = vfs;
 }
