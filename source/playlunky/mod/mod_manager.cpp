@@ -1,7 +1,9 @@
 #include "mod_manager.h"
 
-#include "log.h"
+#include "mod_database.h"
+
 #include "algorithms.h"
+#include "../log.h"
 
 #include <filesystem>
 
@@ -12,7 +14,7 @@ ModManager::ModManager(std::string_view mods_root) {
 
 	LogInfo("Scanning for mods...");
 
-	const fs::path mods_root_path{ std::move(mods_root) };
+	const fs::path mods_root_path{ mods_root };
 	if (fs::exists(mods_root_path) && fs::is_directory(mods_root_path)) {
 		const std::vector<fs::path> mod_folders = [this](const fs::path& root_folder) {
 			std::vector<fs::path> mod_folders;
@@ -29,7 +31,7 @@ ModManager::ModManager(std::string_view mods_root) {
 							self(sub_path, self);
 						}
 						else {
-							mod_folders.push_back(std::move(sub_path));
+							mod_folders.push_back(sub_path);
 						}
 					}
 				}
@@ -40,6 +42,13 @@ ModManager::ModManager(std::string_view mods_root) {
 			return mod_folders;
 		}(mods_root_path);
 
-
+		for (const fs::path& mod_folder : mod_folders) {
+			ModDatabase mod_db{ mod_folder };
+			mod_db.UpdateDatabase();
+			mod_db.ForEachOutdatedFile([](const fs::path& asset_path) {
+				LogInfo("File {} is outdated...", asset_path.string());
+			});
+			mod_db.WriteDatabase();
+		}
 	}
 }

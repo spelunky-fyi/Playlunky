@@ -20,13 +20,17 @@ struct DetourWinMain
 };
 
 // This is the first function called in WinMain() after the global log is initialized
-struct DetourInitSteam
+struct DetourGetSteamHandle
 {
-	inline static SigScan::Function<void(__stdcall*)()> Trampoline{
+	inline static SigScan::Function<void*(__stdcall*)()> Trampoline{
 		.Signature = "\x40\x53\x48\x83\xec\x20\x48\x8b\x05\x2a\x2a\x2a\x2a\x48\x85\xc0\x75\x6d\xe8\x2a\x2a\x2a\x2a"
 	};
-	static void Detour() {
-		Playlunky::Get().Init();
+	static void* Detour() {
+		static bool s_PlaylunkyInit{ false };
+		if (!s_PlaylunkyInit) {
+			Playlunky::Get().Init();
+			s_PlaylunkyInit = true;
+		}
 		return Trampoline();
 	}
 };
@@ -35,6 +39,6 @@ std::vector<struct DetourEntry> GetMainDetours()
 {
 	return {
 		DetourHelper<DetourWinMain>::GetDetourEntry("WinMain"),
-		DetourHelper<DetourInitSteam>::GetDetourEntry("InitSteam")
+		DetourHelper<DetourGetSteamHandle>::GetDetourEntry("GetSteamHandle")
 	};
 }

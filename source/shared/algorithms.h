@@ -19,10 +19,35 @@ namespace algo {
 	};
 
 	template<class ContainerT, class ValueT>
-	requires range<ContainerT> && is_comparable_v<decltype(*std::begin(std::declval<ContainerT>())), ValueT>
+	requires range<ContainerT> && is_comparable_v<decltype(*begin(std::declval<ContainerT>())), ValueT>
 	bool contains(ContainerT&& container, ValueT&& value) {
 		const auto begin_it = begin(container);
 		const auto end_it = end(container);
 		return std::find(begin_it, end_it, std::forward<ValueT>(value)) != end_it;
+	}
+
+	template<class ContainerT, class FunT>
+	requires range<ContainerT> && std::is_invocable_v<FunT, decltype(*begin(std::declval<ContainerT>()))>
+	auto find_if(ContainerT&& container, FunT&& fun) -> decltype(&*begin(std::declval<ContainerT>())) {
+		const auto begin_it = begin(container);
+		const auto end_it = end(container);
+		auto found_it = std::find_if(begin_it, end_it, std::forward<FunT>(fun));
+		if (found_it != end_it) {
+			return &*found_it;
+		}
+		return nullptr;
+	}
+
+	template<class ContainerT, class FunT>
+	requires range<ContainerT> && std::is_invocable_v<FunT, decltype(*begin(std::declval<ContainerT>()))>
+	auto count_if(ContainerT&& container, FunT&& fun) {
+		const auto begin_it = begin(container);
+		const auto end_it = end(container);
+		return std::count_if(begin_it, end_it, std::forward<FunT>(fun));
+	}
+
+	inline bool is_sub_path(const std::filesystem::path& path, const std::filesystem::path& base) {
+		const auto first_mismatch = std::mismatch(path.begin(), path.end(), base.begin(), base.end());
+		return first_mismatch.second == base.end();
 	}
 }
