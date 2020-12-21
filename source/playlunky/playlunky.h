@@ -5,10 +5,12 @@
 
 class Playlunky {
 public:
+	static Playlunky& Get();
+	
 	static void Create(HMODULE game_module);
 	static void Destroy();
 
-	Playlunky& Get();
+	void Init();
 private:
 	Playlunky(HMODULE game_module);
 	~Playlunky();

@@ -1,10 +1,12 @@
 #include <playlunky.h>
 
 #include "log.h"
+#include "mod/mod_manager.h"
 #include "detour/detour.h"
 
 struct Playlunky::PlaylunkyImpl {
 	HMODULE GameModule;
+	std::unique_ptr<ModManager> Manager;
 };
 
 struct PlaylunkyDeleter {
@@ -13,6 +15,14 @@ struct PlaylunkyDeleter {
 	}
 };
 static std::unique_ptr<Playlunky, PlaylunkyDeleter> s_PlaylunkyInstance;
+
+Playlunky& Playlunky::Get() {
+	if (s_PlaylunkyInstance == nullptr) {
+		LogFatal("Playlunky::Get() called without a valid instance present");
+	}
+
+	return *s_PlaylunkyInstance;
+}
 
 void Playlunky::Create(HMODULE game_module) {
 	if (s_PlaylunkyInstance != nullptr) {
@@ -31,14 +41,11 @@ void Playlunky::Destroy() {
 	s_PlaylunkyInstance.reset();
 }
 
-Playlunky& Playlunky::Get() {
-	if (s_PlaylunkyInstance == nullptr) {
-		LogFatal("Playlunky::Get() called without a valid instance present");
-	}
+void Playlunky::Init() {
+	LogInfo("Initializing Playlunky...");
 
-	return *s_PlaylunkyInstance;
+	mImpl->Manager = std::make_unique<ModManager>("Mods");
 }
-
 
 Playlunky::Playlunky(HMODULE game_module)
 	: mImpl{ new PlaylunkyImpl{ game_module } }
