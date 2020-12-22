@@ -17,15 +17,5 @@ public:
 	ModManager& operator=(ModManager&&) = delete;
 
 private:
-	static inline constexpr std::array<std::string_view, 4> mReservedFolders{
-		".compressed",
-		"Extracted",
-		"Mods",
-		"Overrides"
-	};
-	static inline constexpr std::array<std::string_view, 1> mRecurseFolders{
-		"Packs"
-	};
-
 	std::vector<std::string> mMods;
 };

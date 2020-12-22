@@ -48,7 +48,7 @@ void Playlunky::Init() {
 	LogInfo("Initializing Playlunky...");
 
 	mImpl->Vfs = std::make_unique<VirtualFilesystem>();
-	mImpl->Manager = std::make_unique<ModManager>("Mods", *mImpl->Vfs);
+	mImpl->Manager = std::make_unique<ModManager>("Mods/Packs", *mImpl->Vfs);
 
 	SetVfs(mImpl->Vfs.get());
 }
