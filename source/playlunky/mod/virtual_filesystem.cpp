@@ -1,7 +1,7 @@
 #include "virtual_filesystem.h"
 
-#include "util.h"
-#include "../log.h"
+#include "log.h"
+#include "util/on_scope_exit.h"
 
 #include <filesystem>
 

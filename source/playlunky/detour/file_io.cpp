@@ -4,7 +4,6 @@
 #include "detour_helper.h"
 #include "sigscan.h"
 #include "log.h"
-#include "util.h"
 
 #include "mod/virtual_filesystem.h"
 

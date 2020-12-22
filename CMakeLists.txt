@@ -97,8 +97,8 @@ function(group_files sources)
 			string(SUBSTRING ${GROUP} 16 -1 GROUP)
 		elseif("${FILE}" MATCHES "source/playlunky/.*")
 			string(SUBSTRING ${GROUP} 17 -1 GROUP)
-		elseif("${FILE}" MATCHES "source/.*")
-			string(SUBSTRING ${GROUP} 7 -1 GROUP)
+		elseif("${FILE}" MATCHES "source/shared/.*")
+			string(SUBSTRING ${GROUP} 14 -1 GROUP)
 		endif()
 
 		# Do the grouping

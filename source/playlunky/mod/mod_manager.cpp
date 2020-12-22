@@ -3,8 +3,8 @@
 #include "mod_database.h"
 #include "virtual_filesystem.h"
 
-#include "algorithms.h"
-#include "../log.h"
+#include "log.h"
+#include "util/algorithms.h"
 
 #include <filesystem>
 #include <fstream>
@@ -53,7 +53,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				mod_db.UpdateDatabase();
 				mod_db.ForEachOutdatedFile([](const fs::path& asset_path) {
 					if (asset_path.extension() == ".png") {
-						//LogInfo("Converting file '{}' to be readable by the game...", asset_path.string());
+						LogInfo("Converting file '{}' to be readable by the game...", asset_path.string());
 					}
 				});
 				mod_db.WriteDatabase();
@@ -69,7 +69,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				mod_name_to_prio[mod_name] = prio;
 			}
 			vfs.MountFolder(mod_folder.string(), prio);
-			//vfs.MountFolder((mod_folder / ".db").string(), prio);
+			vfs.MountFolder((mod_folder / ".db").string(), prio);
 
 			mMods.push_back(std::move(mod_name));
 		}

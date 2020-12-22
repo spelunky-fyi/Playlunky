@@ -1,6 +1,6 @@
 #include "mod_database.h"
 
-#include "algorithms.h"
+#include "util/algorithms.h"
 
 #include <fstream>
 

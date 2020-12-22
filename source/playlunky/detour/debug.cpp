@@ -4,9 +4,6 @@
 #include "detour_helper.h"
 #include "sigfun.h"
 #include "log.h"
-#include "util.h"
-
-#include "../log.h"
 
 #include <Windows.h>
 #include <cstdint>

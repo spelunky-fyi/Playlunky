@@ -1,5 +1,5 @@
 #include "logger.h"
-#include "../log.h"
+#include "log.h"
 
 #include "detour_entry.h"
 #include "detour_helper.h"

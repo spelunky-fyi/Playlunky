@@ -1,4 +1,4 @@
-#include "util.h"
+#include "get_proc.h"
 
 inline PSTR GetProcName(HMODULE module, const FARPROC proc_address)
 {
