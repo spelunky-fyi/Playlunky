@@ -1,6 +1,7 @@
 #include "mod_manager.h"
 
 #include "mod_database.h"
+#include "png_dds_conversion.h"
 #include "virtual_filesystem.h"
 
 #include "log.h"
@@ -48,12 +49,23 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 		}();
 
 		for (const fs::path& mod_folder : mod_folders) {
+			const auto db_folder = mod_folder / ".db";
+
 			{
 				ModDatabase mod_db{ mod_folder };
 				mod_db.UpdateDatabase();
-				mod_db.ForEachOutdatedFile([](const fs::path& asset_path) {
-					if (asset_path.extension() == ".png") {
-						LogInfo("Converting file '{}' to be readable by the game...", asset_path.string());
+				mod_db.ForEachOutdatedFile([&mod_folder, db_folder](const fs::path& rel_asset_path) {
+					if (rel_asset_path.extension() == ".png") {
+						const auto full_asset_path = mod_folder / rel_asset_path;
+						const auto db_destination = (db_folder / rel_asset_path).replace_extension(".dds");
+
+						if (ConvertPngToDds(full_asset_path, db_destination))
+						{
+							LogInfo("Successfully converted file '{}' to be readable by the game...", full_asset_path.string());
+						}
+						else {
+							LogInfo("Failed converting file '{}' to be readable by the game...", full_asset_path.string());
+						}
 					}
 				});
 				mod_db.WriteDatabase();
@@ -69,7 +81,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				mod_name_to_prio[mod_name] = prio;
 			}
 			vfs.MountFolder(mod_folder.string(), prio);
-			vfs.MountFolder((mod_folder / ".db").string(), prio);
+			vfs.MountFolder(db_folder.string(), prio);
 
 			mMods.push_back(std::move(mod_name));
 		}

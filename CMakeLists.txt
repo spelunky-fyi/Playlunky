@@ -25,6 +25,7 @@ run_conan()
 # Find packages
 find_package(fmt REQUIRED)
 find_package(structopt REQUIRED)
+find_package(lodepng REQUIRED)
 
 
 # --------------------------------------------------
@@ -48,6 +49,10 @@ target_link_libraries(playlunky_dependencies INTERFACE
 target_link_libraries(playlunky_dependencies INTERFACE
 	optimized detours)
 
+add_library(playlunky_lib_dependencies INTERFACE)
+target_link_libraries(playlunky_lib_dependencies INTERFACE
+	lodepng::lodepng)
+
 
 # --------------------------------------------------
 # Glob for shared sources
@@ -62,7 +67,8 @@ file(GLOB_RECURSE playlunky64_headers CONFIGURE_DEPENDS "source/playlunky/*.h" "
 add_library(playlunky64 SHARED ${playlunky64_sources} ${shared_sources} ${playlunky64_headers} ${shared_headers})
 target_link_libraries(playlunky64 PRIVATE
 	playlunky_warnings
-	playlunky_dependencies)
+	playlunky_dependencies
+	playlunky_lib_dependencies)
 target_include_directories(playlunky64 PRIVATE "source/playlunky" "source/shared")
 
 

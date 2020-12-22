@@ -16,7 +16,7 @@ public:
 		for (const AssetDescriptor& asset : mAssets) {
 			if ((!asset.LastKnownWrite.has_value() && asset.LastWrite.has_value()) ||
 				 (asset.LastKnownWrite.has_value() && asset.LastWrite.has_value() && asset.LastKnownWrite.value() < asset.LastWrite.value())) {
-				fun(mModFolder / asset.Path);
+				fun(asset.Path);
 			}
 		}
 	}
