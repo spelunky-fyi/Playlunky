@@ -7,6 +7,9 @@
 #include "../log.h"
 
 #include <filesystem>
+#include <fstream>
+#include <unordered_map>
+#include <map>
 
 ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 	namespace fs = std::filesystem;
@@ -43,6 +46,20 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			return mod_folders;
 		}(mods_root_path);
 
+		std::unordered_map<std::string, std::int64_t> mod_name_to_prio = [&mods_root_path]() {
+			std::unordered_map<std::string, std::int64_t> mod_name_to_prio;
+
+			if (auto load_order_file = std::ifstream{ mods_root_path / "load_order.txt" }) {
+				while (!load_order_file.eof()) {
+					std::string mod_name;
+					load_order_file >> mod_name;
+					mod_name_to_prio[std::move(mod_name)] = mod_name_to_prio.size();
+				}
+			}
+
+			return mod_name_to_prio;
+		}();
+
 		for (const fs::path& mod_folder : mod_folders) {
 			{
 				ModDatabase mod_db{ mod_folder };
@@ -55,10 +72,34 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				mod_db.WriteDatabase();
 			}
 
-			vfs.MountFolder(mod_folder.string(), 0);
-			//vfs.MountFolder((mod_folder / ".db").string(), 0);
+			std::string mod_name = mod_folder.stem().string();
+			std::int64_t prio;
+			if (mod_name_to_prio.contains(mod_name)) {
+				prio = mod_name_to_prio[mod_name];
+			}
+			else {
+				prio = mod_name_to_prio.size();
+				mod_name_to_prio[mod_name] = prio;
+			}
+			vfs.MountFolder(mod_folder.string(), prio);
+			//vfs.MountFolder((mod_folder / ".db").string(), prio);
 
-			mMods.push_back(mod_folder.stem().string());
+			mMods.push_back(std::move(mod_name));
+		}
+
+		{
+			std::map<std::int64_t, std::string> mod_prio_to_name;
+			for (auto& [mod_name, prio] : mod_name_to_prio) {
+				mod_prio_to_name[prio] = mod_name;
+			}
+
+			if (auto load_order_file = std::ofstream{ mods_root_path / "load_order.txt", std::ios::trunc }) {
+				for (auto& [prio, mod_name] : mod_prio_to_name) {
+					if (algo::contains(mMods, mod_name)) {
+						load_order_file << mod_name << '\n';
+					}
+				}
+			}
 		}
 	}
 }
