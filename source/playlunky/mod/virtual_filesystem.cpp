@@ -10,21 +10,22 @@ public:
 	virtual ~IVfsMountImpl() = default;
 
 	using FileInfo = VirtualFilesystem::FileInfo;
-	virtual FileInfo* LoadFile(std::string_view file_path, void* (*allocator)(std::size_t)) const = 0;
+	virtual FileInfo* LoadFile(const char* file_path, void* (*allocator)(std::size_t)) const = 0;
 };
 
 class VfsFolderMount : public IVfsMountImpl {
 public:
 	VfsFolderMount(std::filesystem::path mounted_path)
-		: mMountedPath(std::move(mounted_path)) {}
+		: mMountedPath(std::move(mounted_path))
+		, mMountedPathString(mMountedPath.string()) {}
 	virtual ~VfsFolderMount() override = default;
 
-	virtual FileInfo* LoadFile(std::string_view file_path, void* (*allocator)(std::size_t)) const override {
-		const std::filesystem::path full_path = mMountedPath / file_path;
-		const std::string full_path_as_string = full_path.string();
+	virtual FileInfo* LoadFile(const char* file_path, void* (*allocator)(std::size_t)) const override {
+		char full_path[MAX_PATH];
+		sprintf_s(full_path, "%s/%s", mMountedPathString.c_str(), file_path);
 
 		FILE* file{ nullptr };
-		auto error = fopen_s(&file, full_path_as_string.c_str(), "rb");
+		auto error = fopen_s(&file, full_path, "rb");
 		if (error == 0 && file != nullptr) {
 			auto close_file = OnScopeExit{ [file]() { fclose(file); } };
 
@@ -60,6 +61,7 @@ public:
 
 private:
 	std::filesystem::path mMountedPath;
+	std::string mMountedPathString;
 };
 
 struct VirtualFilesystem::VfsMount {
@@ -82,7 +84,7 @@ void VirtualFilesystem::MountFolder(std::string_view path, std::int64_t priority
 		});
 }
 
-VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(std::string_view path, void* (*allocator)(std::size_t))
+VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void* (*allocator)(std::size_t))
 {
 	for (const VfsMount& mount : mMounts) {
 		if (FileInfo* loaded_data = mount.MountImpl->LoadFile(path, allocator)) {

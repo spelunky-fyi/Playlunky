@@ -23,7 +23,7 @@ public:
 		int AllocationSize{ 0 };
 		int _member_4{ 0 };
 	};
-	FileInfo* LoadFile(std::string_view path, void* (*allocator)(std::size_t) = nullptr);
+	FileInfo* LoadFile(const char* path, void* (*allocator)(std::size_t) = nullptr);
 
 private:
 	struct VfsMount;
