@@ -54,10 +54,7 @@ This project is currently compatible with 1.19.8c
     * Only tries to inject ScyllaHide if a debugger is attached to the exe on boot
 * Logging to console
     * Creates a console window if started with `--console` that grabs all of the games logging output for easier debugging 
-
-### Coming Eventually
 * Mod Management
-    * Loads mods from the `Mods` folder, where each folder is one mod
-    * Users can specify priority of mods (in case multiple mods replace the same asset)
-    * On first load, all files not compatible with the game will be converted to be compatible (e.g. png &rarr; dds)
-    * Mods store a database so that the conversions are redone when a mod gets updated
+    * Loads mods from the `Mods/Packs` folder, where each folder is one mod
+    * Users can specify priority of mods using the `Mods/Packs/load_order.txt` file (useful in case multiple mods replace the same asset)
+    * On first load all png files are automatically converted to dds, so mods can be distributed as usual (mods store a small database to catch when they get updated)
