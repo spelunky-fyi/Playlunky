@@ -82,7 +82,7 @@ void Attach() {
 
 	for (auto [trampoline, detour, signature, function_name] : detour_entries) {
 		if (signature != nullptr) {
-			*trampoline = SigScan::FindPattern(*signature);
+			*trampoline = SigScan::FindPattern(*signature, true);
 			if (*trampoline != nullptr)
 			{
 				fmt::print("Found function {}:\n\tsig: {}\n\t at: {}\n", function_name, ByteStr{ .Str = *signature }, *trampoline);

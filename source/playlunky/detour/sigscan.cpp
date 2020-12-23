@@ -27,7 +27,7 @@ namespace SigScan {
 		return { section, num_sections };
 	}
 
-	void* FindPattern(const char* module_name, const char* signature) {
+	void* FindPattern(const char* module_name, const char* signature, bool code_only) {
 		if (module_name == nullptr || signature == nullptr)
 			return 0;
 
@@ -40,7 +40,7 @@ namespace SigScan {
 			std::span<IMAGE_SECTION_HEADER> section_headers = GetImageSectionHeaders(module);
 			for (auto& section : section_headers) {
 				static constexpr auto executable_code_flags = IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_CNT_CODE;
-				if ((section.Characteristics & executable_code_flags) == executable_code_flags) {
+				if (!code_only || (section.Characteristics & executable_code_flags) == executable_code_flags) {
 					std::size_t size = (std::size_t)section.SizeOfRawData;
 					std::size_t section_base = base + (std::size_t)section.VirtualAddress;
 
@@ -75,9 +75,9 @@ namespace SigScan {
 		return nullptr;
 	}
 
-	void* FindPattern(const char* signature) {
+	void* FindPattern(const char* signature, bool code_only) {
 		char module_name[MAX_PATH];
 		GetModuleFileNameA(0, module_name, MAX_PATH);
-		return FindPattern(module_name, signature);
+		return FindPattern(module_name, signature, code_only);
 	}
 }
