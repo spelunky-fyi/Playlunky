@@ -42,8 +42,6 @@ jobs:
 
     - name: Zip Release
       run: |
-        tar -a -c --exclude=build --exclude=publish --exclude=.* --exclude=source.tar.gz --exclude=source.zip -f source.zip *
-        tar -a -c --exclude=build --exclude=publish --exclude=.* --exclude=source.tar.gz --exclude=source.zip -f source.tar.gz *
         cd publish
         tar -a -c -f ../playlunky.zip *
 
@@ -58,27 +56,7 @@ jobs:
         body: ${{ steps.extract_release_notes.outputs.release_notes }}
         draft: true
 
-    - name: Upload Release Asset - source.zip
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./source.zip
-        asset_name: source.zip
-        asset_content_type: application/zip
-
-    - name: Upload Release Asset - source.tar.gz
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./source.tar.gz
-        asset_name: source.tar.gz
-        asset_content_type: application/tar
-
-    - name: Upload Release Asset - playlunky.zip
+    - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
