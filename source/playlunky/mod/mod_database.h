@@ -5,7 +5,7 @@
 
 class ModDatabase {
 public:
-	ModDatabase(std::filesystem::path mod_folder);
+	ModDatabase(std::filesystem::path root_folder, bool recursive);
 	~ModDatabase();
 
 	void UpdateDatabase();
@@ -13,7 +13,7 @@ public:
 
 	template<class FunT>
 	void ForEachOutdatedFile(FunT&& fun) {
-		for (const AssetDescriptor& asset : mAssets) {
+		for (const FileDescriptor& asset : mFiles) {
 			if ((!asset.LastKnownWrite.has_value() && asset.LastWrite.has_value()) ||
 				 (asset.LastKnownWrite.has_value() && asset.LastWrite.has_value() && asset.LastKnownWrite.value() < asset.LastWrite.value())) {
 				fun(asset.Path);
@@ -22,12 +22,13 @@ public:
 	}
 
 private:
-	std::filesystem::path mModFolder;
+	const std::filesystem::path mRootFolder;
+	const bool mRecurse;
 
-	struct AssetDescriptor {
+	struct FileDescriptor {
 		std::filesystem::path Path{};
 		std::optional<std::time_t> LastKnownWrite{ std::nullopt };
 		std::optional<std::time_t> LastWrite{ std::nullopt };
 	};
-	std::vector<AssetDescriptor> mAssets;
+	std::vector<FileDescriptor> mFiles;
 };

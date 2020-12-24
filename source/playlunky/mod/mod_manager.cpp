@@ -24,13 +24,19 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 	const fs::path mods_root_path{ mods_root };
 	if (fs::exists(mods_root_path) && fs::is_directory(mods_root_path)) {
-		for (fs::path zip_path : fs::directory_iterator{ mods_root_path }) {
-			if (fs::is_regular_file(zip_path) && zip_path.extension() == ".zip") {
-				const auto message = fmt::format("Found archive '{}' in mods packs folder. Do you want to unzip it in order for it to be loadable as a mod?", zip_path.filename().string());
-				if (MessageBox(NULL, message.c_str(), "Zipped Mod Found", MB_YESNO) == IDYES) {
-					UnzipMod(zip_path);
+		{
+			ModDatabase mod_db{ mods_root, true };
+			mod_db.UpdateDatabase();
+			mod_db.ForEachOutdatedFile([&mods_root_path](const fs::path& rel_file_path) {
+				if (rel_file_path.extension() == ".zip") {
+					const fs::path zip_path = mods_root_path / rel_file_path;
+					const auto message = fmt::format("Found archive '{}' in mods packs folder. Do you want to unzip it in order for it to be loadable as a mod?", zip_path.filename().string());
+					if (MessageBox(NULL, message.c_str(), "Zipped Mod Found", MB_YESNO) == IDYES) {
+						UnzipMod(zip_path);
+					}
 				}
-			}
+			});
+			mod_db.WriteDatabase();
 		}
 
 		const std::vector<fs::path> mod_folders = [this](const fs::path& root_folder) {
@@ -64,7 +70,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			const auto db_folder = mod_folder / ".db";
 
 			{
-				ModDatabase mod_db{ mod_folder };
+				ModDatabase mod_db{ mod_folder, true };
 				mod_db.UpdateDatabase();
 				mod_db.ForEachOutdatedFile([&mod_folder, db_folder](const fs::path& rel_asset_path) {
 					if (rel_asset_path.extension() == ".png") {
