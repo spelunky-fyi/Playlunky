@@ -26,6 +26,7 @@ run_conan()
 find_package(fmt REQUIRED)
 find_package(structopt REQUIRED)
 find_package(lodepng REQUIRED)
+find_package(libzip REQUIRED)
 
 
 # --------------------------------------------------
@@ -51,7 +52,8 @@ target_link_libraries(playlunky_dependencies INTERFACE
 
 add_library(playlunky_lib_dependencies INTERFACE)
 target_link_libraries(playlunky_lib_dependencies INTERFACE
-	lodepng::lodepng)
+	lodepng::lodepng
+	libzip::libzip)
 
 
 # --------------------------------------------------

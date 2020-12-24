@@ -2,6 +2,7 @@
 fmt/7.0.1
 structopt/0.1.1
 lodepng/cci.20200615
+libzip/1.7.3
 
 [generators]
 cmake_multi

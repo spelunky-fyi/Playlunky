@@ -2,11 +2,14 @@
 
 #include "mod_database.h"
 #include "png_dds_conversion.h"
+#include "unzip_mod.h"
 #include "virtual_filesystem.h"
 
 #include "log.h"
 #include "util/algorithms.h"
 
+#include <Windows.h>
+#include <zip.h>
 #include <filesystem>
 #include <fstream>
 #include <unordered_map>
@@ -21,6 +24,15 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 	const fs::path mods_root_path{ mods_root };
 	if (fs::exists(mods_root_path) && fs::is_directory(mods_root_path)) {
+		for (fs::path zip_path : fs::directory_iterator{ mods_root_path }) {
+			if (fs::is_regular_file(zip_path) && zip_path.extension() == ".zip") {
+				const auto message = fmt::format("Found archive '{}' in mods packs folder. Do you want to unzip it in order for it to be loadable as a mod?", zip_path.filename().string());
+				if (MessageBox(NULL, message.c_str(), "Zipped Mod Found", MB_YESNO) == IDYES) {
+					UnzipMod(zip_path);
+				}
+			}
+		}
+
 		const std::vector<fs::path> mod_folders = [this](const fs::path& root_folder) {
 			std::vector<fs::path> mod_folders;
 

@@ -8,7 +8,6 @@
 
 bool ConvertPngToDds(const std::filesystem::path& source, const std::filesystem::path& destination)
 {
-
 	std::vector<std::uint8_t> image_buffer;
     std::uint32_t width;
     std::uint32_t height;
