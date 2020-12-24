@@ -23,7 +23,11 @@ struct DetourWinMain
 			const char* version_string = static_cast<const char*>(production_str) - 16;
 
 			if (version_string != s_SupportedSpelunkyVersion) {
-				LogFatal("This version of Spelunky 2 is not supported by Playlunky, please update your game or check if there is a new version of Playlunky available.");
+				const auto message = fmt::format("This version of Spelunky 2 is not supported by Playlunky, "
+					"please update your game or check if there is a new version of Playlunky available.\n"
+					" Spelunky Version: {}\n"
+					"Supported Version: {}", version_string, s_SupportedSpelunkyVersion);
+				MessageBox(NULL, message.c_str(), "Version Mistmacht Detected", MB_OK);
 			}
 		}
 
