@@ -17,15 +17,33 @@ class VfsFolderMount : public IVfsMountImpl {
 public:
 	VfsFolderMount(std::filesystem::path mounted_path)
 		: mMountedPath(std::move(mounted_path))
-		, mMountedPathString(mMountedPath.string()) {}
+		, mMountedPathString(mMountedPath.string()) {
+		std::replace(mMountedPathString.begin(), mMountedPathString.end(), '\\', '/');
+	}
 	virtual ~VfsFolderMount() override = default;
 
 	virtual FileInfo* LoadFile(const char* file_path, void* (*allocator)(std::size_t)) const override {
-		char full_path[MAX_PATH];
-		sprintf_s(full_path, "%s/%s", mMountedPathString.c_str(), file_path);
+		char path_copy[MAX_PATH];
+		sprintf_s(path_copy, "%s", file_path);
+		std::replace(std::begin(path_copy), std::end(path_copy), '\\', '/');
 
+		char full_path[MAX_PATH];
+		sprintf_s(full_path, "%s/%s", mMountedPathString.c_str(), path_copy);
+
+		if (FileInfo* file_info = LoadFileWithPath(full_path, allocator)) {
+			return file_info;
+		}
+		else if (const char* last_slash = std::strrchr(path_copy, '/')) {
+			sprintf_s(full_path, "%s/%s", mMountedPathString.c_str(), last_slash + 1);
+			return LoadFileWithPath(full_path, allocator);
+		}
+
+		return {};
+	}
+
+	FileInfo* LoadFileWithPath(const char* file_path, void* (*allocator)(std::size_t)) const {
 		FILE* file{ nullptr };
-		auto error = fopen_s(&file, full_path, "rb");
+		auto error = fopen_s(&file, file_path, "rb");
 		if (error == 0 && file != nullptr) {
 			auto close_file = OnScopeExit{ [file]() { fclose(file); } };
 
@@ -42,7 +60,7 @@ public:
 				void* data = static_cast<void*>(reinterpret_cast<char*>(buf) + 24);
 				const auto size_read = fread(data, 1, file_size, file);
 				if (size_read != file_size) {
-					LogInfo("Could not load file {}, this will either crash or cause glitches...", file_path);
+					LogInfo("Could not read file {}, this will either crash or cause glitches...", file_path);
 				}
 
 				FileInfo* file_info = new (buf) FileInfo();
@@ -58,6 +76,7 @@ public:
 
 		return {};
 	}
+
 
 private:
 	std::filesystem::path mMountedPath;
