@@ -3,6 +3,7 @@
 #include "log.h"
 #include "util/on_scope_exit.h"
 
+#include <Windows.h>
 #include <filesystem>
 
 class IVfsMountImpl {
