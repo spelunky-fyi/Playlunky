@@ -38,7 +38,7 @@ public:
 			}
 
 			const std::size_t allocation_size = file_size + sizeof(FileInfo);
-			if (void* buf = allocator(file_size)) {
+			if (void* buf = allocator(allocation_size)) {
 				void* data = static_cast<void*>(reinterpret_cast<char*>(buf) + 24);
 				const auto size_read = fread(data, 1, file_size, file);
 				if (size_read != file_size) {
