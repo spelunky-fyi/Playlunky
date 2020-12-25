@@ -16,9 +16,9 @@ This same readme or an updated version of it can be found online at the [Playlun
 
 ## Installing Mods
 1. Download a mod from [spelunky.fyi](https://spelunky.fyi/mods/)
-2. Place the contents of the mod into a subfolder in `Spelunky 2/Mods/Repacks` (you might need to create these folders if you have no mods installed)
+2. Place the contents of the mod into a subfolder in `Spelunky 2/Mods/Packs` (you might need to create these folders if you have no mods installed)
 3. Some mods may require you to rename the files that they ship, so always refer to the instructions that come with the mod
-4. You should now have a folder inside the Packs folder, named after the mod you downloaded, for example `Spelunky 2/Mods/Repacks/Cat Spelunker`
+4. You should now have a folder inside the Packs folder, named after the mod you downloaded, for example `Spelunky 2/Mods/Packs/Cat Spelunker`
 5. Launch the game through `playlunky_launcher.exe` to enjoy your mod.
 
 ## Creating Mods

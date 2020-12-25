@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2020-25-12
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
+
+### Fixed
+- Error in readme.txt
+
 ## [0.1.0] - 2020-25-12
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
