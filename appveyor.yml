@@ -12,6 +12,7 @@ skip_commits:
     - README.md
     - LICENSE
     - CODE_OF_CONDUCT.md
+    - CHANGELOG.md
     - .gitignore
     - .github/*
     - '**/*.html'
