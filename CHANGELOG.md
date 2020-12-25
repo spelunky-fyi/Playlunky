@@ -6,7 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2020-25-12
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
+
+### Added
+- Automatic unzipping of zipped mods in the Mods/Packs folder
+- Error popup on version mismatch
+- A readme.txt with usage instructions
+
+### Changed
+- Bumped supported version to 1.20.0j
+- File lookup at the root when proper folder structure not present (to align with Modlunky)
+
+### Fixed
+- Heap corruption when loading loose files (because of 24 missing bytes in the allocation)
+
 ## [0.0.1] - 2020-23-12
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.19.8c-orange">
+
 ### Added
 - Mod-Management based on the folder structure of Modlunky
 - Automatic png to dds conversion
