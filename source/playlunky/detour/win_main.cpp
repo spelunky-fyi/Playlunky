@@ -11,7 +11,7 @@
 #include <Windows.h>
 #include <string_view>
 
-inline constexpr std::string_view s_SupportedSpelunkyVersion = "1.19.8c";
+inline constexpr std::string_view s_SupportedSpelunkyVersion = "1.20.0j";
 
 struct DetourWinMain
 {
