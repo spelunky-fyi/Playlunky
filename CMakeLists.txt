@@ -164,6 +164,8 @@ install(TARGETS
 	playlunky_launcher RUNTIME DESTINATION .)
 install(FILES
 	res/steam_appid.txt DESTINATION .)
+install(FILES
+	res/readme.txt DESTINATION .)
 if(EXISTS ${SPELUNKY_INSTALL_DIR})
 	install(FILES
 		res/steam_appid.txt DESTINATION ${SPELUNKY_INSTALL_DIR})
