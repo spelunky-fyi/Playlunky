@@ -1,5 +1,6 @@
 #include "mod_manager.h"
 
+#include "fix_mod_structure.h"
 #include "mod_database.h"
 #include "png_dds_conversion.h"
 #include "unzip_mod.h"
@@ -25,7 +26,8 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 	const fs::path mods_root_path{ mods_root };
 	if (fs::exists(mods_root_path) && fs::is_directory(mods_root_path)) {
 		{
-			ModDatabase mod_db{ mods_root, ModDatabaseFlags_Files };
+			ModDatabase mod_db{ mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
+
 			mod_db.UpdateDatabase();
 			mod_db.ForEachOutdatedFile([&mods_root_path](const fs::path& rel_file_path) {
 				if (rel_file_path.extension() == ".zip") {
@@ -36,6 +38,12 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 					}
 				}
 			});
+
+			mod_db.UpdateDatabase();
+			mod_db.ForEachOutdatedFolder([&mods_root_path](const fs::path& rel_folder_path) {
+				FixModFolderStructure(mods_root_path / rel_folder_path);
+			});
+
 			mod_db.WriteDatabase();
 		}
 
@@ -44,7 +52,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 			for (fs::path sub_path : fs::directory_iterator{ root_folder }) {
 				const std::string folder_name = sub_path.stem().string();
-				if (fs::is_directory(sub_path)) {
+				if (fs::is_directory(sub_path) && sub_path.stem() != ".db") {
 					mod_folders.push_back(sub_path);
 				}
 			}
