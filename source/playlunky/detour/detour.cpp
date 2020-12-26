@@ -8,11 +8,9 @@
 #include "win_main.h"
 
 #include <Windows.h>
-
-#include <detours/detours.h>
+#include <detours.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
-
 #include <span>
 
 #define DLL_NAME "playlunky" DETOURS_STRINGIFY(DETOURS_BITS) ".dll"

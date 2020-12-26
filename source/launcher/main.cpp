@@ -1,7 +1,6 @@
 #include <Windows.h>
 
-#include <detours/detours.h>
-
+#include <detours.h>
 #include <fmt/format.h>
 #include <structopt/app.hpp>
 

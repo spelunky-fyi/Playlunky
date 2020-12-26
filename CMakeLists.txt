@@ -7,6 +7,11 @@ set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/publish")
 
 
 # --------------------------------------------------
+# Add submodules
+add_subdirectory(submodules)
+
+
+# --------------------------------------------------
 # Run conan
 set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR} ${CMAKE_MODULE_PATH})
 set(CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR} ${CMAKE_PREFIX_PATH})
@@ -39,16 +44,9 @@ else()
 endif()
 
 add_library(playlunky_dependencies INTERFACE)
-target_include_directories(playlunky_dependencies INTERFACE
-	lib/include)
-target_link_directories(playlunky_dependencies INTERFACE
-	lib/detours)
 target_link_libraries(playlunky_dependencies INTERFACE
-	fmt::fmt)
-target_link_libraries(playlunky_dependencies INTERFACE
-	debug detours_d)
-target_link_libraries(playlunky_dependencies INTERFACE
-	optimized detours)
+	fmt::fmt
+	lib_detours)
 
 add_library(playlunky_lib_dependencies INTERFACE)
 target_link_libraries(playlunky_lib_dependencies INTERFACE
