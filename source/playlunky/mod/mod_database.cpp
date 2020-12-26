@@ -29,8 +29,8 @@ ModDatabase::ModDatabase(std::filesystem::path root_folder, ModDatabaseFlags fla
 				std::size_t num_folder;
 				db_file >> num_folder;
 
-				mFiles.resize(num_folder);
-				for (ItemDescriptor& folder : mFiles) {
+				mFolders.resize(num_folder);
+				for (ItemDescriptor& folder : mFolders) {
 					db_file >> folder.Path;
 
 					folder.LastKnownWrite.emplace();
@@ -99,13 +99,13 @@ void ModDatabase::UpdateDatabase() {
 		};
 
 		if (mFlags & ModDatabaseFlags_Recurse) {
-			for (auto& file_path : fs::recursive_directory_iterator(mRootFolder)) {
-				do_iteration(file_path);
+			for (auto& path : fs::recursive_directory_iterator(mRootFolder)) {
+				do_iteration(path);
 			}
 		}
 		else {
-			for (auto& file_path : fs::directory_iterator(mRootFolder)) {
-				do_iteration(file_path);
+			for (auto& path : fs::directory_iterator(mRootFolder)) {
+				do_iteration(path);
 			}
 		}
 	}
@@ -144,6 +144,8 @@ void ModDatabase::WriteDatabase() {
 			const std::size_t num_files = 0;
 			db_file << num_files;
 		}
+
+		db_file << " ";
 
 		if (mFlags & ModDatabaseFlags_Folders) {
 			const std::size_t num_folders = algo::count_if(mFolders, [](const auto& folder) { return folder.LastWrite != std::nullopt; });
