@@ -15,6 +15,9 @@ jobs:
     - uses: actions/setup-python@v2
     - uses: lukka/get-cmake@latest
 
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
+
     - name: Prepare
       run: |
         python -m pip install --upgrade pip

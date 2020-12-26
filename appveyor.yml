@@ -24,6 +24,8 @@ environment:
 
 clone_folder: c:/playlunky/
 
+install:
+  - git submodule update --init --recursive
 before_build:
 - cmd: pip install conan --upgrade
 - cmd: conan user
