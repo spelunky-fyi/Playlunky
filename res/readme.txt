@@ -23,7 +23,12 @@ This same readme or an updated version of it can be found online at the [Playlun
 5. Launch the game through `playlunky_launcher.exe`, this will automatically install your mod. For larger mods (such as `fingerspit's Remix Mod`) the installation may take a while since Playlunky has to convert all files to a format usable by the base game. Give it a few minutes, if nothing seems to happen report a bug.
 6. Enjoy your mod every time you launch the game through `playlunky_launcher.exe`.
 
-## Creating Mods
+## Additional Features
+To declare what order mods should be loaded in (e.g. when two mods replace the same file from the base game and you prefer one over the other) open the file `Spelunky 2/Mods/Packs/load_order.txt` and just sort the mods in the order you want them to load in. Make sure every line contains exactly one mod name.
+
+Also using `load_order.txt` you can disable mods by prefixing their name with `--`, aka two minus signs.
+
+# Creating Mods
 This tool is not sufficient for creating mods. You will instead need [Modlunky](github.com/spelunky-fyi/modlunky2/wiki), follow the instructions in their wiki. 
 When developing mods while using Playlunky however you do not need to repack the executable whenever you change your assets (i.e. skip the step "Repacking with Modlunky 2"). Also note that Playlunky will automatically organize files in your mod, meaning it might move files to different folders within your mods directory after you created them. This usually just means it will place textures into `Data/Textures` and levels into `Data/Levels`.
 If you are ready to share your mod make sure you delete the ".db" folder in your mod folder before zipping it up.
