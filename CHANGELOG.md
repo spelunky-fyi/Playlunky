@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2020-26-12
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
+
+### Added
+- Automatic mod reorganization, all files in a mod will be placed into their appropriate folders on first load
+- Ability to disable mods in `load_order.txt`.
+
+### Removed
+- File lookup at root, since mods are now organized correctly instead
+
+### Fixed
+- Issue with mods that have spaces in their names
+
 ## [0.1.1] - 2020-25-12
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
