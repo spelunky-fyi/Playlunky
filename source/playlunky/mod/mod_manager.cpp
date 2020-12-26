@@ -25,7 +25,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 	const fs::path mods_root_path{ mods_root };
 	if (fs::exists(mods_root_path) && fs::is_directory(mods_root_path)) {
 		{
-			ModDatabase mod_db{ mods_root, true };
+			ModDatabase mod_db{ mods_root, ModDatabaseFlags_Files };
 			mod_db.UpdateDatabase();
 			mod_db.ForEachOutdatedFile([&mods_root_path](const fs::path& rel_file_path) {
 				if (rel_file_path.extension() == ".zip") {
@@ -70,7 +70,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			const auto db_folder = mod_folder / ".db";
 
 			{
-				ModDatabase mod_db{ mod_folder, true };
+				ModDatabase mod_db{ mod_folder, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Recurse) };
 				mod_db.UpdateDatabase();
 				mod_db.ForEachOutdatedFile([&mod_folder, db_folder](const fs::path& rel_asset_path) {
 					if (rel_asset_path.extension() == ".png") {
