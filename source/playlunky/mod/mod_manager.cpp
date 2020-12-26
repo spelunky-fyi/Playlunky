@@ -60,14 +60,30 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			return mod_folders;
 		}(mods_root_path);
 
-		std::unordered_map<std::string, std::int64_t> mod_name_to_prio = [&mods_root_path]() {
-			std::unordered_map<std::string, std::int64_t> mod_name_to_prio;
+		struct ModPrioAndState {
+			std::int64_t Prio;
+			bool Enabled;
+		};
+		std::unordered_map<std::string, ModPrioAndState> mod_name_to_prio = [&mods_root_path]() {
+			std::unordered_map<std::string, ModPrioAndState> mod_name_to_prio;
 
 			if (auto load_order_file = std::ifstream{ mods_root_path / "load_order.txt" }) {
 				while (!load_order_file.eof()) {
 					std::string mod_name;
-					load_order_file >> mod_name;
-					mod_name_to_prio[std::move(mod_name)] = mod_name_to_prio.size();
+					std::getline(load_order_file, mod_name, '\n');
+
+					if (!mod_name.empty()) {
+						bool enabled{ true };
+						if (mod_name.find("--") == 0) {
+							mod_name = mod_name.substr(2);
+							// basically mod_name.trim()
+							mod_name.erase(mod_name.begin(), std::find_if(mod_name.begin(), mod_name.end(), [](unsigned char ch) {
+								return !std::isspace(ch);
+							}));
+							enabled = false;
+						}
+						mod_name_to_prio[std::move(mod_name)] = { static_cast<std::int64_t>(mod_name_to_prio.size()), enabled };
+					}
 				}
 			}
 
@@ -98,30 +114,42 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			}
 
 			std::string mod_name = mod_folder.stem().string();
-			std::int64_t prio;
+			std::int64_t prio{ static_cast<std::int64_t>(mod_name_to_prio.size()) };
+			bool enabled{ true };
 			if (mod_name_to_prio.contains(mod_name)) {
-				prio = mod_name_to_prio[mod_name];
+				const auto& prio_and_state = mod_name_to_prio[mod_name];
+				prio = prio_and_state.Prio;
+				enabled = prio_and_state.Enabled;
 			}
 			else {
-				prio = mod_name_to_prio.size();
-				mod_name_to_prio[mod_name] = prio;
+				mod_name_to_prio[mod_name] = { prio, true };
 			}
-			vfs.MountFolder(mod_folder.string(), prio);
-			vfs.MountFolder(db_folder.string(), prio);
+
+			if (enabled) {
+				vfs.MountFolder(mod_folder.string(), prio);
+				vfs.MountFolder(db_folder.string(), prio);
+			}
 
 			mMods.push_back(std::move(mod_name));
 		}
 
 		{
-			std::map<std::int64_t, std::string> mod_prio_to_name;
-			for (auto& [mod_name, prio] : mod_name_to_prio) {
-				mod_prio_to_name[prio] = mod_name;
+			struct ModNameAndState {
+				std::string Name;
+				bool Enabled;
+			};
+			std::map<std::int64_t, ModNameAndState> mod_prio_to_name;
+			for (auto& [mod_name, prio_and_state] : mod_name_to_prio) {
+				mod_prio_to_name[prio_and_state.Prio] = { mod_name, prio_and_state.Enabled };
 			}
 
 			if (auto load_order_file = std::ofstream{ mods_root_path / "load_order.txt", std::ios::trunc }) {
-				for (auto& [prio, mod_name] : mod_prio_to_name) {
-					if (algo::contains(mMods, mod_name)) {
-						load_order_file << mod_name << '\n';
+				for (auto& [prio, mod_name_and_state] : mod_prio_to_name) {
+					if (algo::contains(mMods, mod_name_and_state.Name)) {
+						if (!mod_name_and_state.Enabled) {
+							load_order_file << "--";
+						}
+						load_order_file << mod_name_and_state.Name << '\n';
 					}
 				}
 			}
