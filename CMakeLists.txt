@@ -44,6 +44,9 @@ else()
 	target_compile_options(playlunky_warnings INTERFACE -Wall -Wextra -pedantic -Werror)
 endif()
 
+add_library(playlunky_definitions INTERFACE)
+target_compile_definitions(playlunky_definitions INTERFACE NOMINMAX)
+
 add_library(playlunky_dependencies INTERFACE)
 target_link_libraries(playlunky_dependencies INTERFACE
 	fmt::fmt
@@ -69,6 +72,7 @@ file(GLOB_RECURSE playlunky64_headers CONFIGURE_DEPENDS "source/playlunky/*.h" "
 add_library(playlunky64 SHARED ${playlunky64_sources} ${shared_sources} ${playlunky64_headers} ${shared_headers})
 target_link_libraries(playlunky64 PRIVATE
 	playlunky_warnings
+	playlunky_definitions
 	playlunky_dependencies
 	playlunky_lib_dependencies)
 target_include_directories(playlunky64 PRIVATE "source/playlunky" "source/shared")
@@ -82,6 +86,7 @@ set(playlunky_launcher_resources "res/playlunky_launcher.rc")
 add_executable(playlunky_launcher WIN32 ${playlunky_launcher_sources} ${shared_sources} ${playlunky_launcher_headers} ${shared_headers} ${playlunky_launcher_resources})
 target_link_libraries(playlunky_launcher PRIVATE
 	playlunky_warnings
+	playlunky_definitions
 	playlunky_dependencies
 	structopt::structopt)
 target_include_directories(playlunky_launcher PRIVATE "source/launcher" "source/shared" "res")
