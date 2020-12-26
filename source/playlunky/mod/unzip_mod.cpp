@@ -24,8 +24,6 @@ void UnzipMod(const std::filesystem::path& zip_file) {
 						const std::filesystem::path file_path_on_disk = mod_folder / file_path_in_zip.filename();
 						const std::string file_path_on_disk_string = file_path_on_disk.string();
 
-						fmt::print("{} -> {}", file_path_in_zip.string(), file_path_on_disk.string());
-
 						FILE* disk_file{ nullptr };
 						if (fopen_s(&disk_file, file_path_on_disk_string.c_str(), "wb") == 0 && disk_file != nullptr) {
 							const std::size_t zipped_file_size = entry_stat.size;
