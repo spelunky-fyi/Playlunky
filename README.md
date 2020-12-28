@@ -17,12 +17,16 @@
 
 This is mainly a personal playground to learn the tricks and trades of video game reverse engineering/hacking. It currently is only a wrapper around launching Spelunky 2 with an injected dll which loads resources from disk and injects ScyllaHide but hopefully will become more in the future.
 
+## Credits
+A huge thanks to the [modlunky2](https://github.com/spelunky-fyi/modlunky2) team for their input, suggestions, support and for making all their hard work open source. Special thanks to `gmosjack`, `Dregu` and `iojonmbnmb` that made it possible for this tool to exist.
+
 ## Build
 
 Only Windows build is supported:
 ```sh
 git clone git@github.com:Malacath-92/Playlunky.git
 cd playlunky
+git submodule update --init --recursive
 mkdir build
 cd build
 cmake ..
@@ -58,4 +62,8 @@ This project is currently compatible with 1.19.8c
 * Mod Management
     * Loads mods from the `Mods/Packs` folder, where each folder is one mod
     * Users can specify priority of mods using the `Mods/Packs/load_order.txt` file (useful in case multiple mods replace the same asset)
-    * On first load all png files are automatically converted to dds, so mods can be distributed as usual (mods store a small database to catch when they get updated)
+    * On first load:
+        * zip files get extracted into their own mod folders
+        * the files in the mod folder are reorganized to align with the games original structure
+        * all png files are automatically converted to dds, so mods can be distributed as usual (mods store a small database to catch when they get updated)
+        * stickers and journal entries are generated from character mods
