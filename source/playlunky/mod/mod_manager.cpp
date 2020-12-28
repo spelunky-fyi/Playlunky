@@ -34,7 +34,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			ModDatabase mod_db{ mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
 
 			mod_db.UpdateDatabase();
-			mod_db.ForEachFile([&mods_root_path](const fs::path& rel_file_path, bool outdated) {
+			mod_db.ForEachFile([&mods_root_path](const fs::path& rel_file_path, bool outdated, [[maybe_unused]] bool deleted) {
 				if (outdated) {
 					if (rel_file_path.extension() == ".zip") {
 						const fs::path zip_path = mods_root_path / rel_file_path;
@@ -47,7 +47,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			});
 
 			mod_db.UpdateDatabase();
-			mod_db.ForEachFolder([&mods_root_path](const fs::path& rel_folder_path, bool outdated) {
+			mod_db.ForEachFolder([&mods_root_path](const fs::path& rel_folder_path, bool outdated, [[maybe_unused]] bool deleted) {
 				if (outdated) {
 					FixModFolderStructure(mods_root_path / rel_folder_path);
 				}
@@ -117,7 +117,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			{
 				ModDatabase mod_db{ mod_folder, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Recurse) };
 				mod_db.UpdateDatabase();
-				mod_db.ForEachFile([&mod_folder, &mod_db_folder, &sticker_gen](const fs::path& rel_asset_path, bool outdated) {
+				mod_db.ForEachFile([&mod_folder, &mod_db_folder, &sticker_gen](const fs::path& rel_asset_path, bool outdated, [[maybe_unused]] bool deleted) {
 					if (rel_asset_path.extension() == ".png") {
 						const auto full_asset_path = mod_folder / rel_asset_path;
 						const auto full_asset_path_string = full_asset_path.string();
@@ -131,7 +131,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 							}
 						}
 
-						if (outdated) {
+						if (outdated || deleted) {
 							const auto db_destination = (mod_db_folder / rel_asset_path).replace_extension(".dds");
 
 							if (ConvertPngToDds(full_asset_path, db_destination))

@@ -4,6 +4,8 @@
 
 #include <fstream>
 
+static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xF00DBAAD };
+
 ModDatabase::ModDatabase(std::filesystem::path root_folder, ModDatabaseFlags flags)
 	: mRootFolder(std::move(root_folder))
 	, mFlags(flags) {
@@ -14,27 +16,51 @@ ModDatabase::ModDatabase(std::filesystem::path root_folder, ModDatabaseFlags fla
 		if (fs::exists(db_path) && fs::is_regular_file(db_path)) {
 			std::ifstream db_file(db_path, std::ios::binary);
 
-			std::size_t num_files;
-			db_file >> num_files;
-
-			mFiles.resize(num_files);
-			for (ItemDescriptor& file : mFiles) {
-				db_file >> file.Path;
-
-				file.LastKnownWrite.emplace();
-				db_file >> file.LastKnownWrite.value();
+			std::uint32_t magic_number;
+			db_file.read(reinterpret_cast<char*>(&magic_number), sizeof(magic_number));
+			if (magic_number != s_ModDatabaseMagicNumber) {
+				db_file.close();
+				fs::remove(db_path);
+				return;
 			}
 
-			if (!db_file.eof()) {
-				std::size_t num_folder;
-				db_file >> num_folder;
+			{
+				std::size_t num_files;
+				db_file.read(reinterpret_cast<char*>(&num_files), sizeof(num_files));
 
-				mFolders.resize(num_folder);
+				mFiles.resize(num_files);
+				for (ItemDescriptor& file : mFiles) {
+					std::size_t path_size;
+					db_file.read(reinterpret_cast<char*>(&path_size), sizeof(path_size));
+
+					std::string path(path_size, '\0');
+					db_file.read(path.data(), path_size);
+
+					std::time_t last_know_write;
+					db_file.read(reinterpret_cast<char*>(&last_know_write), sizeof(last_know_write));
+
+					file.Path = path;
+					file.LastKnownWrite = last_know_write;
+				}
+			}
+
+			{
+				std::size_t num_folders;
+				db_file.read(reinterpret_cast<char*>(&num_folders), sizeof(num_folders));
+
+				mFolders.resize(num_folders);
 				for (ItemDescriptor& folder : mFolders) {
-					db_file >> folder.Path;
+					std::size_t path_size;
+					db_file.read(reinterpret_cast<char*>(&path_size), sizeof(path_size));
 
-					folder.LastKnownWrite.emplace();
-					db_file >> folder.LastKnownWrite.value();
+					std::string path(path_size, '\0');
+					db_file.read(path.data(), path_size);
+
+					std::time_t last_know_write;
+					db_file.read(reinterpret_cast<char*>(&last_know_write), sizeof(last_know_write));
+
+					folder.Path = path;
+					folder.LastKnownWrite = last_know_write;
 				}
 			}
 		}
@@ -128,39 +154,48 @@ void ModDatabase::WriteDatabase() {
 		}
 
 		std::ofstream db_file(db_path, std::ios::binary);
+		db_file.write(reinterpret_cast<const char*>(&s_ModDatabaseMagicNumber), sizeof(s_ModDatabaseMagicNumber));
 
 		if (mFlags & ModDatabaseFlags_Files) {
 			const std::size_t num_files = algo::count_if(mFiles, [](const auto& file) { return file.LastWrite != std::nullopt; });
-			db_file << num_files;
+			db_file.write(reinterpret_cast<const char*>(&num_files), sizeof(num_files));
 
 			for (ItemDescriptor& file : mFiles) {
 				if (file.LastWrite != std::nullopt) {
-					db_file << file.Path;
-					db_file << file.LastWrite.value();
+					const std::string path_string = file.Path.string();
+					const std::size_t path_size = path_string.size();
+					db_file.write(reinterpret_cast<const char*>(&path_size), sizeof(path_size));
+					db_file.write(path_string.data(), path_string.size());
+
+					const std::time_t last_write_time = file.LastWrite.value();
+					db_file.write(reinterpret_cast<const char*>(&last_write_time), sizeof(last_write_time));
 				}
 			}
 		}
 		else {
 			const std::size_t num_files = 0;
-			db_file << num_files;
+			db_file.write(reinterpret_cast<const char*>(&num_files), sizeof(num_files));
 		}
-
-		db_file << " ";
 
 		if (mFlags & ModDatabaseFlags_Folders) {
 			const std::size_t num_folders = algo::count_if(mFolders, [](const auto& folder) { return folder.LastWrite != std::nullopt; });
-			db_file << num_folders;
+			db_file.write(reinterpret_cast<const char*>(&num_folders), sizeof(num_folders));
 
 			for (ItemDescriptor& folder : mFolders) {
 				if (folder.LastWrite != std::nullopt) {
-					db_file << folder.Path;
-					db_file << folder.LastWrite.value();
+					const std::string path_string = folder.Path.string();
+					const std::size_t path_size = path_string.size();
+					db_file.write(reinterpret_cast<const char*>(&path_size), sizeof(path_size));
+					db_file.write(path_string.data(), path_string.size());
+
+					const std::time_t last_write_time = folder.LastWrite.value();
+					db_file.write(reinterpret_cast<const char*>(&last_write_time), sizeof(last_write_time));
 				}
 			}
 		}
 		else {
 			const std::size_t num_folders = 0;
-			db_file << num_folders;
+			db_file.write(reinterpret_cast<const char*>(&num_folders), sizeof(num_folders));
 		}
 	}
 }
