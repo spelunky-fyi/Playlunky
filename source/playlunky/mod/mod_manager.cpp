@@ -1,5 +1,7 @@
 #include "mod_manager.h"
 
+#include "character_sticker_gen.h"
+#include "extract_game_assets.h"
 #include "fix_mod_structure.h"
 #include "mod_database.h"
 #include "png_dds_conversion.h"
@@ -11,10 +13,13 @@
 
 #include <Windows.h>
 #include <zip.h>
+#include <ctre.hpp>
 #include <filesystem>
 #include <fstream>
 #include <unordered_map>
 #include <map>
+
+static constexpr ctll::fixed_string s_CharacterRule{ ".+char_(.*)\\.png" };
 
 ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 	namespace fs = std::filesystem;
@@ -29,22 +34,36 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			ModDatabase mod_db{ mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
 
 			mod_db.UpdateDatabase();
-			mod_db.ForEachOutdatedFile([&mods_root_path](const fs::path& rel_file_path) {
-				if (rel_file_path.extension() == ".zip") {
-					const fs::path zip_path = mods_root_path / rel_file_path;
-					const auto message = fmt::format("Found archive '{}' in mods packs folder. Do you want to unzip it in order for it to be loadable as a mod?", zip_path.filename().string());
-					if (MessageBox(NULL, message.c_str(), "Zipped Mod Found", MB_YESNO) == IDYES) {
-						UnzipMod(zip_path);
+			mod_db.ForEachFile([&mods_root_path](const fs::path& rel_file_path, bool outdated) {
+				if (outdated) {
+					if (rel_file_path.extension() == ".zip") {
+						const fs::path zip_path = mods_root_path / rel_file_path;
+						const auto message = fmt::format("Found archive '{}' in mods packs folder. Do you want to unzip it in order for it to be loadable as a mod?", zip_path.filename().string());
+						if (MessageBox(NULL, message.c_str(), "Zipped Mod Found", MB_YESNO) == IDYES) {
+							UnzipMod(zip_path);
+						}
 					}
 				}
 			});
 
 			mod_db.UpdateDatabase();
-			mod_db.ForEachOutdatedFolder([&mods_root_path](const fs::path& rel_folder_path) {
-				FixModFolderStructure(mods_root_path / rel_folder_path);
+			mod_db.ForEachFolder([&mods_root_path](const fs::path& rel_folder_path, bool outdated) {
+				if (outdated) {
+					FixModFolderStructure(mods_root_path / rel_folder_path);
+				}
 			});
 
 			mod_db.WriteDatabase();
+		}
+
+		const auto db_folder = mods_root_path / ".db";
+		const auto db_original_folder = db_folder / "Original";
+		{
+			const auto files = std::array{
+				fs::path{ "Data/Textures/journal_stickers.DDS" },
+				fs::path{ "Data/Textures/journal_entry_people.DDS" },
+			};
+			ExtractGameAssets(files, db_original_folder);
 		}
 
 		const std::vector<fs::path> mod_folders = [this](const fs::path& root_folder) {
@@ -90,23 +109,38 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			return mod_name_to_prio;
 		}();
 
+		CharacterStickerGenerator sticker_gen;
+
 		for (const fs::path& mod_folder : mod_folders) {
-			const auto db_folder = mod_folder / ".db";
+			const auto mod_db_folder = mod_folder / ".db";
 
 			{
 				ModDatabase mod_db{ mod_folder, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Recurse) };
 				mod_db.UpdateDatabase();
-				mod_db.ForEachOutdatedFile([&mod_folder, db_folder](const fs::path& rel_asset_path) {
+				mod_db.ForEachFile([&mod_folder, &mod_db_folder, &sticker_gen](const fs::path& rel_asset_path, bool outdated) {
 					if (rel_asset_path.extension() == ".png") {
 						const auto full_asset_path = mod_folder / rel_asset_path;
-						const auto db_destination = (db_folder / rel_asset_path).replace_extension(".dds");
+						const auto full_asset_path_string = full_asset_path.string();
 
-						if (ConvertPngToDds(full_asset_path, db_destination))
-						{
-							LogInfo("Successfully converted file '{}' to be readable by the game...", full_asset_path.string());
+						if (auto character_match = ctre::match<s_CharacterRule>(full_asset_path_string)) {
+							const std::string_view color = character_match.get<1>().to_view();
+							if (!sticker_gen.RegisterCharacter(color, outdated)) {
+								const std::string mod_name = mod_folder.stem().string();
+								const std::string character_file_name = full_asset_path.filename().string();
+								LogInfo("Mod '{}' contains an unkown character file '{}'", mod_name, character_file_name);
+							}
 						}
-						else {
-							LogInfo("Failed converting file '{}' to be readable by the game...", full_asset_path.string());
+
+						if (outdated) {
+							const auto db_destination = (mod_db_folder / rel_asset_path).replace_extension(".dds");
+
+							if (ConvertPngToDds(full_asset_path, db_destination))
+							{
+								LogInfo("Successfully converted file '{}' to be readable by the game...", full_asset_path.string());
+							}
+							else {
+								LogInfo("Failed converting file '{}' to be readable by the game...", full_asset_path.string());
+							}
 						}
 					}
 				});
@@ -127,11 +161,18 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 			if (enabled) {
 				vfs.MountFolder(mod_folder.string(), prio);
-				vfs.MountFolder(db_folder.string(), prio);
+				vfs.MountFolder(mod_db_folder.string(), prio);
 			}
 
 			mMods.push_back(std::move(mod_name));
 		}
+
+		if (sticker_gen.NeedsRegeneration()) {
+			sticker_gen.GenerateStickers(db_original_folder / "Data/Textures/journal_stickers.png", db_folder / "Data/Textures/journal_stickers.DDS", vfs);
+			sticker_gen.GenerateJournal(db_original_folder / "Data/Textures/journal_entry_people.png", db_folder / "Data/Textures/journal_entry_people.DDS", vfs);
+		}
+
+		vfs.MountFolder(db_folder.string(), -1);
 
 		{
 			struct ModNameAndState {

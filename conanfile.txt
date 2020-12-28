@@ -5,6 +5,8 @@ lodepng/cci.20200615
 libzip/1.7.3
 ctre/3.3.4
 zstd/1.4.8
+opencv/4.3.0@conan/stable
+xz_utils/5.2.5
 
 [generators]
 cmake_multi

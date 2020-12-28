@@ -34,6 +34,7 @@ find_package(lodepng REQUIRED)
 find_package(libzip REQUIRED)
 find_package(ctre REQUIRED)
 find_package(zstd REQUIRED)
+find_package(opencv REQUIRED)
 
 
 # --------------------------------------------------
@@ -58,7 +59,8 @@ target_link_libraries(playlunky_lib_dependencies INTERFACE
 	lodepng::lodepng
 	libzip::libzip
 	ctre::ctre
-	zstd::zstd)
+	zstd::zstd
+	opencv::opencv)
 
 
 # --------------------------------------------------

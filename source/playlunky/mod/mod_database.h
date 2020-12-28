@@ -19,22 +19,22 @@ public:
 	void WriteDatabase();
 
 	template<class FunT>
-	void ForEachOutdatedFile(FunT&& fun) {
+	requires std::is_invocable_v<FunT, std::filesystem::path, bool>
+	void ForEachFile(FunT&& fun) {
 		for (const ItemDescriptor& file : mFiles) {
-			if ((!file.LastKnownWrite.has_value() && file.LastWrite.has_value()) ||
-				 (file.LastKnownWrite.has_value() && file.LastWrite.has_value() && file.LastKnownWrite.value() < file.LastWrite.value())) {
-				fun(file.Path);
-			}
+			const bool outdated = (!file.LastKnownWrite.has_value() && file.LastWrite.has_value()) ||
+				(file.LastKnownWrite.has_value() && file.LastWrite.has_value() && file.LastKnownWrite.value() < file.LastWrite.value());
+			fun(file.Path, outdated);
 		}
 	}
 
 	template<class FunT>
-	void ForEachOutdatedFolder(FunT&& fun) {
+	requires std::is_invocable_v<FunT, std::filesystem::path, bool>
+	void ForEachFolder(FunT&& fun) {
 		for (const ItemDescriptor& folder : mFolders) {
-			if ((!folder.LastKnownWrite.has_value() && folder.LastWrite.has_value()) ||
-				(folder.LastKnownWrite.has_value() && folder.LastWrite.has_value() && folder.LastKnownWrite.value() < folder.LastWrite.value())) {
-				fun(folder.Path);
-			}
+			const bool outdated = (!folder.LastKnownWrite.has_value() && folder.LastWrite.has_value()) ||
+				(folder.LastKnownWrite.has_value() && folder.LastWrite.has_value() && folder.LastKnownWrite.value() < folder.LastWrite.value());
+			fun(folder.Path, outdated);
 		}
 	}
 
