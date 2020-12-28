@@ -7,14 +7,18 @@
 
 static constexpr ctll::fixed_string s_FontRule{ ".*\\.fnb" };
 static constexpr std::string_view s_FontTargetPath{ "Data/Fonts" };
+
 static constexpr ctll::fixed_string s_ArenaLevelRule{ "dm.*\\.lvl" };
 static constexpr ctll::fixed_string s_ArenaLevelTokRule{ ".*\\.tok" };
 static constexpr std::string_view s_ArenaLevelTargetPath{ "Data/Levels/Arena" };
+
 static constexpr ctll::fixed_string s_LevelRule{ ".*\\.lvl" };
 static constexpr std::string_view s_LevelTargetPath{ "Data/Levels" };
-static constexpr ctll::fixed_string s_OldTextureRule{ "ai\\.(dds|png)" };
+
+static constexpr ctll::fixed_string s_OldTextureRule{ "ai\\.(DDS|png)" };
 static constexpr std::string_view s_OldTextureTargetPath{ "Data/Textures/OldTextures" };
-static constexpr ctll::fixed_string s_TextureRule{ ".*\\.(dds|png)" };
+
+static constexpr ctll::fixed_string s_TextureRule{ ".*\\.(DDS|png)" };
 static constexpr std::string_view s_TextureTargetPath{ "Data/Textures" };
 
 void FixModFolderStructure(const std::filesystem::path& mod_folder) {
