@@ -12,6 +12,7 @@ public:
 
 	using FileInfo = VirtualFilesystem::FileInfo;
 	virtual FileInfo* LoadFile(const char* file_path, void* (*allocator)(std::size_t)) const = 0;
+	virtual std::optional<std::filesystem::path> GetFilePath(const std::filesystem::path& path) const = 0;
 };
 
 class VfsFolderMount : public IVfsMountImpl {
@@ -62,6 +63,14 @@ public:
 		return {};
 	}
 
+	virtual std::optional<std::filesystem::path> GetFilePath(const std::filesystem::path& path) const override {
+		std::filesystem::path full_path = mMountedPath / path;
+		if (std::filesystem::exists(full_path)) {
+			return std::move(full_path);
+		}
+		return std::nullopt;
+	}
+
 private:
 	std::filesystem::path mMountedPath;
 	std::string mMountedPathString;
@@ -92,6 +101,16 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
 	for (const VfsMount& mount : mMounts) {
 		if (FileInfo* loaded_data = mount.MountImpl->LoadFile(path, allocator)) {
 			return loaded_data;
+		}
+	}
+
+	return {};
+}
+
+std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::filesystem::path& path) {
+	for (const VfsMount& mount : mMounts) {
+		if (auto file_path = mount.MountImpl->GetFilePath(path)) {
+			return file_path;
 		}
 	}
 

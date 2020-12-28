@@ -1,6 +1,8 @@
 #pragma once
 
+#include <filesystem>
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <vector>
 
@@ -24,6 +26,7 @@ public:
 		int _member_4{ 0 };
 	};
 	FileInfo* LoadFile(const char* path, void* (*allocator)(std::size_t) = nullptr);
+	std::optional<std::filesystem::path> GetFilePath(const std::filesystem::path& path);
 
 private:
 	struct VfsMount;
