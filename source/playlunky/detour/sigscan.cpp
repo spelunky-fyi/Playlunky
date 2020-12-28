@@ -80,4 +80,23 @@ namespace SigScan {
 		GetModuleFileNameA(0, module_name, MAX_PATH);
 		return FindPattern(module_name, signature, code_only);
 	}
+
+	void* GetDataSection() {
+		char module_name[MAX_PATH];
+		GetModuleFileNameA(0, module_name, MAX_PATH);
+		if (HMODULE module = GetModuleHandleA(module_name)) {
+			MODULEINFO module_info = GetModuleInfo(module);
+			std::size_t base = (std::size_t)module_info.lpBaseOfDll;
+
+			std::span<IMAGE_SECTION_HEADER> section_headers = GetImageSectionHeaders(module);
+			for (auto& section : section_headers) {
+				if (strcmp((const char*)section.Name, ".text") == 0) {
+					std::size_t section_base = base + (std::size_t)section.VirtualAddress;
+					return (void*)section_base;
+				}
+			}
+		}
+
+		return nullptr;
+	}
 }
