@@ -1,6 +1,7 @@
 #include "png_dds_conversion.h"
 
 #include "log.h"
+#include "util/on_scope_exit.h"
 
 #include <lodepng.h>
 #include <cassert>
@@ -19,23 +20,7 @@ auto ByteCast(std::span<std::uint8_t> data) {
     return std::span<T>{ reinterpret_cast<T*>(data.data()), data.size() / sizeof(T) };
 }
 
-bool ConvertPngToDds(const std::filesystem::path& source, const std::filesystem::path& destination)
-{
-	std::vector<std::uint8_t> image_buffer;
-    std::uint32_t width;
-    std::uint32_t height;
-    std::uint32_t error = lodepng::decode(image_buffer, width, height, source.string(), LCT_RGBA, 8);
-	if (error != 0) {
-		return false;
-	}
-
-	auto image = ByteCast<ColorRGBA8>(image_buffer);
-	for (ColorRGBA8& pixel : image) {
-		if (pixel.A == 0) {
-			pixel = ColorRGBA8{};
-		}
-	}
-
+bool ConvertRBGAToDds(std::span<const std::uint8_t> source, std::uint32_t width, std::uint32_t height, const std::filesystem::path& destination) {
     {
         const std::filesystem::path dest_parent_dir = destination.parent_path();
         if (!std::filesystem::exists(dest_parent_dir)) {
@@ -43,7 +28,7 @@ bool ConvertPngToDds(const std::filesystem::path& source, const std::filesystem:
         }
     }
 
-	if (auto dest_file = std::ofstream{ destination, std::ios::trunc | std::ios::binary }) {
+    if (auto dest_file = std::ofstream{ destination, std::ios::trunc | std::ios::binary }) {
         // https://docs.microsoft.com/en-us/windows/win32/direct3ddds/dds-header
         const std::uint32_t header_size = 124;  // hardcoded
         const std::uint32_t flags = 0x0002100F;  // required flags + pitch + mipmapped
@@ -77,7 +62,7 @@ bool ConvertPngToDds(const std::filesystem::path& source, const std::filesystem:
             (
                 stream.write(reinterpret_cast<const char*>(&datas), sizeof(datas)),
                 ...
-            );
+                );
         };
 
         dest_file << "DDS ";  // magic bytes
@@ -89,13 +74,33 @@ bool ConvertPngToDds(const std::filesystem::path& source, const std::filesystem:
         write_as_bytes(dest_file, caps, caps2, caps3, caps4);
         write_as_bytes(dest_file, reserved2);
 
-        dest_file.write(reinterpret_cast<const char*>(image.data()), image.size() * sizeof(ColorRGBA8));
+        dest_file.write(reinterpret_cast<const char*>(source.data()), source.size());
 
         dest_file.flush();
         return true;
+    }
+
+    return false;
+}
+
+bool ConvertPngToDds(const std::filesystem::path& source, const std::filesystem::path& destination)
+{
+	std::vector<std::uint8_t> image_buffer;
+    std::uint32_t width;
+    std::uint32_t height;
+    std::uint32_t error = lodepng::decode(image_buffer, width, height, source.string(), LCT_RGBA, 8);
+	if (error != 0) {
+		return false;
 	}
 
-	return false;
+	auto image = ByteCast<ColorRGBA8>(image_buffer);
+	for (ColorRGBA8& pixel : image) {
+		if (pixel.A == 0) {
+			pixel = ColorRGBA8{};
+		}
+	}
+
+    return ConvertRBGAToDds(image_buffer, width, height, destination);
 }
 
 bool ConvertDdsToPng(std::span<const std::uint8_t> source, const std::filesystem::path& destination) {
@@ -164,4 +169,22 @@ bool ConvertDdsToPng(std::span<const std::uint8_t> source, const std::filesystem
     }
 
     return true;
+}
+
+bool ConvertDdsToPng(const std::filesystem::path& source, const std::filesystem::path& destination) {
+    FILE* file{ nullptr };
+    auto error = fopen_s(&file, source.string().c_str(), "rb");
+    if (error == 0 && file != nullptr) {
+        auto close_file = OnScopeExit{ [file]() { fclose(file); } };
+
+        fseek(file, 0, SEEK_END);
+        const std::size_t file_size = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        if (auto data = std::make_unique<std::uint8_t[]>(file_size)) {
+            const auto size_read = fread(data.get(), 1, file_size, file);
+            return ConvertDdsToPng({ data.get(), file_size }, destination);
+        }
+    }
+    return false;
 }
