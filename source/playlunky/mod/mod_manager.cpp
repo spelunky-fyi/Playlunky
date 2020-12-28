@@ -117,7 +117,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			{
 				ModDatabase mod_db{ mod_folder, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Recurse) };
 				mod_db.UpdateDatabase();
-				mod_db.ForEachFile([&mod_folder, &mod_db_folder, &sticker_gen](const fs::path& rel_asset_path, bool outdated, [[maybe_unused]] bool deleted) {
+				mod_db.ForEachFile([&mod_folder, &mod_db_folder, &sticker_gen](const fs::path& rel_asset_path, bool outdated, bool deleted) {
 					if (rel_asset_path.extension() == ".png") {
 						const auto full_asset_path = mod_folder / rel_asset_path;
 						const auto full_asset_path_string = full_asset_path.string();
@@ -134,7 +134,12 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 						if (outdated || deleted) {
 							const auto db_destination = (mod_db_folder / rel_asset_path).replace_extension(".dds");
 
-							if (ConvertPngToDds(full_asset_path, db_destination))
+							if (deleted) {
+								if (fs::remove(db_destination)) {
+									LogInfo("Successfully deleted file '{}' that was removed from a mod...", full_asset_path.string());
+								}
+							}
+							else if (ConvertPngToDds(full_asset_path, db_destination))
 							{
 								LogInfo("Successfully converted file '{}' to be readable by the game...", full_asset_path.string());
 							}
