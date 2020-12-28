@@ -33,6 +33,7 @@ find_package(structopt REQUIRED)
 find_package(lodepng REQUIRED)
 find_package(libzip REQUIRED)
 find_package(ctre REQUIRED)
+find_package(zstd REQUIRED)
 
 
 # --------------------------------------------------
@@ -56,7 +57,8 @@ add_library(playlunky_lib_dependencies INTERFACE)
 target_link_libraries(playlunky_lib_dependencies INTERFACE
 	lodepng::lodepng
 	libzip::libzip
-	ctre::ctre)
+	ctre::ctre
+	zstd::zstd)
 
 
 # --------------------------------------------------
