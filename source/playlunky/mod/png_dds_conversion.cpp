@@ -3,8 +3,21 @@
 #include "log.h"
 
 #include <lodepng.h>
+#include <cassert>
 #include <fstream>
 #include <span>
+
+struct ColorRGBA8 {
+    std::uint8_t R;
+    std::uint8_t G;
+    std::uint8_t B;
+    std::uint8_t A;
+};
+
+template<class T>
+auto ByteCast(std::span<std::uint8_t> data) {
+    return std::span<T>{ reinterpret_cast<T*>(data.data()), data.size() / sizeof(T) };
+}
 
 bool ConvertPngToDds(const std::filesystem::path& source, const std::filesystem::path& destination)
 {
@@ -16,13 +29,7 @@ bool ConvertPngToDds(const std::filesystem::path& source, const std::filesystem:
 		return false;
 	}
 
-	struct ColorRGBA8 {
-		std::uint8_t R;
-		std::uint8_t G;
-		std::uint8_t B;
-		std::uint8_t A;
-	};
-	std::span<ColorRGBA8> image{ reinterpret_cast<ColorRGBA8*>(image_buffer.data()), image_buffer.size() / 4 };
+	auto image = ByteCast<ColorRGBA8>(image_buffer);
 	for (ColorRGBA8& pixel : image) {
 		if (pixel.A == 0) {
 			pixel = ColorRGBA8{};
@@ -89,4 +96,72 @@ bool ConvertPngToDds(const std::filesystem::path& source, const std::filesystem:
 	}
 
 	return false;
+}
+
+bool ConvertDdsToPng(std::span<const std::uint8_t> source, const std::filesystem::path& destination) {
+    namespace fs = std::filesystem;
+
+    if (!fs::exists(destination.parent_path())) {
+        fs::create_directories(destination.parent_path());
+    }
+
+    const auto orig_source = source;
+
+    {
+        const auto magic_bytes = std::string_view{ reinterpret_cast<const char*>(source.data()), 4 };
+        assert(magic_bytes == "DDS ");
+        source = source.subspan(4);
+
+        assert(*reinterpret_cast<const std::uint32_t*>(source.data()) == 124);
+        source = source.subspan(4); // header_size
+        source = source.subspan(4); // flags
+    }
+
+    const auto height = *reinterpret_cast<const std::uint32_t*>(source.data());
+    source = source.subspan(4); // height
+    const auto width = *reinterpret_cast<const std::uint32_t*>(source.data());
+    source = source.subspan(4 * (8 + 11)); // width until bitcount
+
+    const auto rmask = *reinterpret_cast<const std::uint32_t*>(source.data());
+    source = source.subspan(4); // rmask
+    const auto gmask = *reinterpret_cast<const std::uint32_t*>(source.data());
+    source = source.subspan(4); // gmask
+    const auto bmask = *reinterpret_cast<const std::uint32_t*>(source.data());
+    source = source.subspan(4); // bmask
+    const auto amask = *reinterpret_cast<const std::uint32_t*>(source.data());
+
+    auto get_lowest_bit = [](std::uint32_t mask) -> std::uint8_t {
+        for (std::uint8_t i = 0; i < 32; i++) {
+            const std::uint32_t bit = 1 << (31 - i);
+            const std::uint32_t masked = mask & bit;
+            if (masked != 0) {
+                return i;
+            }
+        }
+        return 32;
+    };
+    const auto rshift = 32 - 8 - get_lowest_bit(rmask);
+    const auto gshift = 32 - 8 - get_lowest_bit(gmask);
+    const auto bshift = 32 - 8 - get_lowest_bit(bmask);
+    const auto ashift = 32 - 8 - get_lowest_bit(amask);
+
+    source = orig_source; // back to beginning
+    source = source.subspan(4 + 124); // magic bytes and whole header
+
+    std::vector<std::uint8_t> image_buffer{ source.begin(), source.end() };
+    auto image = ByteCast<ColorRGBA8>(image_buffer);
+    for (auto& pixel : image) {
+        std::uint32_t original_pixel = *reinterpret_cast<std::uint32_t*>(&pixel);
+        pixel.R = static_cast<std::uint8_t>(original_pixel >> rshift);
+        pixel.G = static_cast<std::uint8_t>(original_pixel >> gshift);
+        pixel.B = static_cast<std::uint8_t>(original_pixel >> bshift);
+        pixel.A = static_cast<std::uint8_t>(original_pixel >> ashift);
+    }
+
+    std::uint32_t error = lodepng::encode(destination.string(), image_buffer, width, height);
+    if (error != 0) {
+        return false;
+    }
+
+    return true;
 }
