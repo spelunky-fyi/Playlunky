@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
+
+### Added
+- Asset extraction for making future features more feasible (thanks to Modlunky team for their implementation)
+- Automatic sticker and journal generation for character mods (thanks @Dregu)
+
+### Changed
+- mod.db format for better compatibility with future versions
+
+### Fixed
+- Issue of mismatching file extension for DDS files extracted from the game executable
+- Delete converted assets from the .db folder when their source assets were deleted
+
 ## [0.2.0] - 2020-26-12
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
