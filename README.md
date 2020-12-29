@@ -50,7 +50,6 @@ Furthermore, if the game employs any anti-debugging strategies it is supported t
 Copy all build artifacts into your Spelunky 2 folder, from there you can launch `playlunky_launcher.exe` to launch the game with the dll injected.
 
 ## Features
-This project is currently compatible with 1.19.8c
 * Loose loading of resources    
     * The game still loads files packed in the exe
     * Prioritizes loose files over files packed in the exe
