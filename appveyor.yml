@@ -46,7 +46,7 @@ before_build:
     
     cd build
     
-    cmake c:/playlunky/ -G"Visual Studio 16 2019" -A x64 -T $ENV:TOOLSET
+    cmake c:/playlunky/ -G"Visual Studio 16 2019" -A x64 -T $ENV:TOOLSET 2>&1
 
 build_script:
 - cmake --build . --config %CONFIGURATION%
