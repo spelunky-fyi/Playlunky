@@ -11,3 +11,17 @@ xz_utils/5.2.5
 [generators]
 cmake_multi
 cmake_find_package_multi
+
+[options]
+opencv:jpeg=False
+opencv:tiff=False
+opencv:png=False
+opencv:glog=False
+opencv:gflags=False
+opencv:eigen=False
+opencv:protobuf=False
+opencv:freetype=False
+opencv:harfbuzz=False
+opencv:webp=False
+opencv:openexr=False
+opencv:dc1394=False
