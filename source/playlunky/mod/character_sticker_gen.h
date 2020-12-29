@@ -19,7 +19,7 @@ public:
 
 	bool RegisterCharacter(std::string_view character_color, bool outdated);
 
-	bool NeedsRegeneration() const { return mNeedsRegen; }
+	bool NeedsRegeneration() const { return true; }
 
 	bool GenerateStickers(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder,
 		const std::filesystem::path& sticker_file, const std::filesystem::path& journal_file, VirtualFilesystem& vfs);
