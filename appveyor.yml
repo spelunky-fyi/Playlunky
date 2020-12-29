@@ -26,10 +26,10 @@ clone_folder: c:/playlunky/
 
 install:
   - git submodule update --init --recursive
-  - SET PATH=C:\Python36-x64;%path%
 before_build:
 - cmd: python --version
 - cmd: pip install conan --upgrade
+- cmd: pip install numpy
 - cmd: conan user
 - cmd: conan --version
 - ps: >-
