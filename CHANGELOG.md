@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2020-29-12
+
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
 
 ### Added
@@ -17,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Issue of mismatching file extension for DDS files extracted from the game executable
+- Issue that cause the load order to be inverted
 - Delete converted assets from the .db folder when their source assets were deleted
 
 ## [0.2.0] - 2020-26-12
