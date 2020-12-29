@@ -33,5 +33,8 @@ This tool is not sufficient for creating mods. You will instead need [Modlunky](
 When developing mods while using Playlunky however you do not need to repack the executable whenever you change your assets (i.e. skip the step "Repacking with Modlunky 2"). Also note that Playlunky will automatically organize files in your mod, meaning it might move files to different folders within your mods directory after you created them. This usually just means it will place textures into `Data/Textures` and levels into `Data/Levels`.
 If you are ready to share your mod make sure you delete the ".db" folder in your mod folder before zipping it up.
 
+## Character Mods
+When creating a character mod you may opt to add a small sticker (what is found in `journal_stickers.png`) and a journal entry (what is found in `journal_entry_people.png`) for your character. Do this by changing those two files and deleting everything but the sticker/entry you changed or by adding the sticker directly to your `char_***.png` sprite sheets. In the latter case place the sticker at tile `8x14` with a size of `80x80` pixels and the journal entry `8x15` with a size of `160x160` (thus overlapping with the adjacent empty tiles).
+
 # Reporting Bugs or Requesting Features
 If you find any bugs that appear related to your usage with Playlunky or it is missing some features that you absolutely need, head to the [Issues](https://github.com/Malacath-92/Playlunky/issues) page, look through the existing issues to see if it has already been reported and if not create an issue. When reporting bugs always attach your games log file, found in the Spelunky 2 installation directory and named `spelunky.log`.
