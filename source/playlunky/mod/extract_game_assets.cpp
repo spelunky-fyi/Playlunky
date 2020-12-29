@@ -32,6 +32,18 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
 		return true;
 	}
 
+    std::vector<std::filesystem::path> full_file_paths(files.size());
+    for (size_t i = 0; i < files.size(); i++) {
+        full_file_paths[i] = destination / files[i];
+        if (fs::exists(full_file_paths[i])) {
+            full_file_paths[i].clear();
+        }
+    }
+
+    if (algo::count_if(full_file_paths, [](auto& path) { return !path.empty(); }) == 0) {
+        return true;
+    }
+
 	if (void* data = SigScan::GetDataSection()) {
         struct Asset {
             void* Data;
@@ -67,12 +79,18 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
             });
         }
 
-        std::vector<ChaCha::bytes_t> hashes;
-        for (const auto& wanted_file : files) {
-            const auto file_string = wanted_file.string();
-            hashes.push_back(ChaCha::hash_filepath(file_string, key.Current));
-        }
         const ChaCha::bytes_t empty_hash{ unsigned char('\xDE'), unsigned char('\xAD'), unsigned char('\xBE'), unsigned char('\xEF') };
+
+        std::vector<ChaCha::bytes_t> hashes(files.size());
+        for (std::size_t i = 0; i < files.size(); i++) {
+            if (full_file_paths[i].empty()) {
+                hashes[i] = empty_hash;
+            }
+            else {
+                const auto file_string = files[i].string();
+                hashes[i] = ChaCha::hash_filepath(file_string, key.Current);
+            }
+        }
 
         for (const Asset& asset : assets) {
             for (std::size_t i = 0; i < hashes.size(); i++) {
@@ -95,7 +113,7 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
                         asset_data = decryped_data;
                     }
 
-                    const auto full_destination = destination / file;
+                    const auto& full_destination = full_file_paths[i];
                     
                     {
                         const auto full_destination_dir = full_destination.parent_path();
