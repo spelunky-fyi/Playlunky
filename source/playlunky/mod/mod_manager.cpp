@@ -63,7 +63,12 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				fs::path{ "Data/Textures/journal_stickers.DDS" },
 				fs::path{ "Data/Textures/journal_entry_people.DDS" },
 			};
-			ExtractGameAssets(files, db_original_folder);
+			if (ExtractGameAssets(files, db_original_folder)) {
+				LogInfo("Successfully extracted required game assets...");
+			}
+			else {
+				LogInfo("Failed extracting required game assets, some features might not function...");
+			}
 		}
 
 		const std::vector<fs::path> mod_folders = [this](const fs::path& root_folder) {
@@ -172,9 +177,13 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			mMods.push_back(std::move(mod_name));
 		}
 
-		if (sticker_gen.NeedsRegeneration()) {
-			sticker_gen.GenerateStickers(db_original_folder / "Data/Textures/journal_stickers.png", db_folder / "Data/Textures/journal_stickers.DDS", vfs);
-			sticker_gen.GenerateJournal(db_original_folder / "Data/Textures/journal_entry_people.png", db_folder / "Data/Textures/journal_entry_people.DDS", vfs);
+		if (sticker_gen.NeedsRegeneration() || !fs::exists(db_folder / "journal_stickers.DDS")) {
+			if (sticker_gen.GenerateStickers(db_original_folder, db_folder, "Data/Textures/journal_stickers.png", "Data/Textures/journal_entry_people.png", vfs)) {
+				LogInfo("Successfully generated sticker and journal entries from installed character mods...");
+			}
+			else {
+				LogInfo("Failed generating sticker and journal entries from installed character mods...");
+			}
 		}
 
 		vfs.MountFolder(db_folder.string(), -1);

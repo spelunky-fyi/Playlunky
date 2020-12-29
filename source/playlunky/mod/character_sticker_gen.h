@@ -21,8 +21,8 @@ public:
 
 	bool NeedsRegeneration() const { return mNeedsRegen; }
 
-	bool GenerateStickers(const std::filesystem::path& source, const std::filesystem::path& destination, VirtualFilesystem& vfs);
-	bool GenerateJournal(const std::filesystem::path& source, const std::filesystem::path& destination, VirtualFilesystem& vfs);
+	bool GenerateStickers(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder,
+		const std::filesystem::path& sticker_file, const std::filesystem::path& journal_file, VirtualFilesystem& vfs);
 
 private:
 	struct CharacterInfo {
