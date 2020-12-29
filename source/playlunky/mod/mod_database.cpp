@@ -12,7 +12,8 @@ ModDatabase::ModDatabase(std::filesystem::path root_folder, ModDatabaseFlags fla
 	namespace fs = std::filesystem;
 
 	if (fs::exists(mRootFolder) && fs::is_directory(mRootFolder)) {
-		const fs::path db_path = mRootFolder / ".db" / "mod.db";
+		const fs::path db_folder = mRootFolder / ".db";
+		const fs::path db_path = db_folder / "mod.db";
 		if (fs::exists(db_path) && fs::is_regular_file(db_path)) {
 			std::ifstream db_file(db_path, std::ios::binary);
 
@@ -20,7 +21,7 @@ ModDatabase::ModDatabase(std::filesystem::path root_folder, ModDatabaseFlags fla
 			db_file.read(reinterpret_cast<char*>(&magic_number), sizeof(magic_number));
 			if (magic_number != s_ModDatabaseMagicNumber) {
 				db_file.close();
-				fs::remove(db_path);
+				fs::remove_all(db_folder);
 				return;
 			}
 
