@@ -89,7 +89,7 @@ void VirtualFilesystem::MountFolder(std::string_view path, std::int64_t priority
 
 	LogInfo("Mounting folder '{}' as a virtual filesystem...", path);
 
-	auto it = std::upper_bound(mMounts.begin(), mMounts.end(), priority, [](std::int64_t prio, const VfsMount& mount) { return mount.Priority < prio; });
+	auto it = std::upper_bound(mMounts.begin(), mMounts.end(), priority, [](std::int64_t prio, const VfsMount& mount) { return mount.Priority > prio; });
 	mMounts.insert(it, VfsMount{
 			.Priority = priority,
 			.MountImpl = std::make_unique<VfsFolderMount>(path)
