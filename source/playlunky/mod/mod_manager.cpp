@@ -5,6 +5,7 @@
 #include "fix_mod_structure.h"
 #include "mod_database.h"
 #include "png_dds_conversion.h"
+#include "shader_merger.h"
 #include "unzip_mod.h"
 #include "virtual_filesystem.h"
 
@@ -62,6 +63,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			const auto files = std::array{
 				fs::path{ "Data/Textures/journal_stickers.DDS" },
 				fs::path{ "Data/Textures/journal_entry_people.DDS" },
+				fs::path{ "shaders.hlsl" }
 			};
 			if (ExtractGameAssets(files, db_original_folder)) {
 				LogInfo("Successfully extracted required game assets...");
@@ -115,14 +117,16 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 		}();
 
 		CharacterStickerGenerator sticker_gen;
+		bool has_outdated_shaders{ false };
 
 		for (const fs::path& mod_folder : mod_folders) {
+			std::string mod_name = mod_folder.stem().string(); // Not const so we can move from it later
 			const auto mod_db_folder = mod_folder / ".db";
 
 			{
 				ModDatabase mod_db{ mod_folder, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Recurse) };
 				mod_db.UpdateDatabase();
-				mod_db.ForEachFile([&mod_folder, &mod_db_folder, &sticker_gen](const fs::path& rel_asset_path, bool outdated, bool deleted) {
+				mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool outdated, bool deleted) {
 					if (rel_asset_path.extension() == ".png") {
 						const auto full_asset_path = mod_folder / rel_asset_path;
 						const auto full_asset_path_string = full_asset_path.string();
@@ -130,7 +134,6 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 						if (auto character_match = ctre::match<s_CharacterRule>(full_asset_path_string)) {
 							const std::string_view color = character_match.get<1>().to_view();
 							if (!sticker_gen.RegisterCharacter(color, outdated)) {
-								const std::string mod_name = mod_folder.stem().string();
 								const std::string character_file_name = full_asset_path.filename().string();
 								LogInfo("Mod '{}' contains an unkown character file '{}'", mod_name, character_file_name);
 							}
@@ -153,11 +156,13 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 							}
 						}
 					}
+					else if (rel_asset_path == "shaders_mod.hlsl") {
+						has_outdated_shaders = has_outdated_shaders || outdated;
+					}
 				});
 				mod_db.WriteDatabase();
 			}
 
-			std::string mod_name = mod_folder.stem().string();
 			std::int64_t prio{ static_cast<std::int64_t>(mod_name_to_prio.size()) };
 			bool enabled{ true };
 			if (mod_name_to_prio.contains(mod_name)) {
@@ -183,6 +188,15 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			}
 			else {
 				LogInfo("Failed generating sticker and journal entries from installed character mods...");
+			}
+		}
+
+		if (has_outdated_shaders || !fs::exists(db_folder / "shaders.hlsl")) {
+			if (MergeShaders(db_original_folder, db_folder, "shaders.hlsl", vfs)) {
+				LogInfo("Successfully generated a full shader file from installed shader mods...");
+			}
+			else {
+				LogInfo("Failed generating a full shader file from installed shader mods...");
 			}
 		}
 
