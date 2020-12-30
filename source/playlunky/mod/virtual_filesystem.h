@@ -25,8 +25,9 @@ public:
 		int AllocationSize{ 0 };
 		int _member_4{ 0 };
 	};
-	FileInfo* LoadFile(const char* path, void* (*allocator)(std::size_t) = nullptr);
-	std::optional<std::filesystem::path> GetFilePath(const std::filesystem::path& path);
+	FileInfo* LoadFile(const char* path, void* (*allocator)(std::size_t) = nullptr) const;
+	std::optional<std::filesystem::path> GetFilePath(const std::filesystem::path& path) const;
+	std::vector<std::filesystem::path> GetAllFilePaths(const std::filesystem::path& path) const;
 
 private:
 	struct VfsMount;

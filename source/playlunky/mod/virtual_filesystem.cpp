@@ -96,8 +96,7 @@ void VirtualFilesystem::MountFolder(std::string_view path, std::int64_t priority
 		});
 }
 
-VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void* (*allocator)(std::size_t))
-{
+VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void* (*allocator)(std::size_t)) const {
 	for (const VfsMount& mount : mMounts) {
 		if (FileInfo* loaded_data = mount.MountImpl->LoadFile(path, allocator)) {
 			return loaded_data;
@@ -107,7 +106,7 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
 	return {};
 }
 
-std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::filesystem::path& path) {
+std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::filesystem::path& path) const {
 	for (const VfsMount& mount : mMounts) {
 		if (auto file_path = mount.MountImpl->GetFilePath(path)) {
 			return file_path;
@@ -115,4 +114,16 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::f
 	}
 
 	return {};
+}
+
+std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std::filesystem::path& path) const {
+	std::vector<std::filesystem::path> file_paths;
+
+	for (const VfsMount& mount : mMounts) {
+		if (auto file_path = mount.MountImpl->GetFilePath(path)) {
+			file_paths.push_back(std::move(file_path).value());
+		}
+	}
+
+	return file_paths;
 }
