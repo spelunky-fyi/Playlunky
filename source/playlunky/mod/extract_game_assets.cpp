@@ -40,7 +40,7 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
         }
     }
 
-    if (algo::count_if(full_file_paths, [](auto& path) { return !path.empty(); }) == 0) {
+    if (algo::contains_if(full_file_paths, [](auto& path) { return path.empty(); })) {
         return true;
     }
 

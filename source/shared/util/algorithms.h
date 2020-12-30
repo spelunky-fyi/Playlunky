@@ -28,6 +28,14 @@ namespace algo {
 
 	template<class ContainerT, class FunT>
 	requires range<ContainerT> && std::is_invocable_v<FunT, decltype(*begin(std::declval<ContainerT>()))>
+	bool contains_if(ContainerT&& container, FunT&& value) {
+		const auto begin_it = begin(container);
+		const auto end_it = end(container);
+		return std::find_if(begin_it, end_it, std::forward<FunT>(value)) != end_it;
+	}
+
+	template<class ContainerT, class FunT>
+	requires range<ContainerT> && std::is_invocable_v<FunT, decltype(*begin(std::declval<ContainerT>()))>
 	auto find_if(ContainerT&& container, FunT&& fun) -> decltype(&*begin(std::declval<ContainerT>())) {
 		const auto begin_it = begin(container);
 		const auto end_it = end(container);
