@@ -5,13 +5,7 @@
 #include "util/algorithms.h"
 #include "util/image.h"
 
-#pragma warning(push)
-#pragma warning(disable : 5054)
-#include <opencv2/imgproc.hpp>
-#pragma warning(pop)
-
 #include <fmt/format.h>
-#include <lodepng.h>
 #include <span>
 
 static constexpr struct { std::uint32_t x, y; } s_CharacterStickerIndex{ .x{ 8 }, .y{ 14 } };
