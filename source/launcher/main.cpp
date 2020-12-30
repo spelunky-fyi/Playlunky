@@ -128,7 +128,7 @@ int WinMain(
 			while (ReadFile(out_read, buffer, 1024, &read, NULL))
 			{
 				buffer[read] = '\0';
-				fmt::print(buffer);
+				fmt::print("{}", buffer);
 			}
 
 			CloseHandle(out_read);
