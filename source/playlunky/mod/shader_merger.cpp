@@ -58,7 +58,7 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 
 				if (c == '{') {
 					if (scope_depth == 0) {
-						function_body = '{';
+						function_body.clear();
 					}
 					scope_depth++;
 				}
@@ -83,13 +83,13 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 					}
 				}
 				else if (c == '\n' && scope_depth == 0) {
-					c = ' ';
+					function_decl.clear();
 				}
-				else if (c == '\r') {
-					continue;
-				}
-				else if (scope_depth == 0) {
-					function_decl += c;
+				
+				if (scope_depth == 0) {
+					if (!function_decl.empty() || !std::isspace(c)) {
+						function_decl += c;
+					}
 				}
 				else {
 					function_body += c;
