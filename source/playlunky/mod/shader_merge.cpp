@@ -1,4 +1,4 @@
-#include "shader_merger.h"
+#include "shader_merge.h"
 
 #include "log.h"
 #include "virtual_filesystem.h"

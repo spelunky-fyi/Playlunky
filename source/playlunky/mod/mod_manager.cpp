@@ -5,7 +5,7 @@
 #include "fix_mod_structure.h"
 #include "mod_database.h"
 #include "png_dds_conversion.h"
-#include "shader_merger.h"
+#include "shader_merge.h"
 #include "unzip_mod.h"
 #include "virtual_filesystem.h"
 
