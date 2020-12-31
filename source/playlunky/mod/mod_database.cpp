@@ -4,7 +4,10 @@
 
 #include <fstream>
 
-static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xF00DBAAD };
+// Previously used magic numbers:
+//		0xF00DBAAD -- v0.3.0
+//		0xAFFED00F -- v0.4.0 (latest)
+static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xAFFED00F };
 
 ModDatabase::ModDatabase(std::filesystem::path root_folder, ModDatabaseFlags flags)
 	: mRootFolder(std::move(root_folder))
@@ -17,13 +20,17 @@ ModDatabase::ModDatabase(std::filesystem::path root_folder, ModDatabaseFlags fla
 		if (fs::exists(db_path) && fs::is_regular_file(db_path)) {
 			std::ifstream db_file(db_path, std::ios::binary);
 
-			std::uint32_t magic_number;
-			db_file.read(reinterpret_cast<char*>(&magic_number), sizeof(magic_number));
-			if (magic_number != s_ModDatabaseMagicNumber) {
-				db_file.close();
-				fs::remove_all(db_folder);
-				return;
+			{
+				std::uint32_t magic_number;
+				db_file.read(reinterpret_cast<char*>(&magic_number), sizeof(magic_number));
+				if (magic_number != s_ModDatabaseMagicNumber) {
+					db_file.close();
+					fs::remove_all(db_folder);
+					return;
+				}
 			}
+
+			db_file.read(reinterpret_cast<char*>(&mWasEnabled), sizeof(mWasEnabled));
 
 			{
 				std::size_t num_files;
@@ -156,6 +163,7 @@ void ModDatabase::WriteDatabase() {
 
 		std::ofstream db_file(db_path, std::ios::binary);
 		db_file.write(reinterpret_cast<const char*>(&s_ModDatabaseMagicNumber), sizeof(s_ModDatabaseMagicNumber));
+		db_file.write(reinterpret_cast<const char*>(&mIsEnabled), sizeof(mIsEnabled));
 
 		if (mFlags & ModDatabaseFlags_Files) {
 			const std::size_t num_files = algo::count_if(mFiles, [](const auto& file) { return file.LastWrite != std::nullopt; });

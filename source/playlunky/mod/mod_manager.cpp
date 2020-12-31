@@ -34,8 +34,9 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 		{
 			ModDatabase mod_db{ mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
 
+			mod_db.SetEnabled(true);
 			mod_db.UpdateDatabase();
-			mod_db.ForEachFile([&mods_root_path](const fs::path& rel_file_path, bool outdated, [[maybe_unused]] bool deleted) {
+			mod_db.ForEachFile([&mods_root_path](const fs::path& rel_file_path, bool outdated, [[maybe_unused]] bool deleted, [[maybe_unused]] std::optional<bool> new_enabled_state) {
 				if (outdated) {
 					if (rel_file_path.extension() == ".zip") {
 						const fs::path zip_path = mods_root_path / rel_file_path;
@@ -48,7 +49,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			});
 
 			mod_db.UpdateDatabase();
-			mod_db.ForEachFolder([&mods_root_path](const fs::path& rel_folder_path, bool outdated, [[maybe_unused]] bool deleted) {
+			mod_db.ForEachFolder([&mods_root_path](const fs::path& rel_folder_path, bool outdated, [[maybe_unused]] bool deleted, [[maybe_unused]] std::optional<bool> new_enabled_state) {
 				if (outdated) {
 					FixModFolderStructure(mods_root_path / rel_folder_path);
 				}
@@ -123,17 +124,32 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			std::string mod_name = mod_folder.stem().string(); // Not const so we can move from it later
 			const auto mod_db_folder = mod_folder / ".db";
 
+			const auto [prio, enabled] = [&mod_name_to_prio, &mod_name]() mutable {
+				std::int64_t prio{ static_cast<std::int64_t>(mod_name_to_prio.size()) };
+				bool enabled{ true };
+				if (mod_name_to_prio.contains(mod_name)) {
+					const auto& prio_and_state = mod_name_to_prio[mod_name];
+					prio = prio_and_state.Prio;
+					enabled = prio_and_state.Enabled;
+				}
+				else {
+					mod_name_to_prio[mod_name] = { prio, true };
+				}
+				return std::pair{ prio, enabled };
+			}();
+
 			{
 				ModDatabase mod_db{ mod_folder, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Recurse) };
+				mod_db.SetEnabled(enabled);
 				mod_db.UpdateDatabase();
-				mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool outdated, bool deleted) {
+				mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool outdated, bool deleted, std::optional<bool> new_enabled_state) {
 					if (rel_asset_path.extension() == ".png") {
 						const auto full_asset_path = mod_folder / rel_asset_path;
 						const auto full_asset_path_string = full_asset_path.string();
 
 						if (auto character_match = ctre::match<s_CharacterRule>(full_asset_path_string)) {
 							const std::string_view color = character_match.get<1>().to_view();
-							if (!sticker_gen.RegisterCharacter(color, outdated)) {
+							if (!sticker_gen.RegisterCharacter(color, outdated || new_enabled_state.has_value())) {
 								const std::string character_file_name = full_asset_path.filename().string();
 								LogInfo("Mod '{}' contains an unkown character file '{}'", mod_name, character_file_name);
 							}
@@ -157,21 +173,10 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 						}
 					}
 					else if (rel_asset_path == "shaders_mod.hlsl") {
-						has_outdated_shaders = has_outdated_shaders || outdated;
+						has_outdated_shaders = has_outdated_shaders || outdated || new_enabled_state.has_value();
 					}
 				});
 				mod_db.WriteDatabase();
-			}
-
-			std::int64_t prio{ static_cast<std::int64_t>(mod_name_to_prio.size()) };
-			bool enabled{ true };
-			if (mod_name_to_prio.contains(mod_name)) {
-				const auto& prio_and_state = mod_name_to_prio[mod_name];
-				prio = prio_and_state.Prio;
-				enabled = prio_and_state.Enabled;
-			}
-			else {
-				mod_name_to_prio[mod_name] = { prio, true };
 			}
 
 			if (enabled) {
