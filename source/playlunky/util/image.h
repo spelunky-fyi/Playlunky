@@ -2,10 +2,18 @@
 
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <span>
 
 struct ImageTiling {
-	struct { std::uint32_t x, y; } TileSize;
+	struct {
+		std::uint32_t x;
+		std::uint32_t y;
+	} TileSize;
+	struct {
+		std::optional<std::uint32_t> x{ std::nullopt };
+		std::optional<std::uint32_t> y{ std::nullopt };
+	} ThisTileSize;
 };
 
 struct ImageSubRegion {

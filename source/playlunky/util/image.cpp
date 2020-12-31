@@ -54,8 +54,8 @@ Image Image::GetSubImage(ImageSubRegion region) {
 Image Image::GetSubImage(ImageTiling tiling, ImageSubRegion region) {
 	region.x *= tiling.TileSize.x;
 	region.y *= tiling.TileSize.y;
-	region.width *= tiling.TileSize.x;
-	region.height *= tiling.TileSize.y;
+	region.width *= tiling.ThisTileSize.x.value_or(tiling.TileSize.x);
+	region.height *= tiling.ThisTileSize.y.value_or(tiling.TileSize.x);
 
 	return GetSubImage(region);
 }
@@ -77,8 +77,8 @@ void Image::Blit(const Image& source, ImageSubRegion region) {
 void Image::Blit(const Image& source, ImageTiling tiling, ImageSubRegion region) {
 	region.x *= tiling.TileSize.x;
 	region.y *= tiling.TileSize.y;
-	region.width *= tiling.TileSize.x;
-	region.height *= tiling.TileSize.y;
+	region.width *= tiling.ThisTileSize.x.value_or(tiling.TileSize.x);
+	region.height *= tiling.ThisTileSize.y.value_or(tiling.TileSize.x);
 
 	Blit(source, region);
 }
