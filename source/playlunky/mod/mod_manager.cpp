@@ -187,7 +187,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			mMods.push_back(std::move(mod_name));
 		}
 
-		if (sticker_gen.NeedsRegeneration() || !fs::exists(db_folder / "journal_stickers.DDS")) {
+		if (sticker_gen.NeedsRegeneration() || !fs::exists(db_folder / "Data/Textures/journal_stickers.DDS")) {
 			if (sticker_gen.GenerateStickers(db_original_folder, db_folder, "Data/Textures/journal_stickers.png", "Data/Textures/journal_entry_people.png", vfs)) {
 				LogInfo("Successfully generated sticker and journal entries from installed character mods...");
 			}
