@@ -137,6 +137,17 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
                 }
             }
         }
+
+        for (std::size_t i = 0; i < files.size(); i++) {
+            if (hashes[i] != empty_hash) {
+                const auto file_string = files[i].string();
+                LogInfo("Failed extracting asset {}, no asset in the exe bundle matched its name...", file_string);
+            }
+        }
+
+        if (algo::contains(hashes, empty_hash)) {
+            return false;
+        }
 	}
 
     return true;
