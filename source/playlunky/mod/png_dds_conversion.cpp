@@ -2,6 +2,7 @@
 
 #include "log.h"
 #include "util/on_scope_exit.h"
+#include "util/span_util.h"
 
 #include <lodepng.h>
 #include <cassert>
@@ -14,11 +15,6 @@ struct ColorRGBA8 {
     std::uint8_t B;
     std::uint8_t A;
 };
-
-template<class T>
-auto ByteCast(std::span<std::uint8_t> data) {
-    return std::span<T>{ reinterpret_cast<T*>(data.data()), data.size() / sizeof(T) };
-}
 
 bool ConvertRBGAToDds(std::span<const std::uint8_t> source, std::uint32_t width, std::uint32_t height, const std::filesystem::path& destination) {
     namespace fs = std::filesystem;
@@ -95,7 +91,7 @@ bool ConvertPngToDds(const std::filesystem::path& source, const std::filesystem:
 		return false;
 	}
 
-	auto image = ByteCast<ColorRGBA8>(image_buffer);
+	auto image = span::bit_cast<ColorRGBA8>(image_buffer);
 	for (ColorRGBA8& pixel : image) {
 		if (pixel.A == 0) {
 			pixel = ColorRGBA8{};
@@ -156,7 +152,7 @@ bool ConvertDdsToPng(std::span<const std::uint8_t> source, const std::filesystem
     source = source.subspan(4 + 124); // magic bytes and whole header
 
     std::vector<std::uint8_t> image_buffer{ source.begin(), source.end() };
-    auto image = ByteCast<ColorRGBA8>(image_buffer);
+    auto image = span::bit_cast<ColorRGBA8>(image_buffer);
     for (auto& pixel : image) {
         std::uint32_t original_pixel = *reinterpret_cast<std::uint32_t*>(&pixel);
         pixel.R = static_cast<std::uint8_t>(original_pixel >> rshift);

@@ -1,5 +1,7 @@
 #include "image.h"
 
+#include "util/span_util.h"
+
 #pragma warning(push)
 #pragma warning(disable : 5054)
 #include <opencv2/imgproc.hpp>
@@ -30,6 +32,21 @@ bool Image::LoadFromPng(const std::filesystem::path& file) {
 		const std::uint32_t error = lodepng::decode(mImpl->Buffer, mImpl->Width, mImpl->Height, file.string(), LCT_RGBA, 8);
 		if (error != 0) {
 			return false;
+		}
+	}
+
+	{
+		struct ColorRGBA8 {
+			std::uint8_t R;
+			std::uint8_t G;
+			std::uint8_t B;
+			std::uint8_t A;
+		};
+		auto image = span::bit_cast<ColorRGBA8>(mImpl->Buffer);
+		for (ColorRGBA8& pixel : image) {
+			if (pixel.A == 0) {
+				pixel = ColorRGBA8{};
+			}
 		}
 	}
 
