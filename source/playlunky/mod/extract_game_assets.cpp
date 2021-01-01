@@ -145,7 +145,7 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
             }
         }
 
-        if (algo::contains(hashes, empty_hash)) {
+        if (algo::count(hashes, empty_hash) != hashes.size()) {
             return false;
         }
 
