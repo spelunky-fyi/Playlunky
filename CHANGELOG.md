@@ -6,6 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2021-01-01
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
+
+### Added
+- Preliminary support for sparse string modding
+- Support for sparse shader modding (i.e. placing a `shaders_mod.hlsl` into your mod that contains only modded functions)
+- Correctly regenerate stickers and shaders when mods get enabled or disabled
+
+### Changed
+- mod.db version, this will force a regeneration of assets on first load
+- Always show console on startup so users have some feedback while mods are loaded
+
+### Fixed
+- Issue that caused character stickers to be generated every time the game starts
+- A rare crash with some of the games logging messages
+- Potential graphical errors during character sticker generation
+
 ## [0.3.0] - 2020-29-12
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
