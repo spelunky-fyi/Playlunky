@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include <fstream>
 
 #include <detours.h>
 #include <fmt/format.h>
@@ -21,7 +22,9 @@ struct CommandLineOptions {
 VISITABLE_STRUCT(CommandLineOptions, exe_dir, console);
 
 static HANDLE s_Process = NULL;
-static FILE* s_ConsoleStream = NULL;
+static FILE* s_ConsoleStdOut = NULL;
+static FILE* s_ConsoleStdErr = NULL;
+static FILE* s_ConsoleStdIn = NULL;
 
 bool CreateConsole() {
 	if (AllocConsole() == FALSE)
@@ -30,14 +33,28 @@ bool CreateConsole() {
 	if (SetConsoleTitle("Playlunky") == FALSE)
 		return false;
 
-	if (freopen_s(&s_ConsoleStream, "CONOUT$", "w+", stdout) != 0)
+	if (freopen_s(&s_ConsoleStdOut, "CONOUT$", "w", stdout) != 0)
 		return false;
+
+	if (freopen_s(&s_ConsoleStdErr, "CONOUT$", "w", stderr) != 0)
+		return false;
+
+	if (freopen_s(&s_ConsoleStdIn, "CONIN$", "w", stdin) != 0)
+		return false;
+
+	std::cout.clear();
+	std::cerr.clear();
+	std::cin.clear();
 
 	return true;
 }
 
 bool DestroyConsole() {
-	if (fclose(s_ConsoleStream) != 0)
+	if (fclose(s_ConsoleStdOut) != 0)
+		return false;
+	if (fclose(s_ConsoleStdErr) != 0)
+		return false;
+	if (fclose(s_ConsoleStdIn) != 0)
 		return false;
 	if (FreeConsole() == FALSE)
 		return false;
@@ -67,14 +84,6 @@ int WinMain(
 {
 	try {
 		auto options = structopt::app("playlunky_launcher").parse<CommandLineOptions>(__argc, __argv);
-
-		if (options.console.value_or(false)) {
-			if (!CreateConsole()) {
-				return FAILED_CREATING_CONSOLE;
-			}
-		}
-
-		SetConsoleCtrlHandler(HandlerRoutine, TRUE);
 
 		char dir_path[MAX_PATH] = {};
 		GetCurrentDirectoryA(MAX_PATH, dir_path);
@@ -113,8 +122,7 @@ int WinMain(
 		si.dwFlags |= STARTF_USESTDHANDLES;
 
 		PROCESS_INFORMATION pi{};
-		if (DetourCreateProcessWithDllExA(NULL, exe_path, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE, NULL, cwd_path, &si, &pi, dll_path, NULL))
-		{
+		if (DetourCreateProcessWithDllExA(NULL, exe_path, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE, NULL, cwd_path, &si, &pi, dll_path, NULL)) {
 			fmt::print("Spawned process: {}, PID: {}\n", exe_path, pi.dwProcessId);
 
 			s_Process = pi.hProcess;
@@ -122,18 +130,33 @@ int WinMain(
 			CloseHandle(pi.hThread);
 			CloseHandle(out_write);
 
-			char buffer[1024 + 1] = {};
-			DWORD read = 0;
-
-			while (ReadFile(out_read, buffer, 1024, &read, NULL))
 			{
-				buffer[read] = '\0';
-				fmt::print("{}", buffer);
-			}
+				if (!CreateConsole()) {
+					return FAILED_CREATING_CONSOLE;
+				}
 
-			CloseHandle(out_read);
+				const bool use_console = options.console.value_or(false);
+				if (use_console) {
+					SetConsoleCtrlHandler(HandlerRoutine, TRUE);
+				}
 
-			if (options.console.value_or(false)) {
+				char buffer[1024 + 1] = {};
+				DWORD read = 0;
+
+				while (ReadFile(out_read, buffer, 1024, &read, NULL))
+				{
+					buffer[read] = '\0';
+					fmt::print("{}", buffer);
+
+					if (!use_console) {
+						if (std::string_view{ buffer }.find("All mods initialized...") != std::string_view::npos) {
+							break;
+						}
+					}
+				}
+
+				CloseHandle(out_read);
+
 				if (!DestroyConsole()) {
 					return FAILED_DESTROYING_CONSOLE;
 				}

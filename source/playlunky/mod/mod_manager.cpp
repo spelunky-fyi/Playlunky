@@ -280,4 +280,6 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			}
 		}
 	}
+
+	LogInfo("All mods initialized...");
 }
