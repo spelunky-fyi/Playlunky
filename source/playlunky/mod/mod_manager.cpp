@@ -6,21 +6,25 @@
 #include "mod_database.h"
 #include "png_dds_conversion.h"
 #include "shader_merge.h"
+#include "string_hash.h"
+#include "string_merge.h"
 #include "unzip_mod.h"
 #include "virtual_filesystem.h"
 
 #include "log.h"
 #include "util/algorithms.h"
+#include "util/regex.h"
 
 #include <Windows.h>
 #include <zip.h>
-#include <ctre.hpp>
 #include <filesystem>
 #include <fstream>
 #include <unordered_map>
 #include <map>
 
 static constexpr ctll::fixed_string s_CharacterRule{ ".+char_(.*)\\.png" };
+static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
+static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
 ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 	namespace fs = std::filesystem;
@@ -64,13 +68,35 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			const auto files = std::array{
 				fs::path{ "Data/Textures/journal_stickers.DDS" },
 				fs::path{ "Data/Textures/journal_entry_people.DDS" },
-				fs::path{ "shaders.hlsl" }
+				fs::path{ "shaders.hlsl" },
+				fs::path{ "strings00.str" },
+				fs::path{ "strings01.str" },
+				fs::path{ "strings02.str" },
+				fs::path{ "strings03.str" },
+				fs::path{ "strings04.str" },
+				fs::path{ "strings05.str" },
+				fs::path{ "strings06.str" },
+				fs::path{ "strings07.str" },
+				fs::path{ "strings08.str" },
 			};
 			if (ExtractGameAssets(files, db_original_folder)) {
-				LogInfo("Successfully extracted required game assets...");
+				LogInfo("Successfully extracted all required game assets...");
+
+				{
+					const auto hashed_strings_file = db_original_folder / "strings_hashed.str";
+					if (!fs::exists(hashed_strings_file)) {
+						if (CreateHashedStringsFile(db_original_folder / "strings00.str", hashed_strings_file)) {
+							LogInfo("Successfully created hashed strings file...");
+						}
+						else {
+							LogInfo("Failed creating hashed strings file...");
+						}
+					}
+
+				}
 			}
 			else {
-				LogInfo("Failed extracting required game assets, some features might not function...");
+				LogInfo("Failed extracting all required game assets, some features might not function...");
 			}
 		}
 
@@ -103,10 +129,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 						bool enabled{ true };
 						if (mod_name.find("--") == 0) {
 							mod_name = mod_name.substr(2);
-							// basically mod_name.trim()
-							mod_name.erase(mod_name.begin(), std::find_if(mod_name.begin(), mod_name.end(), [](unsigned char ch) {
-								return !std::isspace(ch);
-							}));
+							mod_name = algo::trim(mod_name);
 							enabled = false;
 						}
 						mod_name_to_prio[std::move(mod_name)] = { static_cast<std::int64_t>(mod_name_to_prio.size()), enabled };
@@ -118,6 +141,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 		}();
 
 		CharacterStickerGenerator sticker_gen;
+		StringMerger string_merger;
 		bool has_outdated_shaders{ false };
 
 		for (const fs::path& mod_folder : mod_folders) {
@@ -143,9 +167,11 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				mod_db.SetEnabled(enabled);
 				mod_db.UpdateDatabase();
 				mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool outdated, bool deleted, std::optional<bool> new_enabled_state) {
+					const auto rel_asset_path_string = rel_asset_path.string();
+
+					const auto full_asset_path = mod_folder / rel_asset_path;
+					const auto full_asset_path_string = full_asset_path.string();
 					if (rel_asset_path.extension() == ".png") {
-						const auto full_asset_path = mod_folder / rel_asset_path;
-						const auto full_asset_path_string = full_asset_path.string();
 
 						if (auto character_match = ctre::match<s_CharacterRule>(full_asset_path_string)) {
 							const std::string_view color = character_match.get<1>().to_view();
@@ -172,8 +198,24 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 							}
 						}
 					}
+					else if (rel_asset_path.extension() == ".str") {
+						if (outdated || deleted || new_enabled_state.has_value()) {
+							if (auto string_match = ctre::match<s_StringFileRule>(rel_asset_path_string)) {
+								const auto table = string_match.get<1>().to_view();
+								if (!string_merger.RegisterOutdatedStringTable(table)) {
+									LogInfo("String file {} is not a valid string file...", full_asset_path_string);
+								}
+							}
+							else if (auto string_mod_match = ctre::match<s_StringModFileRule>(rel_asset_path_string)) {
+								const auto table = string_mod_match.get<1>().to_view();
+								if (!string_merger.RegisterOutdatedStringTable(table) || !string_merger.RegisterModdedStringTable(table)) {
+									LogInfo("String mod {} is not a valid string mod...", full_asset_path_string);
+								}
+							}
+						} 
+					}
 					else if (rel_asset_path == "shaders_mod.hlsl") {
-						has_outdated_shaders = has_outdated_shaders || outdated || new_enabled_state.has_value();
+						has_outdated_shaders = has_outdated_shaders || outdated || deleted || new_enabled_state.has_value();
 					}
 				});
 				mod_db.WriteDatabase();
@@ -198,6 +240,15 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 		if (has_outdated_shaders || !fs::exists(db_folder / "shaders.hlsl")) {
 			if (MergeShaders(db_original_folder, db_folder, "shaders.hlsl", vfs)) {
+				LogInfo("Successfully generated a full shader file from installed shader mods...");
+			}
+			else {
+				LogInfo("Failed generating a full shader file from installed shader mods...");
+			}
+		}
+
+		if (string_merger.NeedsRegen() || !fs::exists(db_folder / "strings00.str")) {
+			if (string_merger.MergeStrings(db_original_folder, db_folder, "strings_hashed.str", vfs)) {
 				LogInfo("Successfully generated a full shader file from installed shader mods...");
 			}
 			else {

@@ -2,8 +2,7 @@
 
 #include "log.h"
 #include "util/algorithms.h"
-
-#include <ctre.hpp>
+#include "util/regex.h"
 
 static constexpr ctll::fixed_string s_FontRule{ ".*\\.fnb" };
 static constexpr std::string_view s_FontTargetPath{ "Data/Fonts" };

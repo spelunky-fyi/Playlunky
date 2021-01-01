@@ -4,8 +4,8 @@
 #include "virtual_filesystem.h"
 #include "util/algorithms.h"
 #include "util/image.h"
+#include "util/regex.h"
 
-#include <ctre.hpp>
 #include <fstream>
 #include <unordered_map>
 
