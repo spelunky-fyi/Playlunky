@@ -46,12 +46,20 @@ namespace algo {
 		return nullptr;
 	}
 
+	template<class ContainerT, class ValueT>
+	requires range<ContainerT> && is_comparable_v<decltype(*begin(std::declval<ContainerT>())), ValueT>
+	auto count(ContainerT&& container, ValueT&& value) {
+		const auto begin_it = begin(container);
+		const auto end_it = end(container);
+		return static_cast<std::size_t>(std::count(begin_it, end_it, std::forward<ValueT>(value)));
+	}
+
 	template<class ContainerT, class FunT>
 	requires range<ContainerT> && std::is_invocable_v<FunT, decltype(*begin(std::declval<ContainerT>()))>
 	auto count_if(ContainerT&& container, FunT&& fun) {
 		const auto begin_it = begin(container);
 		const auto end_it = end(container);
-		return std::count_if(begin_it, end_it, std::forward<FunT>(fun));
+		return static_cast<std::size_t>(std::count_if(begin_it, end_it, std::forward<FunT>(fun)));
 	}
 
 	inline bool is_sub_path(const std::filesystem::path& path, const std::filesystem::path& base) {
