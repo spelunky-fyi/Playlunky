@@ -34,7 +34,33 @@ When developing mods while using Playlunky however you do not need to repack the
 If you are ready to share your mod make sure you delete the ".db" folder in your mod folder before zipping it up.
 
 ## Character Mods
-When creating a character mod you may opt to add a small sticker (what is found in `journal_stickers.png`) and a journal entry (what is found in `journal_entry_people.png`) for your character. Do this by changing those two files and deleting everything but the sticker/entry you changed or by adding the sticker directly to your `char_***.png` sprite sheets. In the latter case place the sticker at tile `8x14` with a size of `80x80` pixels and the journal entry `8x15` with a size of `160x160` (thus overlapping with the adjacent empty tiles).
+When creating a character mod you may opt to add a small sticker (what is found in `journal_stickers.png`) and a journal entry (what is found in `journal_entry_people.png`) for your character. Do this by changing those two files and deleting everything but the sticker/entry you changed or by adding the sticker directly to your `char_***.png` sprite sheets. In the latter case place the graphics to the right of the petting  at the following tiles with the given sizes:
+```
+Sticker:
+    Tile Position:  8x14
+    Pixel Position: 1024x1792
+    Pixel Size:     80x80`
+Journal Entry
+    Tile Position:  9x14
+    Pixel Position: 1152x1792
+    Pixel Size:     160x160` (note this overlaps with three adjacent empty tiles).
+```
+
+## Shader Mods
+To mod shaders place a `shaders_mod.hlsl` file into your mod folder that contains only the functions that you want to modify. For now it is only supported to modify functions, not add them. Also make sure that you copy the exact same signature from the original `shaders.hlsl` file, Playlunky does not properly parse the code but only matches strings.
+
+## String Mods
+_Modding only select strings is fully supported in Playlunky but no extractor exists as of yet that can help in procuring the base hashes of strings._
+To mod only select strings add a `strings00_mod.str` file (or the equivalent for any of the other 8 string files) and place for each string you want to change one line in that file of the pattern `[hash of original english string]: [new string]`. Empty lines as well as lines starting with `#` are ignored. An example would be the following `strings00.str` which modifies the strings in the main menu:
+```
+# Main Menu
+0x3f2ef8d8: Deth
+0x38b0d081: Deth Together
+0x361d77c6: For Dummies
+0x45828a5e: How Bad am I
+0x9ee2eb06: Meself
+0x874447b3: Real Deth
+```
 
 # Reporting Bugs or Requesting Features
 If you find any bugs that appear related to your usage with Playlunky or it is missing some features that you absolutely need, head to the [Issues](https://github.com/Malacath-92/Playlunky/issues) page, look through the existing issues to see if it has already been reported and if not create an issue. When reporting bugs always attach your games log file, found in the Spelunky 2 installation directory and named `spelunky.log`.
