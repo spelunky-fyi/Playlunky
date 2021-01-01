@@ -6,9 +6,11 @@
 #include <zip.h>
 
 void UnzipMod(const std::filesystem::path& zip_file) {
-	const auto mod_folder = std::filesystem::path{ zip_file }.replace_extension("");
-	if (!std::filesystem::exists(mod_folder)) {
-		std::filesystem::create_directory(mod_folder);
+	namespace fs = std::filesystem;
+
+	const auto mod_folder = fs::path{ zip_file }.replace_extension("");
+	if (!fs::exists(mod_folder)) {
+		fs::create_directory(mod_folder);
 	}
 
 	const auto zip_string = zip_file.string();
@@ -20,8 +22,8 @@ void UnzipMod(const std::filesystem::path& zip_file) {
 			if (zip_stat_index(archive, i, 0, &entry_stat) == 0) {
 				if (entry_stat.size > 0 && std::strstr(entry_stat.name, ".db") == nullptr) {
 					if (zip_file_t* zipped_file = zip_fopen_index(archive, i, 0)) {
-						const std::filesystem::path file_path_in_zip{ entry_stat.name };
-						const std::filesystem::path file_path_on_disk = mod_folder / file_path_in_zip.filename();
+						const fs::path file_path_in_zip{ entry_stat.name };
+						const fs::path file_path_on_disk = mod_folder / file_path_in_zip.filename();
 						const std::string file_path_on_disk_string = file_path_on_disk.string();
 
 						FILE* disk_file{ nullptr };

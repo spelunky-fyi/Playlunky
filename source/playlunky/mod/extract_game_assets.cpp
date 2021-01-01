@@ -32,7 +32,7 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
 		return true;
 	}
 
-    std::vector<std::filesystem::path> full_file_paths(files.size());
+    std::vector<fs::path> full_file_paths(files.size());
     for (size_t i = 0; i < files.size(); i++) {
         full_file_paths[i] = destination / files[i];
         if (fs::exists(full_file_paths[i])) {

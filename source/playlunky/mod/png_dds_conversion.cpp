@@ -21,10 +21,12 @@ auto ByteCast(std::span<std::uint8_t> data) {
 }
 
 bool ConvertRBGAToDds(std::span<const std::uint8_t> source, std::uint32_t width, std::uint32_t height, const std::filesystem::path& destination) {
+    namespace fs = std::filesystem;
+
     {
-        const std::filesystem::path dest_parent_dir = destination.parent_path();
-        if (!std::filesystem::exists(dest_parent_dir)) {
-            std::filesystem::create_directories(dest_parent_dir);
+        const auto dest_parent_dir = destination.parent_path();
+        if (!fs::exists(dest_parent_dir)) {
+            fs::create_directories(dest_parent_dir);
         }
     }
 

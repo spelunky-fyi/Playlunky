@@ -32,8 +32,8 @@ bool CharacterStickerGenerator::RegisterCharacter(std::string_view character_col
 bool CharacterStickerGenerator::GenerateStickers(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder,
 	const std::filesystem::path& sticker_file, const std::filesystem::path& journal_file, VirtualFilesystem& vfs) {
 
-	std::filesystem::path source_sticker = vfs.GetFilePath(sticker_file).value_or(source_folder / sticker_file);
-	std::filesystem::path source_journal = vfs.GetFilePath(journal_file).value_or(source_folder / journal_file);
+	const auto source_sticker = vfs.GetFilePath(sticker_file).value_or(source_folder / sticker_file);
+	const auto source_journal = vfs.GetFilePath(journal_file).value_or(source_folder / journal_file);
 
 	Image sticker_image;
 	sticker_image.LoadFromPng(source_sticker);
@@ -112,10 +112,12 @@ bool CharacterStickerGenerator::GenerateStickers(const std::filesystem::path& so
 		}
 	}
 
-	const auto destination_sticker_file = std::filesystem::path{ destination_folder / sticker_file }.replace_extension(".DDS");
+	namespace fs = std::filesystem;
+
+	const auto destination_sticker_file = fs::path{ destination_folder / sticker_file }.replace_extension(".DDS");
 	bool wrote_sticker_file = ConvertRBGAToDds(sticker_image.GetData(), sticker_image.GetWidth(), sticker_image.GetHeight(), destination_sticker_file);
 
-	const auto destination_journal_file = std::filesystem::path{ destination_folder / journal_file }.replace_extension(".DDS");
+	const auto destination_journal_file = fs::path{ destination_folder / journal_file }.replace_extension(".DDS");
 	bool wrote_journal_file = ConvertRBGAToDds(journal_image.GetData(), journal_image.GetWidth(), journal_image.GetHeight(), destination_journal_file);
 
 	return wrote_sticker_file && wrote_journal_file;

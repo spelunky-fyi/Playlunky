@@ -12,7 +12,7 @@
 bool MergeShaders(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder,
 	const std::filesystem::path& shader_file, VirtualFilesystem& vfs) {
 
-	std::filesystem::path source_shader = vfs.GetFilePath(shader_file).value_or(source_folder / shader_file);
+	const auto source_shader = vfs.GetFilePath(shader_file).value_or(source_folder / shader_file);
 	std::string original_shader_code = [&source_shader]() {
 		if (auto original_shader_file = std::ifstream{ source_shader }) {
 			return std::string((std::istreambuf_iterator<char>(original_shader_file)), std::istreambuf_iterator<char>());
@@ -134,8 +134,10 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 		}
 	}
 
-	if (!std::filesystem::exists(destination_folder)) {
-		std::filesystem::create_directories(destination_folder);
+	namespace fs = std::filesystem;
+
+	if (!fs::exists(destination_folder)) {
+		fs::create_directories(destination_folder);
 	}
 
 	const auto destination_file = destination_folder / shader_file;
