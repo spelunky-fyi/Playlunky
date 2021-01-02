@@ -92,7 +92,6 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 							LogInfo("Failed creating hashed strings file...");
 						}
 					}
-
 				}
 			}
 			else {
@@ -249,10 +248,10 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 		if (string_merger.NeedsRegen() || !fs::exists(db_folder / "strings00.str")) {
 			if (string_merger.MergeStrings(db_original_folder, db_folder, "strings_hashed.str", vfs)) {
-				LogInfo("Successfully generated a full shader file from installed shader mods...");
+				LogInfo("Successfully generated a full string file from installed string mods...");
 			}
 			else {
-				LogInfo("Failed generating a full shader file from installed shader mods...");
+				LogInfo("Failed generating a full string file from installed string mods...");
 			}
 		}
 
