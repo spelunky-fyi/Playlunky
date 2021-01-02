@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2021-02-01
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
+
+### Changed
+- Switched from stl hash to crc32, which should make this release compatible with Modlunky2
+
 ## [0.4.0] - 2021-01-01
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
