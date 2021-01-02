@@ -27,12 +27,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install conan
 
-    - name: Cache conan
-      uses: actions/cache@v2
-      with:
-        path: 'c:/.conan'
-        key: ${{ matrix.build_type }}-conan-${{ hashFiles('**/conanfile.txt') }}
-
     - name: Configure
       run: |
         mkdir build

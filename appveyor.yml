@@ -24,10 +24,6 @@ environment:
     - TOOLSET: v142
 #    - TOOLSET: ClangCL
 
-cache:
-  - c:\.conan -> conanfile.txt
-  - c:\Users\Appveyor\.conan -> conanfile.txt
-
 clone_folder: c:/playlunky/
 
 install:
