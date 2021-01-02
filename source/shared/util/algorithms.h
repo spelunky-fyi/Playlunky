@@ -93,4 +93,14 @@ namespace algo {
 		}).base(), str.end());
 		return std::move(str);
 	}
+
+	inline std::string trim(std::string str, char to_strip) {
+		str.erase(str.begin(), std::find_if(str.begin(), str.end(), [to_strip](unsigned char ch) {
+			return ch != to_strip;
+		}));
+		str.erase(std::find_if(str.rbegin(), str.rend(), [to_strip](unsigned char ch) {
+			return ch != to_strip;
+		}).base(), str.end());
+		return std::move(str);
+	}
 }

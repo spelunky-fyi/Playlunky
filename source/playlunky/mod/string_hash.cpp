@@ -8,8 +8,7 @@
 #include <fstream>
 #include <span>
 
-static constexpr ctll::fixed_string s_CommentBlockRule{ "#+" };
-static constexpr ctll::fixed_string s_CommentBlockNameRule{ "#+\\s*([^#]+)\\s*#*" };
+static constexpr ctll::fixed_string s_CommentBlockRule{ "^#+" };
 
 std::uint32_t HashString(std::string_view string) {
 	static constexpr std::uint64_t mask = static_cast<std::uint64_t>(~static_cast<std::uint32_t>(0x0));
@@ -36,8 +35,9 @@ bool CreateHashedStringsFile(const std::filesystem::path& source_file, const std
 				std::string line;
 				std::getline(source, line);
 				if (ctre::starts_with<s_CommentBlockRule>(line)) {
-					if (const auto name_match = ctre::match<s_CommentBlockNameRule>(line)) {
-						current_comment_block = algo::trim(name_match.get<1>().to_string());
+					std::string comment_block = algo::trim(algo::trim(line, '#'));
+					if (!comment_block.empty()) {
+						current_comment_block = std::move(comment_block);
 					}
 					destination << "0x" << std::setw(8) << 0xdeadbeef << '\n';
 				}
