@@ -17,14 +17,15 @@ skip_commits:
     - .gitignore
     - .github/*
     - '**/*.html'
-    
-cache:
-  - c:\.conan -> conanfile.txt
 
 environment:
+  APPVEYOR_CACHE_ENTRY_ZIP_ARGS: '-t7z -m0=lzma -mx=9'
   matrix:
     - TOOLSET: v142
 #    - TOOLSET: ClangCL
+
+cache:
+  - c:\.conan -> conanfile.txt
 
 clone_folder: c:/playlunky/
 
@@ -41,7 +42,7 @@ before_build:
     $ENV:PATH="$ENV:PATH;C:\Users\appveyor\AppData\Roaming\Python\Scripts"
 
     mkdir build
-    
+
     cd build
 - cmd: cmake c:/playlunky/ -G"Visual Studio 16 2019" -A x64 -T %TOOLSET%
 
