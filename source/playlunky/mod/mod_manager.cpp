@@ -83,7 +83,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				LogInfo("Successfully extracted all required game assets...");
 
 				{
-					const auto hashed_strings_file = db_original_folder / "strings_hashed.str";
+					const auto hashed_strings_file = db_original_folder / "strings_hashes.hash";
 					if (!fs::exists(hashed_strings_file)) {
 						if (CreateHashedStringsFile(db_original_folder / "strings00.str", hashed_strings_file)) {
 							LogInfo("Successfully created hashed strings file...");
@@ -247,7 +247,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 		}
 
 		if (string_merger.NeedsRegen() || !fs::exists(db_folder / "strings00.str")) {
-			if (string_merger.MergeStrings(db_original_folder, db_folder, "strings_hashed.str", vfs)) {
+			if (string_merger.MergeStrings(db_original_folder, db_folder, "strings_hashes.hash", vfs)) {
 				LogInfo("Successfully generated a full string file from installed string mods...");
 			}
 			else {
