@@ -7,6 +7,7 @@ configuration:
 
 image:
   - Visual Studio 2019
+
 skip_commits:
   files:
     - README.md
@@ -16,6 +17,9 @@ skip_commits:
     - .gitignore
     - .github/*
     - '**/*.html'
+    
+cache:
+  - c:\.conan -> conanfile.txt
 
 environment:
   matrix:
