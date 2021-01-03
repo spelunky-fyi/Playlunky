@@ -7,8 +7,9 @@
 // Previously used magic numbers:
 //		0xF00DBAAD -- v0.3.0
 //		0xAFFED00F -- v0.4.0
-//		0xD00FAFFE -- v0.4.1 (latest)
-static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xD00FAFFE };
+//		0xD00FAFFE -- v0.4.1
+//		0xABAD1DEA -- v0.4.2 (latest)
+static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xABAD1DEA };
 
 ModDatabase::ModDatabase(std::filesystem::path root_folder, ModDatabaseFlags flags)
 	: mRootFolder(std::move(root_folder))

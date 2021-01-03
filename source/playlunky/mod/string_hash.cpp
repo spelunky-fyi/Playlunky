@@ -39,7 +39,7 @@ bool CreateHashedStringsFile(const std::filesystem::path& source_file, const std
 					destination << "0x" << std::setw(8) << 0xdeadbeef << '\n';
 				}
 				else {
-					const auto comment_and_line = line + current_comment_block;
+					const auto comment_and_line = algo::trim(line) + current_comment_block;
 					destination << "0x" << std::setw(8) << HashString(comment_and_line) << '\n';
 				}
 			}
