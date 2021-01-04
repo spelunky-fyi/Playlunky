@@ -5,15 +5,16 @@
 #include <optional>
 #include <span>
 
+struct TileDimensions {
+	std::uint32_t x;
+	std::uint32_t y;
+
+	bool operator==(const TileDimensions&) const = default;
+};
+
 struct ImageTiling {
-	struct {
-		std::uint32_t x;
-		std::uint32_t y;
-	} TileSize;
-	struct {
-		std::optional<std::uint32_t> x{ std::nullopt };
-		std::optional<std::uint32_t> y{ std::nullopt };
-	} ThisTileSize;
+	TileDimensions TileSize;
+	std::optional<TileDimensions> ThisTileSize;
 };
 
 struct ImageSubRegion {

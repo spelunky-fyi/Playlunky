@@ -69,10 +69,12 @@ Image Image::GetSubImage(ImageSubRegion region) {
 	return sub_image;
 }
 Image Image::GetSubImage(ImageTiling tiling, ImageSubRegion region) {
+	const TileDimensions this_tile_size = tiling.ThisTileSize.value_or(tiling.TileSize);
+
 	region.x *= tiling.TileSize.x;
 	region.y *= tiling.TileSize.y;
-	region.width *= tiling.ThisTileSize.x.value_or(tiling.TileSize.x);
-	region.height *= tiling.ThisTileSize.y.value_or(tiling.TileSize.x);
+	region.width *= this_tile_size.x;
+	region.height *= this_tile_size.y;
 
 	return GetSubImage(region);
 }
@@ -92,10 +94,12 @@ void Image::Blit(const Image& source, ImageSubRegion region) {
 	source.mImpl->Image.copyTo(mImpl->Image(cv::Rect(region.x, region.y, region.width, region.height)));
 }
 void Image::Blit(const Image& source, ImageTiling tiling, ImageSubRegion region) {
+	const TileDimensions this_tile_size = tiling.ThisTileSize.value_or(tiling.TileSize);
+
 	region.x *= tiling.TileSize.x;
 	region.y *= tiling.TileSize.y;
-	region.width *= tiling.ThisTileSize.x.value_or(tiling.TileSize.x);
-	region.height *= tiling.ThisTileSize.y.value_or(tiling.TileSize.x);
+	region.width *= this_tile_size.x;
+	region.height *= this_tile_size.y;
 
 	Blit(source, region);
 }

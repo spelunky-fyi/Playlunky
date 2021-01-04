@@ -11,9 +11,12 @@
 static constexpr struct { std::uint32_t x, y; } s_CharacterStickerIndex{ .x{ 8 }, .y{ 14 } };
 static constexpr struct { std::uint32_t x, y; } s_CharacterJournalIndex{ .x{ 9 }, .y{ 14 } };
 
-static constexpr std::uint32_t s_CharacterTileSize = 128;
-static constexpr std::uint32_t s_StickerTileSize = 80;
-static constexpr std::uint32_t s_PeopleTileSize = 160;
+static constexpr struct { std::uint32_t x, y; } s_NumCharacterTiles{ .x{ 16 }, .y{ 16 } };
+static constexpr struct { std::uint32_t x, y; } s_NumStickerTiles{ .x{ 10 }, .y{ 10 } };
+static constexpr struct { std::uint32_t x, y; } s_NumJournalTiles{ .x{ 10 }, .y{ 5 } };
+
+static constexpr std::uint32_t s_DefaultStickerTileSize{ 80 };
+static constexpr std::uint32_t s_DefaultJournalTileSize{ 160 };
 
 bool CharacterStickerGenerator::RegisterCharacter(std::string_view character_color, bool outdated) {
 	if (const auto* info = algo::find_if(mInfos, [character_color](const CharacterInfo& info) { return info.Color == character_color; })) {
@@ -37,9 +40,17 @@ bool CharacterStickerGenerator::GenerateStickers(const std::filesystem::path& so
 
 	Image sticker_image;
 	sticker_image.LoadFromPng(source_sticker);
+	const TileDimensions sticker_tile_size{
+		.x{ sticker_image.GetWidth() / s_NumStickerTiles.x },
+		.y{ sticker_image.GetHeight() / s_NumStickerTiles.y }
+	};
 
 	Image journal_image;
 	journal_image.LoadFromPng(source_journal);
+	const TileDimensions journal_tile_size{
+		.x{ journal_image.GetWidth() / s_NumJournalTiles.x },
+		.y{ journal_image.GetHeight() / s_NumJournalTiles.y }
+	};
 
 	for (std::string_view character_color : mModdedCharacters) {
 		const std::string character_path = fmt::format("Data/Textures/char_{}.png", character_color);
@@ -47,39 +58,53 @@ bool CharacterStickerGenerator::GenerateStickers(const std::filesystem::path& so
 			if (const auto* info = algo::find_if(mInfos, [character_color](const CharacterInfo& info) { return info.Color == character_color; })) {
 				Image modded_stickers_image;
 				modded_stickers_image.LoadFromPng(char_file.value().parent_path() / sticker_file.filename());
+				const TileDimensions modded_sticker_tile_size{
+					.x{ modded_stickers_image.GetWidth() / s_NumStickerTiles.x },
+					.y{ modded_stickers_image.GetHeight() / s_NumStickerTiles.y }
+				};
 
 				Image modded_journal_image;
 				modded_journal_image.LoadFromPng(char_file.value().parent_path() / journal_file.filename());
+				const TileDimensions modded_journal_tile_size{
+					.x{ modded_journal_image.GetWidth() / s_NumJournalTiles.x },
+					.y{ modded_journal_image.GetHeight() / s_NumJournalTiles.y }
+				};
 
 				std::optional<Image> char_image;
+				TileDimensions char_tile_size{};
 				if (modded_stickers_image.IsEmpty() || modded_journal_image.IsEmpty()) {
 					char_image.emplace();
 					char_image->LoadFromPng(char_file.value());
+					char_tile_size = TileDimensions{
+						.x{ char_image->GetWidth() / s_NumCharacterTiles.x },
+						.y{ char_image->GetHeight() / s_NumCharacterTiles.y }
+					};
 				}
 
 				{
 					std::optional<Image> sticker_tile;
 					if (!modded_stickers_image.IsEmpty()) {
 						sticker_tile = modded_stickers_image.GetSubImage(
-							ImageTiling{ s_StickerTileSize, s_StickerTileSize },
+							ImageTiling{ modded_sticker_tile_size },
 							ImageSubRegion{ info->TileIndex.x, info->TileIndex.y, 1, 1 });
 					}
 					else {
 						sticker_tile = char_image->GetSubImage(
-							ImageTiling{ s_CharacterTileSize, s_CharacterTileSize, s_StickerTileSize, s_StickerTileSize },
+							ImageTiling{ char_tile_size },
 							ImageSubRegion{ s_CharacterStickerIndex.x, s_CharacterStickerIndex.y, 1, 1 });
 					}
 
 					if (sticker_tile == std::nullopt || sticker_tile->IsEmpty()) {
 						Image standing_tile = char_image->GetSubImage(
-							ImageTiling{ s_CharacterTileSize, s_CharacterTileSize },
+							ImageTiling{ char_tile_size },
 							ImageSubRegion{ 0, 0, 1, 1 });
-						standing_tile.Resize(ImageSize{ s_StickerTileSize, s_StickerTileSize });
 						sticker_tile = std::move(standing_tile);
 					}
 
+					sticker_tile->Resize(ImageSize{ .x{ sticker_tile_size.x }, .y{ sticker_tile_size.y } });
+
 					sticker_image.Blit(sticker_tile.value(),
-						ImageTiling{ s_StickerTileSize, s_StickerTileSize }, 
+						ImageTiling{ sticker_tile_size },
 						ImageSubRegion{ info->TileIndex.x, info->TileIndex.y, 1, 1 });
 				}
 
@@ -87,25 +112,26 @@ bool CharacterStickerGenerator::GenerateStickers(const std::filesystem::path& so
 					std::optional<Image> entry_tile;
 					if (!modded_journal_image.IsEmpty()) {
 						entry_tile = modded_journal_image.GetSubImage(
-							ImageTiling{ s_PeopleTileSize, s_PeopleTileSize },
+							ImageTiling{ modded_journal_tile_size },
 							ImageSubRegion{ info->TileIndex.x, info->TileIndex.y, 1, 1 });
 					}
 					else {
 						entry_tile = char_image->GetSubImage(
-							ImageTiling{ s_CharacterTileSize, s_CharacterTileSize, s_PeopleTileSize, s_PeopleTileSize },
-							ImageSubRegion{ s_CharacterStickerIndex.x, s_CharacterStickerIndex.y, 1, 1 });
+							ImageTiling{ char_tile_size },
+							ImageSubRegion{ s_CharacterStickerIndex.x, s_CharacterStickerIndex.y, 2, 2 });
 					}
 
 					if (entry_tile == std::nullopt || entry_tile->IsEmpty()) {
 						Image standing_tile = char_image->GetSubImage(
-							ImageTiling{ s_CharacterTileSize, s_CharacterTileSize },
+							ImageTiling{ char_tile_size },
 							ImageSubRegion{ 0, 0, 1, 1 });
-						standing_tile.Resize(ImageSize{ s_PeopleTileSize, s_PeopleTileSize });
 						entry_tile = std::move(standing_tile);
 					}
 
+					entry_tile->Resize(ImageSize{ .x{ journal_tile_size.x }, .y{ journal_tile_size.y } });
+
 					journal_image.Blit(entry_tile.value(),
-						ImageTiling{ s_PeopleTileSize, s_PeopleTileSize },
+						ImageTiling{ journal_tile_size },
 						ImageSubRegion{ info->TileIndex.x, info->TileIndex.y, 1, 1 });
 				}
 			}
