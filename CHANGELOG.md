@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3] - 2021-04-01
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
+
+### Changed
+- Add support for (relatively) arbitrary character sheet sizes for sticker generation
+
 ## [0.4.2] - 2021-03-01
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
