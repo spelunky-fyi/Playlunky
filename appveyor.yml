@@ -19,7 +19,7 @@ skip_commits:
     - '**/*.html'
 
 environment:
-  APPVEYOR_CACHE_ENTRY_ZIP_ARGS: '-t7z -m0=lzma -mx=9'
+  APPVEYOR_CACHE_ENTRY_ZIP_ARGS: '-t7z -m0=lzma2 -mx=5'
   matrix:
     - TOOLSET: v142
 #    - TOOLSET: ClangCL
