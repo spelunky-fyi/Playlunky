@@ -24,17 +24,21 @@ environment:
     - TOOLSET: v142
 #    - TOOLSET: ClangCL
 
+cache:
+  - c:\.conan -> conanfile.txt
+  - c:\Users\Appveyor\.conan -> conanfile.txt
+
 clone_folder: c:/playlunky/
 
 install:
   - git submodule update --init --recursive
+  - python --version
+  - pip install conan --upgrade
+  - pip install numpy
+  - conan user
+  - conan --version
 
 before_build:
-- cmd: python --version
-- cmd: pip install conan --upgrade
-- cmd: pip install numpy
-- cmd: conan user
-- cmd: conan --version
 - ps: >-
     $ENV:PATH="$ENV:PATH;C:\Users\appveyor\AppData\Roaming\Python\Scripts"
 
