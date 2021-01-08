@@ -24,7 +24,7 @@ A huge thanks to the [modlunky2](https://github.com/spelunky-fyi/modlunky2) team
 
 Only Windows build is supported:
 ```sh
-git clone git@github.com:Malacath-92/Playlunky.git
+git clone git@github.com:spelunky-fyi/Playlunky.git
 cd playlunky
 git submodule update --init --recursive
 mkdir build
