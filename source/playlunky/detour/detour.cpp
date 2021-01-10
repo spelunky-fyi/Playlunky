@@ -83,7 +83,7 @@ void Attach() {
 			*trampoline = SigScan::FindPattern(*signature, true);
 			if (*trampoline != nullptr)
 			{
-				fmt::print("Found function {}:\n\tsig: {}\n\t at: {}\n", function_name, ByteStr{ .Str = *signature }, *trampoline);
+				fmt::print("Found function {}:\n\tsig: {}\n\t at: {}\n     offset: 0x{:x}\n", function_name, ByteStr{ .Str = *signature }, *trampoline, SigScan::GetOffset(*trampoline));
 			}
 		}
 

@@ -8,6 +8,24 @@
 #include <span>
 
 namespace SigScan {
+	void* FindPattern(const char* signature, void* from, void* to) {
+		const std::size_t size = (char*)to - (char*)from;
+		const std::size_t sig_length = strlen(signature);
+
+		for (std::size_t j = 0; j < size - sig_length; j++) {
+			bool found = true;
+			for (std::size_t k = 0; k < sig_length && found; k++) {
+				found = signature[k] == '*' || signature[k] == *((char*)from + j + k);
+			}
+
+			if (found) {
+				return (char*)from + j;
+			}
+		}
+
+		return nullptr;
+	}
+
 	MODULEINFO GetModuleInfo(HMODULE module) {
 		MODULEINFO module_info = { 0 };
 		GetModuleInformation(GetCurrentProcess(), module, &module_info, sizeof(MODULEINFO));
@@ -27,13 +45,27 @@ namespace SigScan {
 		return { section, num_sections };
 	}
 
+	std::size_t GetDataBundleSize(std::size_t bundle_start) {
+		static const std::size_t bundle_size = [bundle_start]() {
+			std::size_t bundle_size_compute{ 0 };
+			while (true) {
+				std::size_t asset_size = ((const std::uint32_t*)(bundle_start + bundle_size_compute))[0];
+				std::size_t name_size = ((const std::uint32_t*)(bundle_start + bundle_size_compute))[1];
+				if (asset_size == 0 && name_size == 0) {
+					break;
+				}
+				bundle_size_compute += asset_size + name_size + 2 * sizeof(std::uint32_t);
+			};
+			return bundle_size_compute;
+		}();
+		return bundle_size;
+	}
+
 	void* FindPattern(const char* module_name, const char* signature, bool code_only) {
 		if (module_name == nullptr || signature == nullptr)
-			return 0;
+			return nullptr;
 
 		if (HMODULE module = GetModuleHandleA(module_name)) {
-			std::size_t pattern_length = (std::size_t)strlen(signature);
-
 			MODULEINFO module_info = GetModuleInfo(module);
 			std::size_t base = (std::size_t)module_info.lpBaseOfDll;
 
@@ -48,25 +80,11 @@ namespace SigScan {
 
 					// Skip the bundled data for much faster scanning
 					if (strstr(module_name, "Spel2.exe") && strcmp((const char*)section.Name, ".text") == 0) {
-						while (true) {
-							std::size_t asset_size = ((const std::uint32_t*)(section_base + section_start))[0];
-							std::size_t name_size = ((const std::uint32_t*)(section_base + section_start))[1];
-							if (asset_size == 0 && name_size == 0) {
-								break;
-							}
-							section_start += asset_size + name_size + 2 * sizeof(std::uint32_t);
-						};
+						section_start += GetDataBundleSize(section_base);
 					}
 
-					for (std::size_t j = section_start; j < size - pattern_length; j++) {
-						bool found = true;
-						for (std::size_t k = 0; k < pattern_length && found; k++) {
-							found = signature[k] == '*' || signature[k] == *(char*)(section_base + j + k);
-						}
-
-						if (found) {
-							return (void*)(section_base + j);
-						}
+					if (void* res = FindPattern(signature, (void*)(section_base + section_start), (void*)(section_base + size))) {
+						return res;
 					}
 				}
 			}
@@ -81,22 +99,42 @@ namespace SigScan {
 		return FindPattern(module_name, signature, code_only);
 	}
 
-	void* GetDataSection() {
-		char module_name[MAX_PATH];
-		GetModuleFileNameA(0, module_name, MAX_PATH);
-		if (HMODULE module = GetModuleHandleA(module_name)) {
-			MODULEINFO module_info = GetModuleInfo(module);
-			std::size_t base = (std::size_t)module_info.lpBaseOfDll;
+	std::ptrdiff_t GetOffset(const char* module_name, const void* address) {
+		if (module_name == nullptr || address == nullptr)
+			return 0;
 
-			std::span<IMAGE_SECTION_HEADER> section_headers = GetImageSectionHeaders(module);
-			for (auto& section : section_headers) {
-				if (strcmp((const char*)section.Name, ".text") == 0) {
-					std::size_t section_base = base + (std::size_t)section.VirtualAddress;
-					return (void*)section_base;
-				}
-			}
+		if (HMODULE module = GetModuleHandleA(module_name)) {
+			return (char*)address - (char*)module;
 		}
 
-		return nullptr;
+		return 0;
+	}
+
+	std::ptrdiff_t GetOffset(const void* address) {
+		char module_name[MAX_PATH];
+		GetModuleFileNameA(0, module_name, MAX_PATH);
+		return GetOffset(module_name, address);
+	}
+
+	void* GetDataSection() {
+		static void* const data_bundle_section = []() -> void* {
+			char module_name[MAX_PATH];
+			GetModuleFileNameA(0, module_name, MAX_PATH);
+			if (HMODULE module = GetModuleHandleA(module_name)) {
+				MODULEINFO module_info = GetModuleInfo(module);
+				std::size_t base = (std::size_t)module_info.lpBaseOfDll;
+
+				std::span<IMAGE_SECTION_HEADER> section_headers = GetImageSectionHeaders(module);
+				for (auto& section : section_headers) {
+					if (strcmp((const char*)section.Name, ".text") == 0) {
+						std::size_t section_base = base + (std::size_t)section.VirtualAddress;
+						return (void*)section_base;
+					}
+				}
+			}
+
+			return nullptr;
+		}();
+		return data_bundle_section;
 	}
 }
