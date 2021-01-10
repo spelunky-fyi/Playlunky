@@ -23,10 +23,14 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 	if (original_shader_code.empty()) {
 		return false;
 	}
+	auto find_decl_in_original = [&original_shader_code](std::string_view decl) {
+		return original_shader_code.find(decl) != std::string::npos;
+	};
 
 	const auto shader_mods = vfs.GetAllFilePaths("shaders_mod.hlsl");
 
 	struct ModdedFunction {
+		std::string Preamble;
 		std::string Declaration;
 		std::string Body;
 	};
@@ -50,6 +54,7 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 				return std::nullopt;
 			};
 
+			std::string function_preamble;
 			std::string function_decl;
 			std::string function_body;
 			std::size_t scope_depth = 0;
@@ -69,12 +74,17 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 					}
 					else {
 						if (scope_depth == 1) {
-							function_body += '}';
-							if (!algo::contains_if(modded_functions, [&function_decl](const ModdedFunction& modded_fun) { return modded_fun.Declaration == function_decl; })) {
+							if (algo::trim(function_decl).find("struct") == 0 || !find_decl_in_original(function_decl)) {
+								function_preamble += function_decl + function_body;
+							}
+							else if (!algo::contains_if(modded_functions, [&function_decl](const ModdedFunction& modded_fun) { return modded_fun.Declaration == function_decl; })) {
+								function_body += '}';
 								modded_functions.push_back(ModdedFunction{
+									.Preamble = std::move(function_preamble),
 									.Declaration = std::move(function_decl),
 									.Body = std::move(function_body)
 								});
+								function_preamble.clear();
 							}
 							function_decl.clear();
 							function_body.clear();
@@ -83,6 +93,7 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 					}
 				}
 				else if (c == '\n' && scope_depth == 0) {
+					function_preamble += function_decl + '\n';
 					function_decl.clear();
 				}
 				
@@ -99,10 +110,6 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 	}
 
 	for (const ModdedFunction& modded_function : modded_functions) {
-		if (modded_function.Declaration.find("struct") != std::string::npos) {
-			continue;
-		}
-
 		const auto decl_pos = original_shader_code.find(modded_function.Declaration);
 		if (decl_pos != std::string::npos) {
 			const auto opening_braces_pos = original_shader_code.find('{', decl_pos + modded_function.Declaration.size());
@@ -124,6 +131,7 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 				}();
 				if (closing_braces != std::string::npos) {
 					original_shader_code.replace(opening_braces_pos, closing_braces - opening_braces_pos + 1, modded_function.Body);
+					original_shader_code.insert(decl_pos, modded_function.Preamble);
 				}
 			}
 		}
