@@ -45,7 +45,8 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 		}();
 
 		if (!shader_mod_code.empty()) {
-			auto read_char = [&shader_mod_code, parsing_index = size_t{ 0 }]() mutable -> std::optional<char> {
+			auto parsing_index = size_t{ 0 };
+			auto read_char = [&shader_mod_code, &parsing_index]() -> std::optional<char> {
 				if (parsing_index < shader_mod_code.size()) {
 					char c = shader_mod_code[parsing_index];
 					parsing_index++;
@@ -53,6 +54,20 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 				}
 				return std::nullopt;
 			};
+			auto peek_char = [&shader_mod_code, &parsing_index]() -> std::optional<char> {
+				if (parsing_index < shader_mod_code.size()) {
+					char c = shader_mod_code[parsing_index];
+					return c;
+				}
+				return std::nullopt;
+			};
+
+			enum class CommentState {
+				None,
+				SingleLine,
+				MultiLine
+			};
+			CommentState comment_state = CommentState::None;
 
 			std::string function_preamble;
 			std::string function_decl;
@@ -60,6 +75,32 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 			std::size_t scope_depth = 0;
 			while (auto c_opt = read_char()) {
 				char c = c_opt.value();
+
+				if (comment_state == CommentState::None && c == '/') {
+					if (peek_char().value_or('?') == '/') {
+						read_char();
+						comment_state = CommentState::SingleLine;
+						continue;
+					}
+					else if (peek_char().value_or('?') == '*') {
+						read_char();
+						comment_state = CommentState::MultiLine;
+						continue;
+					}
+				}
+				else if (comment_state == CommentState::SingleLine) {
+					if (c == '\n') {
+						comment_state = CommentState::None;
+					}
+					continue;
+				}
+				else if (comment_state == CommentState::MultiLine) {
+					if (c == '*' && peek_char().value_or('?') == '/') {
+						read_char();
+						comment_state = CommentState::None;
+					}
+					continue;
+				}
 
 				if (c == '{') {
 					if (scope_depth == 0) {
