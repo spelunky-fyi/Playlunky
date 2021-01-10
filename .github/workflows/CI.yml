@@ -31,7 +31,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: |
-          ${{ env.USERPROFILE }}/.conan
+          c:/Users/runneradmin/.conan
           c:/.conan
         key: ${{ matrix.build_type }}-conan-${{ hashFiles('**/conanfile.txt') }}
 
