@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Shader mods now copy all parts that are not known into the shader (instead of being ignored)
+- Shader mods are also properly parsed for comments (single line '//' and multiline '/*' comments should work)
+
 ## [0.4.3] - 2021-04-01
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
