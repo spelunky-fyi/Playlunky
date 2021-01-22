@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
 				mod_dir = "Mods/Packs" / paths.front().stem();
 			}
 		}
-		else {
+		if (mod_dir.empty()) {
 			const std::size_t first_new_mod = []() {
 				std::size_t first_new_mod{ 0 };
 				while (fs::exists(fmt::format("Mods/Packs/Mod_{}", first_new_mod))) {
