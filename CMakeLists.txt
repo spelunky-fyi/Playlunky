@@ -52,12 +52,15 @@ target_compile_definitions(playlunky_definitions INTERFACE NOMINMAX)
 add_library(playlunky_dependencies INTERFACE)
 target_link_libraries(playlunky_dependencies INTERFACE
 	fmt::fmt
+	libzip::libzip)
+
+add_library(playlunky_inject_dependencies INTERFACE)
+target_link_libraries(playlunky_inject_dependencies INTERFACE
 	lib_detours)
 
 add_library(playlunky_lib_dependencies INTERFACE)
 target_link_libraries(playlunky_lib_dependencies INTERFACE
 	lodepng::lodepng
-	libzip::libzip
 	ctre::ctre
 	zstd::zstd
 	opencv::opencv)
@@ -78,6 +81,7 @@ target_link_libraries(playlunky64 PRIVATE
 	playlunky_warnings
 	playlunky_definitions
 	playlunky_dependencies
+	playlunky_inject_dependencies
 	playlunky_lib_dependencies)
 target_include_directories(playlunky64 PRIVATE "source/playlunky" "source/shared")
 
@@ -92,8 +96,22 @@ target_link_libraries(playlunky_launcher PRIVATE
 	playlunky_warnings
 	playlunky_definitions
 	playlunky_dependencies
+	playlunky_inject_dependencies
 	structopt::structopt)
 target_include_directories(playlunky_launcher PRIVATE "source/launcher" "source/shared" "res")
+
+
+# --------------------------------------------------
+# Create installer executbale
+file(GLOB_RECURSE playlunky_installer_sources CONFIGURE_DEPENDS "source/installer/*.cpp")
+file(GLOB_RECURSE playlunky_installer_headers CONFIGURE_DEPENDS "source/installer/*.h" "source/installer/*.inl")
+set(playlunky_installer_resources "res/playlunky_installer.rc")
+add_executable(playlunky_installer ${playlunky_installer_sources} ${shared_sources} ${playlunky_installer_headers} ${shared_headers} ${playlunky_installer_resources})
+target_link_libraries(playlunky_installer PRIVATE
+	playlunky_warnings
+	playlunky_definitions
+	playlunky_dependencies)
+target_include_directories(playlunky_installer PRIVATE "source/installer" "source/shared" "res")
 
 
 # --------------------------------------------------
@@ -160,6 +178,8 @@ if(EXISTS ${SPELUNKY_INSTALL_DIR})
 	set_target_properties(playlunky_launcher PROPERTIES
 		VS_DEBUGGER_COMMAND_ARGUMENTS "--console --exe_dir \"${SPELUNKY_INSTALL_DIR}\""
 		VS_DEBUGGER_WORKING_DIRECTORY $<TARGET_FILE_DIR:playlunky_launcher>)
+	set_target_properties(playlunky_installer PROPERTIES
+		VS_DEBUGGER_WORKING_DIRECTORY "${SPELUNKY_INSTALL_DIR}")
 
 	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT playlunky_launcher)
 endif()
@@ -171,6 +191,8 @@ install(TARGETS
 	playlunky64 RUNTIME DESTINATION .)
 install(TARGETS
 	playlunky_launcher RUNTIME DESTINATION .)
+install(TARGETS
+	playlunky_installer RUNTIME DESTINATION .)
 install(FILES
 	res/steam_appid.txt DESTINATION .)
 install(FILES
