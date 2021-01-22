@@ -15,7 +15,7 @@
 
 #define DLL_NAME "playlunky" DETOURS_STRINGIFY(DETOURS_BITS) ".dll"
 
-struct ByteStr { const char* Str; };
+struct ByteStr { std::string_view Str; };
 template<>
 struct fmt::formatter<ByteStr> {
 	constexpr auto parse(format_parse_context& ctx) {
@@ -26,7 +26,7 @@ struct fmt::formatter<ByteStr> {
 	auto format(ByteStr byte_str, FormatContext& ctx) {
 		auto out = ctx.out();
 
-		const auto num_bytes = strlen(byte_str.Str);
+		const std::size_t num_bytes = byte_str.Str.size();
 		if (num_bytes > 0) {
 			const uint8_t first_byte = byte_str.Str[0];
 			if (first_byte == '*') {
@@ -36,7 +36,7 @@ struct fmt::formatter<ByteStr> {
 				out = format_to(out, "{:02x}", first_byte);
 			}
 
-			std::span<uint8_t> remainder_byte_span{ (uint8_t*)byte_str.Str + 1, num_bytes - 1 };
+			std::span<uint8_t> remainder_byte_span{ (uint8_t*)byte_str.Str.data() + 1, num_bytes - 1 };
 			for (uint8_t c : remainder_byte_span) {
 				if (c == '*') {
 					out = format_to(out, " ??");

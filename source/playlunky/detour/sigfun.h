@@ -1,6 +1,11 @@
 #pragma once
 
+#include <string_view>
 #include <type_traits>
+
+[[nodiscard]] inline constexpr std::string_view operator"" _sig(const char* _Str, size_t _Len) noexcept {
+	return std::string_view(_Str, _Len);
+}
 
 namespace SigScan
 {
@@ -8,7 +13,7 @@ namespace SigScan
 	struct Function {
 		using type = FunT;
 
-		const char* Signature{ "" };
+		std::string_view Signature{ "" };
 		FunT Func{ nullptr };
 
 		template<class... Args>

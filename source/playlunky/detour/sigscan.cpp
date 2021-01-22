@@ -8,9 +8,9 @@
 #include <span>
 
 namespace SigScan {
-	void* FindPattern(const char* signature, void* from, void* to) {
+	void* FindPattern(std::string_view signature, void* from, void* to) {
 		const std::size_t size = (char*)to - (char*)from;
-		const std::size_t sig_length = strlen(signature);
+		const std::size_t sig_length = signature.size();
 
 		for (std::size_t j = 0; j < size - sig_length; j++) {
 			bool found = true;
@@ -61,8 +61,8 @@ namespace SigScan {
 		return bundle_size;
 	}
 
-	void* FindPattern(const char* module_name, const char* signature, bool code_only) {
-		if (module_name == nullptr || signature == nullptr)
+	void* FindPattern(const char* module_name, std::string_view signature, bool code_only) {
+		if (module_name == nullptr || signature.empty())
 			return nullptr;
 
 		if (HMODULE module = GetModuleHandleA(module_name)) {
@@ -93,7 +93,7 @@ namespace SigScan {
 		return nullptr;
 	}
 
-	void* FindPattern(const char* signature, bool code_only) {
+	void* FindPattern(std::string_view signature, bool code_only) {
 		char module_name[MAX_PATH];
 		GetModuleFileNameA(0, module_name, MAX_PATH);
 		return FindPattern(module_name, signature, code_only);

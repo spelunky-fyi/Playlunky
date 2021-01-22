@@ -1,8 +1,10 @@
 #pragma once
 
+#include <string_view>
+
 struct DetourEntry {
 	void** Trampoline;
 	void* Detour;
-	const char** Signature;
+	std::string_view* Signature;
 	const char* FunctionName;
 };
