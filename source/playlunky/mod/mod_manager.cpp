@@ -36,11 +36,13 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 	const fs::path mods_root_path{ mods_root };
 	if (fs::exists(mods_root_path) && fs::is_directory(mods_root_path)) {
 		{
+			bool has_loose_files{ false };
+
 			ModDatabase mod_db{ mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
 
 			mod_db.SetEnabled(true);
 			mod_db.UpdateDatabase();
-			mod_db.ForEachFile([&mods_root_path](const fs::path& rel_file_path, bool outdated, [[maybe_unused]] bool deleted, [[maybe_unused]] std::optional<bool> new_enabled_state) {
+			mod_db.ForEachFile([&mods_root_path, &has_loose_files](const fs::path& rel_file_path, bool outdated, [[maybe_unused]] bool deleted, [[maybe_unused]] std::optional<bool> new_enabled_state) {
 				if (outdated) {
 					if (rel_file_path.extension() == ".zip") {
 						const fs::path zip_path = mods_root_path / rel_file_path;
@@ -48,6 +50,9 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 						if (MessageBox(NULL, message.c_str(), "Zipped Mod Found", MB_YESNO) == IDYES) {
 							UnzipMod(zip_path);
 						}
+					}
+					else if (rel_file_path.filename() != "load_order.txt") {
+						has_loose_files = true;
 					}
 				}
 			});
@@ -60,6 +65,11 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			});
 
 			mod_db.WriteDatabase();
+
+			if (has_loose_files) {
+				const fs::path absolute_mods_root_path{ fs::absolute(mods_root_path) };
+				LogFatal("The 'Mods/Packs' folder contains loose files, did you mean to create a subfolder to paste those files into?");
+			}
 		}
 
 		const auto db_folder = mods_root_path / ".db";
@@ -278,7 +288,14 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				}
 			}
 		}
-	}
 
-	LogInfo("All mods initialized...");
+		LogInfo("All mods initialized...");
+	}
+	else {
+		const fs::path absolute_mods_root_path{ fs::absolute(mods_root_path) };
+		LogFatal("The 'Mods/Packs' folder does not exist, did you do a mistake when installing mods or did you not mean to run Playlunky? "
+				 "The folder was expected to be found here: {}", absolute_mods_root_path.string());
+
+		LogInfo("No mods were initialized...");
+	}
 }
