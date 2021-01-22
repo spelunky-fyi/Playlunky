@@ -6,9 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.4] - 2021-22-01
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
+
+### Added
+- Add a mod installer that should make it super easy to install mods now (also works for Modlunky2 since it loads mods from the same folder)§
+
 ### Changed
 - Shader mods now copy all parts that are not known into the shader (instead of being ignored)
 - Shader mods are also properly parsed for comments (single line '//' and multiline '/*' comments should work)
+- Slightly optimized pattern lookup in Spel2.exe
+- Bumped OpenCV to latest
+
+### Fixed
+- Fix a mods folder structure unconditionally, which resolves some rare errors when changing existing mods
+- Fixed an issue with pattern lookup in Spel2.exe that wouldn't look for the whole pattern if it contained null-characters
 
 ## [0.4.3] - 2021-04-01
 
