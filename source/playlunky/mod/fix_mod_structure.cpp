@@ -17,6 +17,9 @@ static constexpr std::string_view s_LevelTargetPath{ "Data/Levels" };
 static constexpr ctll::fixed_string s_OldTextureRule{ "ai\\.(DDS|png)" };
 static constexpr std::string_view s_OldTextureTargetPath{ "Data/Textures/OldTextures" };
 
+static constexpr ctll::fixed_string s_FullTextureRule{ ".*_full\\.(DDS|png)" };
+static constexpr std::string_view s_FullTextureTargetPath{ "Data/Textures/Merged" };
+
 static constexpr ctll::fixed_string s_TextureRule{ ".*\\.(DDS|png)" };
 static constexpr std::string_view s_TextureTargetPath{ "Data/Textures" };
 
@@ -44,6 +47,9 @@ void FixModFolderStructure(const std::filesystem::path& mod_folder) {
 			}
 			else if (ctre::match<s_OldTextureRule>(file_name)) {
 				path_mappings.push_back({ path, mod_folder / s_OldTextureTargetPath / file_name });
+			}
+			else if (ctre::match<s_FullTextureRule>(file_name)) {
+				path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / file_name });
 			}
 			else if (ctre::match<s_TextureRule>(file_name)) {
 				path_mappings.push_back({ path, mod_folder / s_TextureTargetPath / file_name });

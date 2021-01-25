@@ -6,6 +6,7 @@
 #include "mod_database.h"
 #include "png_dds_conversion.h"
 #include "shader_merge.h"
+#include "sprite_sheet_merger.h"
 #include "string_hash.h"
 #include "string_merge.h"
 #include "unzip_mod.h"
@@ -74,7 +75,33 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 		const auto db_original_folder = db_folder / "Original";
 		{
 			const auto files = std::array{
+				fs::path{ "Data/Textures/char_black.DDS" },
+				fs::path{ "Data/Textures/char_blue.DDS" },
+				fs::path{ "Data/Textures/char_cerulean.DDS" },
+				fs::path{ "Data/Textures/char_cinnabar.DDS" },
+				fs::path{ "Data/Textures/char_cyan.DDS" },
+				fs::path{ "Data/Textures/char_eggchild.DDS" },
+				fs::path{ "Data/Textures/char_gold.DDS" },
+				fs::path{ "Data/Textures/char_gray.DDS" },
+				fs::path{ "Data/Textures/char_green.DDS" },
+				fs::path{ "Data/Textures/char_hired.DDS" },
+				fs::path{ "Data/Textures/char_iris.DDS" },
+				fs::path{ "Data/Textures/char_khaki.DDS" },
+				fs::path{ "Data/Textures/char_lemon.DDS" },
+				fs::path{ "Data/Textures/char_lime.DDS" },
+				fs::path{ "Data/Textures/char_magenta.DDS" },
+				fs::path{ "Data/Textures/char_olive.DDS" },
+				fs::path{ "Data/Textures/char_orange.DDS" },
+				fs::path{ "Data/Textures/char_pink.DDS" },
+				fs::path{ "Data/Textures/char_red.DDS" },
+				fs::path{ "Data/Textures/char_violet.DDS" },
+				fs::path{ "Data/Textures/char_white.DDS" },
+				fs::path{ "Data/Textures/char_yellow.DDS" },
+				fs::path{ "Data/Textures/items.DDS" },
+				fs::path{ "Data/Textures/monsters_pets.DDS" },
+				fs::path{ "Data/Textures/mounts.DDS" },
 				fs::path{ "Data/Textures/journal_stickers.DDS" },
+				fs::path{ "Data/Textures/journal_entry_mons.DDS" },
 				fs::path{ "Data/Textures/journal_entry_people.DDS" },
 				fs::path{ "shaders.hlsl" },
 				fs::path{ "strings00.str" },
@@ -148,6 +175,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 		}();
 
 		CharacterStickerGenerator sticker_gen;
+		SpriteSheetMerger sprite_sheet_merger;
 		StringMerger string_merger;
 		bool has_outdated_shaders{ false };
 
@@ -188,6 +216,11 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 							}
 						}
 
+						const bool is_merged_asset = full_asset_path.parent_path().filename() == "Merged";
+						if (is_merged_asset) {
+							sprite_sheet_merger.RegisterSheet(full_asset_path, outdated, deleted);
+						}
+
 						if (outdated || deleted) {
 							const auto db_destination = (mod_db_folder / rel_asset_path).replace_extension(".dds");
 
@@ -196,7 +229,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 									LogInfo("Successfully deleted file '{}' that was removed from a mod...", full_asset_path.string());
 								}
 							}
-							else if (ConvertPngToDds(full_asset_path, db_destination))
+							else if (!is_merged_asset && ConvertPngToDds(full_asset_path, db_destination))
 							{
 								LogInfo("Successfully converted file '{}' to be readable by the game...", full_asset_path.string());
 							}
@@ -242,6 +275,15 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			}
 			else {
 				LogInfo("Failed generating sticker and journal entries from installed character mods...");
+			}
+		}
+
+		if (sprite_sheet_merger.NeedsRegeneration()) {
+			if (sprite_sheet_merger.GenerateRequiredSheets(db_original_folder, db_folder, vfs)) {
+				LogInfo("Successfully generated merged sheets from mods...");
+			}
+			else {
+				LogInfo("Failed generating merged sheets from mods...");
 			}
 		}
 
