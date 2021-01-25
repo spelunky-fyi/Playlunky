@@ -115,6 +115,17 @@ target_include_directories(playlunky_installer PRIVATE "source/installer" "sourc
 
 
 # --------------------------------------------------
+# Create uninstaller executable
+file(GLOB_RECURSE playlunky_uninstaller_sources CONFIGURE_DEPENDS "source/uninstaller/*.cpp")
+set(playlunky_install_resources "res/playlunky_uninstaller.rc")
+add_executable(playlunky_uninstaller ${playlunky_installer_sources} )
+target_link_libraries(playlunky_uninstaller PRIVATE
+	playlunky_warnings
+	playlunky_definitions
+	playlunky_dependencies)
+target_include_directories(playlunky_uninstaller PRIVATE "source/uninstaller" "source/shared" "res")
+
+# --------------------------------------------------
 # Merge files from source and include in the IDE
 function(group_files sources)
 	foreach(FILE ${sources})
@@ -193,6 +204,8 @@ install(TARGETS
 	playlunky_launcher RUNTIME DESTINATION .)
 install(TARGETS
 	playlunky_installer RUNTIME DESTINATION .)
+install(TARGETS
+	playlunky_uninstaller RUNTIME DESTINATION .)
 install(FILES
 	res/steam_appid.txt DESTINATION .)
 install(FILES
