@@ -18,7 +18,7 @@ static constexpr ctll::fixed_string s_OldTextureRule{ "ai\\.(DDS|png)" };
 static constexpr std::string_view s_OldTextureTargetPath{ "Data/Textures/OldTextures" };
 
 static constexpr ctll::fixed_string s_FullTextureRule{ ".*_full\\.(DDS|png)" };
-static constexpr std::string_view s_FullTextureTargetPath{ "Data/Textures/Merged" };
+static constexpr std::string_view s_FullTextureTargetPath{ "Data/Textures/Entities" };
 
 static constexpr ctll::fixed_string s_TextureRule{ ".*\\.(DDS|png)" };
 static constexpr std::string_view s_TextureTargetPath{ "Data/Textures" };
