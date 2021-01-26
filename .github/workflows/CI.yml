@@ -2,46 +2,47 @@ name: Github Actions CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
     name: Windows ${{ matrix.build_type }}
-    runs-on: 	windows-latest
+    runs-on: windows-latest
     strategy:
       matrix:
         build_type: [Debug, Release]
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - uses: lukka/get-cmake@latest
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          submodules: true
 
-    - name: Checkout submodules
-      run: git submodule update --init --recursive
+      - uses: actions/setup-python@v2
+      - uses: lukka/get-cmake@latest
 
-    - name: Prepare
-      run: |
-        python -m pip install --upgrade pip
-        pip install conan
+      - name: Prepare
+        run: |
+          python -m pip install --upgrade pip
+          pip install conan
 
-    - name: Cache conan
-      uses: actions/cache@v2
-      with:
-        path: |
-          c:/Users/runneradmin/.conan
-          c:/.conan
-        key: ${{ matrix.build_type }}-conan-${{ hashFiles('**/conanfile.txt') }}
+      - name: Cache conan
+        uses: actions/cache@v2
+        with:
+          path: |
+            c:/Users/runneradmin/.conan
+            c:/.conan
+          key: ${{ matrix.build_type }}-conan-${{ hashFiles('**/conanfile.txt') }}
 
-    - name: Configure
-      run: |
-        mkdir build
-        cd build
-        cmake ..
+      - name: Configure
+        run: |
+          mkdir build
+          cd build
+          cmake ..
 
-    - name: Build
-      run: |
-        cd build
-        cmake --build . --config ${{matrix.build_type}}
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config ${{matrix.build_type}}
