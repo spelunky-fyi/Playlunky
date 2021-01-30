@@ -60,7 +60,10 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 			mod_db.UpdateDatabase();
 			mod_db.ForEachFolder([&mods_root_path](const fs::path& rel_folder_path, [[maybe_unused]] bool outdated, [[maybe_unused]] bool deleted, [[maybe_unused]] std::optional<bool> new_enabled_state) {
-				FixModFolderStructure(mods_root_path / rel_folder_path);
+				const fs::path folder_path = mods_root_path / rel_folder_path;
+				if (fs::exists(folder_path)) {
+					FixModFolderStructure(folder_path);
+				}
 			});
 
 			mod_db.WriteDatabase();

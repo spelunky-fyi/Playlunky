@@ -1,3 +1,6 @@
 [submodule "submodules/detours"]
 	path = submodules/detours
 	url = https://github.com/microsoft/Detours.git
+[submodule "submodules/inih"]
+	path = submodules/inih
+	url = https://github.com/jtilly/inih.git
