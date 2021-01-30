@@ -19,13 +19,13 @@ public:
 
 	void RegisterSheet(const std::filesystem::path& full_sheet, bool outdated, bool deleted);
 
-	bool NeedsRegeneration() const;
+	bool NeedsRegeneration(const std::filesystem::path& destination_folder) const;
 
 	bool GenerateRequiredSheets(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, VirtualFilesystem& vfs);
 
 private:
 	struct TargetSheet;
-	bool NeedsRegen(const TargetSheet& target_sheet) const;
+	bool NeedsRegen(const TargetSheet& target_sheet, const std::filesystem::path& destination_folder) const;
 
 	static TargetSheet MakeJournalPeopleSheet();
 	static TargetSheet MakeJournalMonstersSheet();
@@ -66,7 +66,4 @@ private:
 		bool Deleted;
 	};
 	std::vector<RegisteredSourceSheet> m_RegisteredSourceSheets;
-
-	std::filesystem::path m_SourcePath;
-	std::filesystem::path m_DestinationPath;
 };

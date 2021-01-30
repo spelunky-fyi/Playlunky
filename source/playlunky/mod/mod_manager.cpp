@@ -281,7 +281,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			}
 		}
 
-		if (sprite_sheet_merger.NeedsRegeneration()) {
+		if (sprite_sheet_merger.NeedsRegeneration(db_folder)) {
 			if (sprite_sheet_merger.GenerateRequiredSheets(db_original_folder, db_folder, vfs)) {
 				LogInfo("Successfully generated merged sheets from mods...");
 			}

@@ -58,19 +58,19 @@ void SpriteSheetMerger::RegisterSheet(const std::filesystem::path& full_sheet, b
 		});
 }
 
-bool SpriteSheetMerger::NeedsRegeneration() const {
+bool SpriteSheetMerger::NeedsRegeneration(const std::filesystem::path& destination_folder) const {
 	for (const TargetSheet& target_sheet : m_TargetSheets) {
-		if (NeedsRegen(target_sheet)) {
+		if (NeedsRegen(target_sheet, destination_folder)) {
 			return true;
 		}
 	}
 	return false;
 }
 
-bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet) const {
+bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::filesystem::path& destination_folder) const {
 	namespace fs = std::filesystem;
 
-	if (!fs::exists(m_DestinationPath / target_sheet.Path)) {
+	if (!fs::exists(fs::path{ destination_folder / target_sheet.Path }.replace_extension(".DDS"))) {
 		return true;
 	}
 	for (const SourceSheet& source_sheet : target_sheet.SourceSheets) {
@@ -88,7 +88,7 @@ bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet) const {
 
 bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, VirtualFilesystem& vfs) {
 	for (const TargetSheet& target_sheet : m_TargetSheets) {
-		if (NeedsRegen(target_sheet)) {
+		if (NeedsRegen(target_sheet, destination_folder)) {
 			const auto target_file_path = vfs.GetFilePath(target_sheet.Path).value_or(source_folder / target_sheet.Path);
 			Image target_image;
 			target_image.LoadFromPng(target_file_path);
