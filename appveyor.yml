@@ -16,10 +16,9 @@ skip_commits:
     - CHANGELOG.md
     - .gitignore
     - .github/*
-    - '**/*.html'
 
 environment:
-  APPVEYOR_CACHE_ENTRY_ZIP_ARGS: '-t7z -m0=lzma2 -mx=5'
+  APPVEYOR_CACHE_ENTRY_ZIP_ARGS: "-t7z -m0=lzma2 -mx=5"
   matrix:
     - TOOLSET: v142
 #    - TOOLSET: ClangCL
@@ -39,16 +38,15 @@ install:
   - conan --version
 
 before_build:
-- ps: >-
-    $ENV:PATH="$ENV:PATH;C:\Users\appveyor\AppData\Roaming\Python\Scripts"
+  - ps: >-
+      $ENV:PATH="$ENV:PATH;C:\Users\appveyor\AppData\Roaming\Python\Scripts"
 
-    mkdir build
+      mkdir build
 
-    cd build
-- cmd: cmake c:/playlunky/ -G"Visual Studio 16 2019" -A x64 -T %TOOLSET%
+      cd build
+  - cmd: cmake c:/playlunky/ -G"Visual Studio 16 2019" -A x64 -T %TOOLSET%
 
 build_script:
-- cmake --build . --config %CONFIGURATION%
-
+  - cmake --build . --config %CONFIGURATION%
 #test_script:
 #- ctest -C %CONFIGURATION% --output-on-failure
