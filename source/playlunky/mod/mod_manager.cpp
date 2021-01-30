@@ -219,9 +219,9 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 							}
 						}
 
-						const bool is_merged_asset = full_asset_path.parent_path().filename() == "Merged";
-						if (is_merged_asset) {
-							sprite_sheet_merger.RegisterSheet(full_asset_path, outdated, deleted);
+						const bool is_entity_asset = rel_asset_path.parent_path().filename() == "Entities";
+						if (is_entity_asset) {
+							sprite_sheet_merger.RegisterSheet(rel_asset_path, outdated, deleted);
 						}
 
 						if (outdated || deleted) {
@@ -232,7 +232,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 									LogInfo("Successfully deleted file '{}' that was removed from a mod...", full_asset_path.string());
 								}
 							}
-							else if (!is_merged_asset && ConvertPngToDds(full_asset_path, db_destination))
+							else if (!is_entity_asset && ConvertPngToDds(full_asset_path, db_destination))
 							{
 								LogInfo("Successfully converted file '{}' to be readable by the game...", full_asset_path.string());
 							}

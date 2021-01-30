@@ -63,7 +63,8 @@ target_link_libraries(playlunky_lib_dependencies INTERFACE
 	lodepng::lodepng
 	ctre::ctre
 	zstd::zstd
-	opencv::opencv)
+	opencv::opencv
+	inih)
 
 
 # --------------------------------------------------
@@ -188,18 +189,21 @@ endif()
 # --------------------------------------------------
 # Install shared lib and launcher
 install(TARGETS
-	playlunky64 RUNTIME DESTINATION .)
-install(TARGETS
-	playlunky_launcher RUNTIME DESTINATION .)
-install(TARGETS
-	playlunky_installer RUNTIME DESTINATION .)
+	playlunky64
+	playlunky_launcher
+	playlunky_installer
+	RUNTIME
+	DESTINATION .)
 install(FILES
-	res/steam_appid.txt DESTINATION .)
-install(FILES
-	res/readme.txt DESTINATION .)
+	res/steam_appid.txt
+	res/readme.txt
+	res/playlunky.ini
+	DESTINATION .)
 if(EXISTS ${SPELUNKY_INSTALL_DIR})
 	install(FILES
-		res/steam_appid.txt DESTINATION ${SPELUNKY_INSTALL_DIR})
+		res/steam_appid.txt
+		res/playlunky.ini
+		DESTINATION ${SPELUNKY_INSTALL_DIR})
 endif()
 
 	

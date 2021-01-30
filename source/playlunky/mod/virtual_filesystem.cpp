@@ -12,6 +12,7 @@ public:
 
 	using FileInfo = VirtualFilesystem::FileInfo;
 	virtual FileInfo* LoadFile(const char* file_path, void* (*allocator)(std::size_t)) const = 0;
+	virtual FileInfo* LoadSubFile(const char* sub_file_path, void* (*allocator)(std::size_t), bool validate) const = 0;
 	virtual std::optional<std::filesystem::path> GetFilePath(const std::filesystem::path& path) const = 0;
 };
 
@@ -28,8 +29,25 @@ public:
 		char full_path[MAX_PATH];
 		sprintf_s(full_path, "%s/%s", mMountedPathString.c_str(), file_path);
 
+		return LoadSubFile(full_path, allocator, false);
+	}
+
+	virtual FileInfo* LoadSubFile(const char* sub_file_path, void* (*allocator)(std::size_t), bool validate) const override {
+		if (sub_file_path == nullptr) {
+			return {};
+		}
+
+		if (validate) {
+			char cleaned_sub_file_path[MAX_PATH];
+			sprintf_s(cleaned_sub_file_path, "%s", sub_file_path);
+			std::replace(cleaned_sub_file_path, cleaned_sub_file_path + std::strlen(cleaned_sub_file_path), '\\', '/');
+			if (std::strstr(cleaned_sub_file_path, mMountedPathString.c_str()) != cleaned_sub_file_path) {
+				return {};
+			}
+		}
+
 		FILE* file{ nullptr };
-		auto error = fopen_s(&file, full_path, "rb");
+		auto error = fopen_s(&file, sub_file_path, "rb");
 		if (error == 0 && file != nullptr) {
 			auto close_file = OnScopeExit{ [file]() { fclose(file); } };
 
@@ -46,7 +64,7 @@ public:
 				void* data = static_cast<void*>(reinterpret_cast<char*>(buf) + 24);
 				const auto size_read = fread(data, 1, file_size, file);
 				if (size_read != file_size) {
-					LogInfo("Could not read file {}, this will either crash or cause glitches...", file_path);
+					LogInfo("Could not read file {}, this will either crash or cause glitches...", sub_file_path);
 				}
 
 				FileInfo* file_info = new (buf) FileInfo();
@@ -99,6 +117,16 @@ void VirtualFilesystem::MountFolder(std::string_view path, std::int64_t priority
 VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void* (*allocator)(std::size_t)) const {
 	for (const VfsMount& mount : mMounts) {
 		if (FileInfo* loaded_data = mount.MountImpl->LoadFile(path, allocator)) {
+			return loaded_data;
+		}
+	}
+
+	return {};
+}
+
+VirtualFilesystem::FileInfo* VirtualFilesystem::LoadSpecificFile(const char* specific_path, void* (*allocator)(std::size_t)) const {
+	for (const VfsMount& mount : mMounts) {
+		if (FileInfo* loaded_data = mount.MountImpl->LoadSubFile(specific_path, allocator, true)) {
 			return loaded_data;
 		}
 	}

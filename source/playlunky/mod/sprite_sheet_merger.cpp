@@ -70,13 +70,13 @@ bool SpriteSheetMerger::NeedsRegeneration(const std::filesystem::path& destinati
 bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::filesystem::path& destination_folder) const {
 	namespace fs = std::filesystem;
 
-	if (!fs::exists(fs::path{ destination_folder / target_sheet.Path }.replace_extension(".DDS"))) {
-		return true;
-	}
 	for (const SourceSheet& source_sheet : target_sheet.SourceSheets) {
+		const bool does_exist = fs::exists(fs::path{ destination_folder / target_sheet.Path }.replace_extension(".DDS"));
 		if (const RegisteredSourceSheet* registered_sheet = algo::find_if(m_RegisteredSourceSheets,
 			[&source_sheet](const RegisteredSourceSheet& sheet) { return sheet.Path == source_sheet.Path; })) {
-			if (registered_sheet->Outdated || registered_sheet->Deleted) {
+			if (!does_exist
+				|| registered_sheet->Outdated
+				|| registered_sheet->Deleted) {
 				return true;
 			}
 		}
@@ -154,7 +154,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet() {
 										"white", "cerulean", "blue", "lime", "lime", "lemon", "iris", "gold",
 										"red", "pink", "violet", "gray", "khaki", "orange" }) {
 			source_sheets.push_back(SourceSheet{
-					.Path{ fmt::format("Data/Textures/Merged/char_{}_full.png", color) },
+					.Path{ fmt::format("Data/Textures/Entities/char_{}_full.png", color) },
 					.Size{ .Width{ 2048 }, .Height{ 2160 } },
 					.TileMap = std::vector<TileMapping>{
 						TileMapping{
@@ -172,7 +172,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet() {
 	}
 	
 	source_sheets.push_back(SourceSheet{
-			.Path{ "Data/Textures/Merged/char_eggchild_full.png" },
+			.Path{ "Data/Textures/Entities/char_eggchild_full.png" },
 			.Size{ .Width{ 2048 }, .Height{ 2080 } },
 			.TileMap = std::vector<TileMapping>{
 				TileMapping{
@@ -182,7 +182,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet() {
 			}
 		});
 	source_sheets.push_back(SourceSheet{
-			.Path{ "Data/Textures/Merged/char_hired_full.png" },
+			.Path{ "Data/Textures/Entities/char_hired_full.png" },
 			.Size{ .Width{ 2048 }, .Height{ 2080 } },
 			.TileMap = std::vector<TileMapping>{
 				TileMapping{
@@ -208,7 +208,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalStickerSheet() {
 			"white", "cerulean", "blue", "lime", "lime", "lemon", "iris", "gold",
 			"red", "pink", "violet", "gray", "khaki", "orange" }) {
 			source_sheets.push_back(SourceSheet{
-					.Path{ fmt::format("Data/Textures/Merged/char_{}_full.png", color) },
+					.Path{ fmt::format("Data/Textures/Entities/char_{}_full.png", color) },
 					.Size{.Width{ 2048 }, .Height{ 2160 } },
 					.TileMap = std::vector<TileMapping>{
 						TileMapping{
@@ -243,7 +243,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeMountsTargetSheet() {
 	for (const auto& [pet_name, idx] : name_to_idx) {
 		const std::uint32_t image_height = pet_name == "turkey" ? 960 : 672;
 		source_sheets.push_back(SourceSheet{
-				.Path{ fmt::format("Data/Textures/Merged/{}_full.png", pet_name) },
+				.Path{ fmt::format("Data/Textures/Entities/{}_full.png", pet_name) },
 				.Size{.Width{ 2048 }, .Height{ image_height } },
 				.TileMap = std::vector<TileMapping>{
 					TileMapping{
@@ -270,7 +270,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakePetsTargetSheet() {
 	std::vector<SourceSheet> source_sheets;
 	for (const auto& [pet_name, idx] : name_to_idx) {
 		source_sheets.push_back(SourceSheet{
-				.Path{ fmt::format("Data/Textures/Merged/{}_full.png", pet_name) },
+				.Path{ fmt::format("Data/Textures/Entities/{}_full.png", pet_name) },
 				.Size{.Width{ 1536 }, .Height{ 672 } },
 				.TileMap = std::vector<TileMapping>{
 					TileMapping{
@@ -292,7 +292,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeCharacterTargetSheet(std::
 	const std::uint32_t image_height = is_npc ? 2080 : 2160;
 	std::vector<SourceSheet> source_sheets{
 		SourceSheet{
-			.Path{ fmt::format("Data/Textures/Merged/char_{}_full.png", color) },
+			.Path{ fmt::format("Data/Textures/Entities/char_{}_full.png", color) },
 			.Size{.Width{ 2048 }, .Height{ image_height } },
 			.TileMap = std::vector<TileMapping>{
 				TileMapping{

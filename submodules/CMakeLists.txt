@@ -24,3 +24,9 @@ set_property (
 
 target_compile_options(lib_detours PRIVATE /W4 /WX /Zi /MT /Gy /Gm- /Zl /Od)
 target_include_directories(lib_detours PUBLIC detours/src)
+
+# --------------------------------------------------
+# inih
+add_library(inih INTERFACE)
+target_include_directories(inih INTERFACE
+    inih)
