@@ -104,6 +104,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				fs::path{ "Data/Textures/monsters_pets.DDS" },
 				fs::path{ "Data/Textures/mounts.DDS" },
 				fs::path{ "Data/Textures/journal_stickers.DDS" },
+				fs::path{ "Data/Textures/journal_entry_items.DDS" },
 				fs::path{ "Data/Textures/journal_entry_mons.DDS" },
 				fs::path{ "Data/Textures/journal_entry_people.DDS" },
 				fs::path{ "shaders.hlsl" },
