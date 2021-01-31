@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2021-31-01
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.1d-orange">
+
+### Added
+- Add a playlunky.ini file for future configuration.
+- Add support for Modlunky full sheets, e.g. char_black_full.png or poochie_full.png, for pets, mounts and characters.
+- Add random mode for character mods (configured in playlunky.ini), which picks a random character mod from all installed mods per color.
+
+### Changed
+- Bumped the supported version of Spelunky
+
+### Fixed
+- Fix a crash when deleting a mod folder that was previously loaded
+
 ## [0.5.0] - 2021-27-01
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.1c-orange">
@@ -18,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.0j-orange">
 
 ### Added
-- Add a mod installer that should make it super easy to install mods now (also works for Modlunky2 since it loads mods from the same folder)§
+- Add a mod installer that should make it super easy to install mods now (also works for Modlunky2 since it loads mods from the same folder)
 
 ### Changed
 - Shader mods now copy all parts that are not known into the shader (instead of being ignored)
