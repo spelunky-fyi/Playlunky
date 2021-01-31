@@ -61,8 +61,11 @@ Copy all build artifacts into your Spelunky 2 folder, from there you can launch 
 * Mod Management
     * Loads mods from the `Mods/Packs` folder, where each folder is one mod
     * Users can specify priority of mods using the `Mods/Packs/load_order.txt` file (useful in case multiple mods replace the same asset)
+    * Settings are specified in playlunky.ini
+        * Random Character Select: Everytime the game is launched for each character a random sheet will be loaded out of all installed and enabled mods. For example if you installed 5 mods that all change Roffy you will get a random version of Roffy every time you launch the game. Note that this only changes the visuals, not any strings and also does not currently work for full entity mods of characters.
     * On first load:
         * zip files get extracted into their own mod folders
         * the files in the mod folder are reorganized to align with the games original structure
-        * all png files are automatically converted to dds, so mods can be distributed as usual (mods store a small database to catch when they get updated)
-        * stickers and journal entries are generated from character mods
+        * entity sprite sheets (as provided by Modlunky in the form of `Entities/*_full.png`) are merged into their respective sheets for the game
+        * all other png files are automatically converted to dds, so mods can be distributed as usual (mods store a small database to catch when they get updated)
+        * additionally stickers and journal entries are generated from character mods
