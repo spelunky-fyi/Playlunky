@@ -27,8 +27,8 @@ private:
 	struct TargetSheet;
 	bool NeedsRegen(const TargetSheet& target_sheet, const std::filesystem::path& destination_folder) const;
 
-	static TargetSheet MakeJournalPeopleSheet();
 	static TargetSheet MakeJournalMonstersSheet();
+	static TargetSheet MakeJournalPeopleSheet();
 	static TargetSheet MakeJournalStickerSheet();
 	static TargetSheet MakeMountsTargetSheet();
 	static TargetSheet MakePetsTargetSheet();

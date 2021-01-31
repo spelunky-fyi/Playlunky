@@ -15,6 +15,7 @@
 
 SpriteSheetMerger::SpriteSheetMerger()
 	: m_TargetSheets{
+		MakeJournalMonstersSheet(),
 		MakeJournalPeopleSheet(),
 		MakeJournalStickerSheet(),
 		MakeMountsTargetSheet(),
@@ -144,6 +145,86 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 }
 
 // Note: All the `TileMap = std::vector<TileMapping>{ ... }` code is because of a bug in MSVC
+SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalMonstersSheet() {
+	std::vector<SourceSheet> source_sheets;
+
+	source_sheets.push_back(SourceSheet{
+			.Path{ "Data/Textures/Entities/monty_full.png" },
+			.Size{ .Width{ 1536 }, .Height{ 672 } },
+			.TileMap = std::vector<TileMapping>{
+				TileMapping{
+					.SourceTile{ 0, 512, 160, 672 },
+					.TargetTile{ 800, 480, 960, 640 },
+				}
+			}
+		});
+	source_sheets.push_back(SourceSheet{
+			.Path{ "Data/Textures/Entities/percy_full.png" },
+			.Size{ .Width{ 1536 }, .Height{ 672 } },
+			.TileMap = std::vector<TileMapping>{
+				TileMapping{
+					.SourceTile{ 0, 512, 160, 672 },
+					.TargetTile{ 1440, 480, 1600, 640 },
+				}
+			}
+		});
+	source_sheets.push_back(SourceSheet{
+			.Path{ "Data/Textures/Entities/poochi_full.png" },
+			.Size{ .Width{ 1536 }, .Height{ 672 } },
+			.TileMap = std::vector<TileMapping>{
+				TileMapping{
+					.SourceTile{ 0, 512, 160, 672 },
+					.TargetTile{ 640, 480, 800, 640 },
+				}
+			}
+		});
+	source_sheets.push_back(SourceSheet{
+			.Path{ "Data/Textures/Entities/turkey_full.png" },
+			.Size{ .Width{ 1920 }, .Height{ 960 } },
+			.TileMap = std::vector<TileMapping>{
+				TileMapping{
+					.SourceTile{ 0, 512, 160, 672 },
+					.TargetTile{ 1280, 640, 1440, 800},
+				}
+			}
+		});
+	source_sheets.push_back(SourceSheet{
+			.Path{ "Data/Textures/Entities/rockdog_full.png" },
+			.Size{ .Width{ 1920 }, .Height{ 672 } },
+			.TileMap = std::vector<TileMapping>{
+				TileMapping{
+					.SourceTile{ 0, 512, 160, 672 },
+					.TargetTile{ 1440, 640, 1600, 800},
+				}
+			}
+		});
+	source_sheets.push_back(SourceSheet{
+			.Path{ "Data/Textures/Entities/axolotl_full.png" },
+			.Size{ .Width{ 1920 }, .Height{ 672 } },
+			.TileMap = std::vector<TileMapping>{
+				TileMapping{
+					.SourceTile{ 0, 512, 160, 672 },
+					.TargetTile{ 0, 800, 160, 960 },
+				}
+			}
+		});
+	source_sheets.push_back(SourceSheet{
+			.Path{ "Data/Textures/Entities/qilin_full.png" },
+			.Size{ .Width{ 1920 }, .Height{ 672 } },
+			.TileMap = std::vector<TileMapping>{
+				TileMapping{
+					.SourceTile{ 0, 512, 160, 672 },
+					.TargetTile{ 160, 800, 320, 960 },
+				}
+			}
+		});
+
+	return TargetSheet{
+		.Path{ "Data/Textures/journal_entry_mons.png" },
+		.Size{.Width{ 1600 }, .Height{ 960 } },
+		.SourceSheets{ std::move(source_sheets) }
+	};
+}
 SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet() {
 	std::vector<SourceSheet> source_sheets;
 
