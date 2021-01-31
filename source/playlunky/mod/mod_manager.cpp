@@ -24,6 +24,7 @@
 #include <map>
 
 static constexpr ctll::fixed_string s_CharacterRule{ ".+char_(.*)\\.png" };
+static constexpr ctll::fixed_string s_CharacterFullRule{ ".+char_(.*)_full\\.png" };
 static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
@@ -216,7 +217,9 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 							const std::string_view color = character_match.get<1>().to_view();
 							if (!sticker_gen.RegisterCharacter(color, outdated || new_enabled_state.has_value())) {
 								const std::string character_file_name = full_asset_path.filename().string();
-								LogInfo("Mod '{}' contains an unkown character file '{}'", mod_name, character_file_name);
+								if (!ctre::match<s_CharacterFullRule>(full_asset_path_string)) {
+									LogInfo("Mod '{}' contains an unkown character file '{}'", mod_name, character_file_name);
+								}
 							}
 						}
 
