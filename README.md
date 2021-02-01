@@ -15,10 +15,10 @@
   </a>
 </p>
 
-This is mainly a personal playground to learn the tricks and trades of video game reverse engineering/hacking. It currently is only a wrapper around launching Spelunky 2 with an injected dll which loads resources from disk and injects ScyllaHide but hopefully will become more in the future.
+This is a launcher for Spelunky 2 that injects a dll for extended mod management. It currently supports string, shader and sprite mods, with some extended features for more fine grained modding. See the wiki for details.
 
 ## Credits
-A huge thanks to the [modlunky2](https://github.com/spelunky-fyi/modlunky2) team for their input, suggestions, support and for making all their hard work open source. Special thanks to `gmosjack`, `Dregu` and `iojonmbnmb` that made it possible for this tool to exist.
+A huge thanks to the [spelunky-fyi](https://github.com/spelunky-fyi) team for their input, suggestions, support and for making all their hard work open source. Special thanks to `gmosjack`, `Dregu` and `iojonmbnmb` that made it possible for this tool to exist.
 
 ## Build
 
@@ -35,16 +35,18 @@ cmake --install .
 ```
 Build artifacts are found in the `publish` folder.
 
-### Debugging
-If you have installed Spelunky 2 then the install folder should be found during configuration of the project and starting a debugging session will launch Spelunky 2 with the `playlunky64.dll` injected. If you want to debug the game itself as well as the `playlunky64.dll` it is highly recommended to get the [Microsoft Child Process Debugging Power Tool](https://marketplace.visualstudio.com/items?itemName=vsdbgplat.MicrosoftChildProcessDebuggingPowerTool) extension and enable child process debugging in `Debug` &rarr; `Other Debug Targets` &rarr; `Child Process Debugging Settings...`
-
-Furthermore, if the game employs any anti-debugging strategies it is supported to inject ScyllaHide into the game process. To do this download [ScyllaHide from Github](https://github.com/x64dbg/ScyllaHide/tags) and extract it into a ScyllaHide subfolder right next to the game. The `playlunky64.dll` will do the rest.
-
 ### Requirements
 - MSVC 2019 (for C++20)
 - python
     - cmake
     - conan
+
+### Debugging
+If you have installed Spelunky 2 then the install folder should be found during configuration of the project and starting a debugging session will launch Spelunky 2 with the `playlunky64.dll` injected. If you want to debug the game itself as well as the `playlunky64.dll` it is highly recommended to get the [Microsoft Child Process Debugging Power Tool](https://marketplace.visualstudio.com/items?itemName=vsdbgplat.MicrosoftChildProcessDebuggingPowerTool) extension and enable child process debugging in `Debug` &rarr; `Other Debug Targets` &rarr; `Child Process Debugging Settings...`
+
+#### Anti-Debugging Prevention
+This section can be ignored for Spelunky 2 versions 1.20.0j or older.
+If the game employs any anti-debugging strategies it is supported to inject ScyllaHide into the game process. To do this download [ScyllaHide from Github](https://github.com/x64dbg/ScyllaHide/tags) and extract it into a ScyllaHide subfolder right next to the game. The `playlunky64.dll` will do the rest.
 
 ## Usage
 Copy all build artifacts into your Spelunky 2 folder, from there you can launch `playlunky_launcher.exe` to launch the game with the dll injected.
@@ -68,4 +70,6 @@ Copy all build artifacts into your Spelunky 2 folder, from there you can launch 
         * the files in the mod folder are reorganized to align with the games original structure
         * entity sprite sheets (as provided by Modlunky in the form of `Entities/*_full.png`) are merged into their respective sheets for the game
         * all other png files are automatically converted to dds, so mods can be distributed as usual (mods store a small database to catch when they get updated)
+        * shader mods in the form of `shaders_mod.hlsl` get merged into `shaders.hlsl`
+        * string mods in the form of `strings##_mod.str` (where ## is any of the valid numbers) get merged into `strings##.str`
         * additionally stickers and journal entries are generated from character mods
