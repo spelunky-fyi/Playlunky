@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2021-01-02
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.1d-orange">
+
+### Fixed
+- Erroneous double occurrence of lime, resulting in wrong sticker generation.
+
 ## [0.5.1] - 2021-31-01
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.1d-orange">
