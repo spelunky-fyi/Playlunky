@@ -18,7 +18,7 @@ struct DetourWinMain {
 		.Signature = "\x40\x53\x48\x83\xec\x20\x49\x8b\xd8\xff\x15\x2a\x2a\x2a\x2a\x48\x8b\xc8\xba\x02\x00\x00\x00"_sig
 	};
 	static int Detour(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
-		if (void* version_address = SigScan::FindPattern("1.\x2a\x2a.\x2a\x2a\x00", false)) {
+		if (void* version_address = SigScan::FindPattern("Spel2.exe", "1.\x2a\x2a.\x2a\x2a\x00"_sig, false)) {
 			const char* version_string = static_cast<const char*>(version_address);
 			if (version_string != s_SupportedSpelunkyVersion) {
 				const auto message = fmt::format("This version of Spelunky 2 is not supported by Playlunky, "

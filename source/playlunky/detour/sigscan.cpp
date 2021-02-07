@@ -93,12 +93,6 @@ namespace SigScan {
 		return nullptr;
 	}
 
-	void* FindPattern(std::string_view signature, bool code_only) {
-		char module_name[MAX_PATH];
-		GetModuleFileNameA(0, module_name, MAX_PATH);
-		return FindPattern(module_name, signature, code_only);
-	}
-
 	std::ptrdiff_t GetOffset(const char* module_name, const void* address) {
 		if (module_name == nullptr || address == nullptr)
 			return 0;

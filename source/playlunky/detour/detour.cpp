@@ -78,9 +78,9 @@ void Attach() {
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());
 
-	for (auto [trampoline, detour, signature, function_name] : detour_entries) {
+	for (auto [trampoline, detour, signature, module, function_name] : detour_entries) {
 		if (signature != nullptr) {
-			*trampoline = SigScan::FindPattern(*signature, true);
+			*trampoline = SigScan::FindPattern(module, *signature, true);
 			if (*trampoline != nullptr)
 			{
 				fmt::print("Found function {}:\n\tsig: {}\n\t at: {}\n     offset: 0x{:x}\n", function_name, ByteStr{ .Str = *signature }, *trampoline, SigScan::GetOffset(*trampoline));
@@ -113,7 +113,7 @@ void Detach() {
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());
 
-	for (auto [trampoline, detour, signature, function_name] : detour_entries) {
+	for (auto [trampoline, detour, signature, module, function_name] : detour_entries) {
 		DetourDetach(trampoline, detour);
 	}
 
