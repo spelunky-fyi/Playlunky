@@ -6,6 +6,7 @@
 #include "detour/sigscan.h"
 #include "util/algorithms.h"
 
+#include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <span>
@@ -94,9 +95,14 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
             }
         }
 
+        auto match_hash = [](const ChaCha::bytes_t& lhs, const ChaCha::bytes_t& rhs) {
+            const auto min_size = std::min(lhs.size(), rhs.size());
+            return std::equal(lhs.begin(), lhs.begin() + min_size, rhs.begin());
+        };
+
         for (const Asset& asset : assets) {
             for (std::size_t i = 0; i < hashes.size(); i++) {
-                if (hashes[i] == asset.AssetNameHash) {
+                if (match_hash(hashes[i], asset.AssetNameHash)) {
                     const auto& file = files[i];
                     const auto& file_path = file.string();
                     ChaCha::bytes_t decryped_data;
