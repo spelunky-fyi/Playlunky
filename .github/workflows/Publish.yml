@@ -70,6 +70,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./playlunky.zip
-          asset_name: playlunky.zip
+          asset_path: ./playlunky_${{ steps.get_version.outputs.VERSION }}.zip
+          asset_name: playlunky_${{ steps.get_version.outputs.VERSION }}.zip
           asset_content_type: application/zip
