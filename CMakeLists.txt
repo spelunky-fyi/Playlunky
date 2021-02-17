@@ -19,7 +19,7 @@ if (NOT GIT_FOUND)
 endif()
 
 execute_process(
-    COMMAND ${GIT_EXECUTABLE} describe --always --dirty=-modified
+    COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty=-modified
     OUTPUT_VARIABLE PLAYLUNKY_GIT_VERSION
 	OUTPUT_STRIP_TRAILING_WHITESPACE)
 
