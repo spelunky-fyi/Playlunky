@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.5] - 2021-17-02
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.2a-orange">
+
+### Added
+- Version printouts for possibly easier debugging.
+
+### Fixed
+- Fixed an issue when a shader mod would modify more than one function.
+
+
 ## [0.5.4] - 2021-07-02
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.2a-orange">
