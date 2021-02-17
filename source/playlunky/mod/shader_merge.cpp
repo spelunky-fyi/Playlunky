@@ -125,7 +125,8 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 									.Declaration = std::move(function_decl),
 									.Body = std::move(function_body)
 								});
-								function_preamble.clear();
+								scope_depth--;
+								continue;
 							}
 							function_decl.clear();
 							function_body.clear();
