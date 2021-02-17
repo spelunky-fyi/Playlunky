@@ -78,12 +78,21 @@ void Attach() {
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());
 
-	for (auto [trampoline, detour, signature, module, function_name] : detour_entries) {
-		if (signature != nullptr) {
+	for (auto [trampoline, detour, signature, proc_name, module, function_name] : detour_entries) {
+		if (signature != nullptr && !signature->empty()) {
 			*trampoline = SigScan::FindPattern(module, *signature, true);
 			if (*trampoline != nullptr)
 			{
 				fmt::print("Found function {}:\n\tsig: {}\n\t at: {}\n     offset: 0x{:x}\n", function_name, ByteStr{ .Str = *signature }, *trampoline, SigScan::GetOffset(*trampoline));
+			}
+		}
+		else if (proc_name != nullptr) {
+			if (HMODULE module_handle = GetModuleHandleA(module)) {
+				*trampoline = GetProcAddress(module_handle, proc_name);
+				if (*trampoline != nullptr)
+				{
+					fmt::print("Found function {}:\n\tproc: {}\n\t  at: {}\n      offset: 0x{:x}\n", function_name, proc_name, *trampoline, SigScan::GetOffset(*trampoline));
+				}
 			}
 		}
 
@@ -113,7 +122,7 @@ void Detach() {
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());
 
-	for (auto [trampoline, detour, signature, module, function_name] : detour_entries) {
+	for (auto [trampoline, detour, signature, proc_name, module, function_name] : detour_entries) {
 		DetourDetach(trampoline, detour);
 	}
 

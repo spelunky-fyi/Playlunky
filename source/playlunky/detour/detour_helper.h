@@ -22,6 +22,7 @@ struct DetourHelper {
 				.Trampoline = &(void_ptr&)DetourT::Trampoline.Func,
 				.Detour = &DetourT::Detour,
 				.Signature = &DetourT::Trampoline.Signature,
+				.ProcName = DetourT::Trampoline.ProcName,
 				.Module = DetourT::Trampoline.Module,
 				.FunctionName = function_name
 			};
@@ -32,6 +33,7 @@ struct DetourHelper {
 				.Trampoline = &(void_ptr&)DetourT::Trampoline,
 				.Detour = &DetourT::Detour,
 				.Signature = nullptr,
+				.ProcName = nullptr,
 				.Module = nullptr,
 				.FunctionName = function_name
 			};

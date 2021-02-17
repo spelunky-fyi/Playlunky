@@ -14,6 +14,7 @@ namespace SigScan
 		using type = FunT;
 
 		std::string_view Signature{ "" };
+		const char* ProcName{ nullptr };
 		const char* Module{ "Spel2.exe" };
 		FunT Func{ nullptr };
 
