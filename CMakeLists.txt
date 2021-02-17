@@ -12,6 +12,19 @@ add_subdirectory(submodules)
 
 
 # --------------------------------------------------
+# Get version tag
+find_package(Git)
+if (NOT GIT_FOUND)
+	SET(GIT_EXECUTABLE git)
+endif()
+
+execute_process(
+    COMMAND ${GIT_EXECUTABLE} describe --always --dirty=-modified
+    OUTPUT_VARIABLE PLAYLUNKY_GIT_VERSION
+	OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+
+# --------------------------------------------------
 # Run conan
 set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR} ${CMAKE_MODULE_PATH})
 set(CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR} ${CMAKE_PREFIX_PATH})
@@ -47,7 +60,9 @@ else()
 endif()
 
 add_library(playlunky_definitions INTERFACE)
-target_compile_definitions(playlunky_definitions INTERFACE NOMINMAX)
+target_compile_definitions(playlunky_definitions INTERFACE
+	NOMINMAX
+	"PLAYLUNKY_VERSION=\"${PLAYLUNKY_GIT_VERSION}\"")
 
 add_library(playlunky_dependencies INTERFACE)
 target_link_libraries(playlunky_dependencies INTERFACE

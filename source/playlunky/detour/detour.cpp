@@ -69,7 +69,7 @@ std::vector<DetourEntry> CollectDetourEntries() {
 }
 
 void Attach() {
-	fmt::print(DLL_NAME ": Attaching...\n");
+	fmt::print(DLL_NAME "-" PLAYLUNKY_VERSION ": Attaching...\n");
 
 	std::vector<DetourEntry> detour_entries = CollectDetourEntries();
 
