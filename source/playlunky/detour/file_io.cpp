@@ -149,7 +149,7 @@ enum FMOD_RESULT {
 	FMOD_ERR_RECORD_DISCONNECTED,
 	FMOD_ERR_TOOMANYSAMPLES
 };
-enum class FMOD_MODE : std::uint32_t
+enum FMOD_MODE : std::uint32_t
 {
 	DEFAULT = 0x00000000,
 	LOOP_OFF = 0x00000001,
@@ -525,13 +525,9 @@ struct DetourFmodSystemCreateSound {
 					// TODO:
 					//	- Cache SOUND** with s_Samples (s_Samples as user data to cancel destroySound until unloading soundbank)
 					//	- Move fmod crap to its own file
-					//	- Verify this works with modded soundbanks
 					//	- Fix loading ogg files
 					//	- Don't leak `sound` on failing to load the sub_sound
-
-					CREATESOUNDEXINFO loose_exinfo{};
-					loose_exinfo.cbsize = sizeof(loose_exinfo);
-					loose_exinfo.fsbguid = exinfo->fsbguid;
+					//	- Cleanup
 
 					char empty_wav[]{
 						"\x52\x49\x46\x46\x25\x00\x00\x00\x57\x41\x56\x45\x66\x6D\x74\x20"
@@ -539,11 +535,17 @@ struct DetourFmodSystemCreateSound {
 						"\x02\x00\x10\x00\x64\x61\x74\x61\x74\x00\x00\x00\x00"
 					};
 
-					loose_exinfo.length = sizeof(empty_wav);
-					loose_exinfo.fileoffset = 0;
-					loose_exinfo.inclusionlist = 1;
-					loose_exinfo.numsubsounds = 1;
-					auto ret = Trampoline(fmod_system, empty_wav, mode, &loose_exinfo, sound);
+					const FMOD_MODE loose_mode = (FMOD_MODE)(mode | FMOD_MODE::OPENMEMORY_POINT);
+
+					CREATESOUNDEXINFO loose_exinfo{
+						.cbsize = sizeof(loose_exinfo),
+						.length = sizeof(empty_wav),
+						.fileoffset = 0,
+						.numsubsounds = 1,
+						.inclusionlist = 1,
+						.fsbguid = exinfo->fsbguid
+					};
+					auto ret = Trampoline(fmod_system, empty_wav, loose_mode, &loose_exinfo, sound);
 
 					if (ret == FMOD_OK) {
 						auto get_sub_sound = [](void* sound, int sub_sound_index) -> void** {
@@ -578,13 +580,11 @@ struct DetourFmodSystemCreateSound {
 							};
 							std::vector<char> file_data = read_file_data(file_path);
 
-							mode = (FMOD_MODE)((std::uint32_t)mode & ~(std::uint32_t)FMOD_MODE::OPENMEMORY_POINT);
-							mode = (FMOD_MODE)((std::uint32_t)mode | (std::uint32_t)FMOD_MODE::OPENMEMORY);
+							const FMOD_MODE loose_sub_sound_mode = (FMOD_MODE)((mode | FMOD_MODE::OPENMEMORY) & ~FMOD_MODE::OPENMEMORY_POINT);
 
 							loose_exinfo.length = (int)file_data.size();
-							loose_exinfo.fileoffset = 0;
 							loose_exinfo.numsubsounds = 0;
-							ret = Trampoline(fmod_system, file_data.data(), mode, &loose_exinfo, sub_sound);
+							ret = Trampoline(fmod_system, file_data.data(), loose_sub_sound_mode, &loose_exinfo, sub_sound);
 
 							return ret;
 						}
