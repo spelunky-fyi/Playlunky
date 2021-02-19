@@ -243,15 +243,18 @@ namespace FMOD {
 }
 
 template<class T>
-[[nodiscard]] auto ReadFromBuffer(const char*& buffer) {
+[[nodiscard]] inline auto ReadFromBuffer(const char*& buffer) {
 	const T* ret = reinterpret_cast<const T*>(buffer);
 	buffer += sizeof(T);
 	return *ret;
 };
 
+inline FMOD::FMOD_RESULT CreateSound(FMOD::System* fmod_system, const char* filename_or_data, FMOD::FMOD_MODE mode, FMOD::CREATESOUNDEXINFO* exinfo, FMOD::Sound** sound);
+inline FMOD::FMOD_RESULT ReleaseSound(FMOD::Sound* sound);
+
 struct DetourFmodSystemLoadBankMemory {
 	inline static SigScan::Function<FMOD::FMOD_RESULT(__stdcall*)(FMOD::System*, const char*, int, int, int, FMOD::Bank**)> Trampoline{
-		.Signature = "\x40\x53\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xec\x68\x01\x00\x00\x48\x8b\x05\x2a\x2a\x2a\x2a\x48\x33\xc4\x48\x89\x84\x24\x50\x01\x00\x00\x4c\x8b\xb4\x24\xd8\x01\x00\x00"_sig,
+		.ProcName = "?loadBankMemory@System@Studio@FMOD@@QEAA?AW4FMOD_RESULT@@PEBDHW4FMOD_STUDIO_LOAD_MEMORY_MODE@@IPEAPEAVBank@23@@Z",
 		.Module = "fmodstudio.dll"
 	};
 	static FMOD::FMOD_RESULT Detour(
@@ -262,7 +265,20 @@ struct DetourFmodSystemLoadBankMemory {
 		int flags,
 		FMOD::Bank** bank) {
 
-		{
+		s_LastBuffer = buffer;
+		s_LastLength = length;
+		s_LastMode = mode;
+		s_LastFlags = flags;
+
+		*bank = nullptr;
+		return FMOD::ERR_UNSUPPORTED;
+	}
+
+	static void ParseSoundbankMemory() {
+		const auto buffer = s_LastBuffer;
+		const auto length = s_LastLength;
+
+		if (buffer != nullptr && length != 0) {
 			const char* current_buffer_pos = buffer;
 			[[maybe_unused]] const char* first_data = buffer + 0x283340;
 			const char* buffer_end = buffer + length;
@@ -305,6 +321,7 @@ struct DetourFmodSystemLoadBankMemory {
 
 #define GET_FSB5_OFFSET(X) ((((X) >> (std::uint64_t)7) << (std::uint64_t)5) & (((std::uint64_t)1 << (std::uint64_t)32) - 1))
 						offset = GET_FSB5_OFFSET(offset);
+#undef GET_FSB5_OFFSET
 
 						while (next_header_type & 1)
 						{
@@ -388,21 +405,127 @@ struct DetourFmodSystemLoadBankMemory {
 
 					s_FsbFiles.push_back(FsbFile{
 							.Offset{ (std::uint32_t)(fsb_begin - buffer) },
-							.Samples{ std::move(samples) }
+							.Samples{ std::move(samples) },
+							.Bank{ nullptr }
 						});
 				}
 
 				current_buffer_pos = fsb_data;
 			}
 		}
+	}
 
-		s_LastBuffer = buffer;
-		s_LastLength = length;
-		s_LastMode = mode;
-		s_LastFlags = flags;
+	static void PreloadModdedSampleData([[maybe_unused]] FMOD::System* fmod_system, FMOD::Bank* bank) {
+		for (FsbFile& fsb_file : s_FsbFiles) {
+			if (fsb_file.Bank == nullptr) {
+				fsb_file.Bank = bank;
 
-		*bank = nullptr;
-		return FMOD::ERR_UNSUPPORTED;
+				for (FsbFile::Sample& sample : fsb_file.Samples) {
+					const auto modded_sample = s_FmodVfs->GetFilePath(fmt::format("soundbank/wav/{}.wav", sample.Name))
+						.value_or(s_FmodVfs->GetFilePath(fmt::format("soundbank/ogg/{}.ogg", sample.Name))
+							.value_or("invalid.err"));
+					if (std::filesystem::exists(modded_sample)) {
+
+						const auto modded_sample_string = modded_sample.string();
+
+						FILE* file{ nullptr };
+						auto error = fopen_s(&file, modded_sample_string.c_str(), "rb");
+						if (error == 0 && file != nullptr) {
+							auto close_file = OnScopeExit{ [file]() { fclose(file); } };
+
+							fseek(file, 0, SEEK_END);
+							const std::size_t file_size = ftell(file);
+							fseek(file, 0, SEEK_SET);
+
+							sample.Data = std::make_unique<std::byte[]>(file_size);
+							sample.DataSize = (std::uint32_t)file_size;
+
+							const auto size_read = fread(sample.Data.get(), 1, file_size, file);
+							if (size_read != file_size) {
+								LogInfo("Could not read file {}, this will either crash or cause glitches...", modded_sample_string);
+							}
+						}
+
+						// BOOKMARK-POSSIBLE-OPT
+						// Possible optimization? Preload sounds here?
+						/*
+						// TODO:
+						//	- Cache SOUND** with s_Samples (s_Samples as user data to cancel destroySound until unloading soundbank)
+						//	- Fix loading ogg files
+						//	- Actually load from mods
+						//	- Cleanup
+
+						static char empty_wav[]{
+							"\x52\x49\x46\x46\x25\x00\x00\x00\x57\x41\x56\x45\x66\x6D\x74\x20"
+							"\x10\x00\x00\x00\x01\x00\x01\x00\x44\xAC\x00\x00\x88\x58\x01\x00"
+							"\x02\x00\x10\x00\x64\x61\x74\x61\x74\x00\x00\x00\x00"
+						};
+
+						const FMOD::FMOD_MODE loose_mode = (FMOD::FMOD_MODE)(FMOD::MODE_LOOP_NORMAL | FMOD::MODE_IGNORETAGS | FMOD::MODE_OPENMEMORY_POINT);
+
+						FMOD::CREATESOUNDEXINFO loose_exinfo{
+							.cbsize = sizeof(loose_exinfo),
+							.length = sizeof(empty_wav),
+							.fileoffset = 0,
+							.numsubsounds = 1,
+							.inclusionlist = 1,
+							.userdata = reinterpret_cast<std::intptr_t>(&DetourFmodSystemLoadBankMemory::s_FsbFiles)
+						};
+						const auto create_empty_sound_res = CreateSound(fmod_system, empty_wav, loose_mode, &loose_exinfo, &sample.Sound);
+
+						if (create_empty_sound_res == FMOD::OK) {
+							auto get_sub_sound = [](FMOD::Sound* sound, int sub_sound_index) -> FMOD::Sound** {
+								const auto* num_sub_sounds = reinterpret_cast<int*>(sound) + 0x2c;
+								if (*num_sub_sounds <= sub_sound_index) {
+									return nullptr;
+								}
+								const auto* sub_sounds_array = reinterpret_cast<FMOD::Sound***>(sound) + 0x14;
+								return (*sub_sounds_array) + sub_sound_index;
+							};
+
+							if (FMOD::Sound** sub_sound = get_sub_sound(sample.Sound, 0))
+							{
+								//static auto read_file_data = [](const std::string& file_path) {
+								//	std::vector<char> file_data_tmp;
+								//	FILE* file{ nullptr };
+								//	auto error = fopen_s(&file, file_path.c_str(), "rb");
+								//	if (error == 0 && file != nullptr) {
+								//		auto close_file = OnScopeExit{ [file]() { fclose(file); } };
+
+								//		fseek(file, 0, SEEK_END);
+								//		const std::size_t file_size = ftell(file);
+								//		fseek(file, 0, SEEK_SET);
+
+								//		file_data_tmp.resize(file_size);
+								//		const auto size_read = fread(file_data_tmp.data(), 1, file_size, file);
+								//		if (size_read != file_size) {
+								//			LogInfo("Could not read file {}, this will either crash or cause glitches...", file_path);
+								//		}
+								//	}
+								//	return file_data_tmp;
+								//};
+								//std::vector<char> file_data = read_file_data(file_path);
+
+								const FMOD::FMOD_MODE loose_sub_sound_mode = (FMOD::FMOD_MODE)(FMOD::MODE_LOOP_NORMAL | FMOD::MODE_IGNORETAGS);
+								//const FMOD::FMOD_MODE loose_sub_sound_mode = (FMOD::FMOD_MODE)((mode | FMOD::MODE_OPENMEMORY) & ~FMOD::MODE_OPENMEMORY_POINT);
+
+								//loose_exinfo.length = (int)file_data.size();
+								loose_exinfo.numsubsounds = 0;
+								loose_exinfo.userdata = 0;
+
+								const auto modded_sample_path = modded_sample.string();
+								CreateSound(fmod_system, modded_sample_path.c_str(), loose_sub_sound_mode, &loose_exinfo, sub_sound);
+
+								//LogInfo("Failed loading loose audio file {}, falling back to loading from soundbank...", fsb_file.Samples[sample_index].Name);
+								//[[maybe_unused]] const auto destroy_leaking_sound_res = ReleaseSound(*sound);
+								//assert(destroy_leaking_sound_res == FMOD::OK);
+							}
+						}
+						*/
+					}
+				}
+			}
+		}
 	}
 
 	static FMOD::FMOD_RESULT DoLastLoad(FMOD::System* fmod_system, FMOD::Sound** bank) {
@@ -417,7 +540,9 @@ struct DetourFmodSystemLoadBankMemory {
 			std::swap(mode, s_LastMode);
 			std::swap(flags, s_LastFlags);
 
-			return Trampoline(fmod_system, buffer, length, mode, flags, bank);
+			auto last_load_res = Trampoline(fmod_system, buffer, length, mode, flags, bank);
+			PreloadModdedSampleData(fmod_system , *bank);
+			return last_load_res;
 		}
 
 		return FMOD::ERR_UNSUPPORTED;
@@ -432,24 +557,31 @@ struct DetourFmodSystemLoadBankMemory {
 		struct Sample {
 			std::string Name;
 			std::uint32_t Offset;
+			FMOD::Sound* Sound;
+			std::unique_ptr<std::byte[]> Data;
+			std::uint32_t DataSize;
 		};
 
 		std::uint32_t Offset;
 		std::vector<Sample> Samples;
+		FMOD::Bank* Bank;
 	};
 	static inline std::vector<FsbFile> s_FsbFiles;
 };
 
 struct DetourFmodSystemLoadBankFile {
-	inline static SigScan::Function<FMOD::FMOD_RESULT(__stdcall*)(FMOD::System*, const char*, int, FMOD::Sound**)> Trampoline{
-		.Signature = "\x40\x53\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xec\x68\x01\x00\x00\x48\x8b\x05\x2a\x2a\x2a\x2a\x48\x33\xc4\x48\x89\x84\x24\x50\x01\x00\x00\x44\x89\x44\x24\x30"_sig,
+	inline static SigScan::Function<FMOD::FMOD_RESULT(__stdcall*)(FMOD::System*, const char*, int, FMOD::Bank**)> Trampoline{
+		.ProcName = "?loadBankFile@System@Studio@FMOD@@QEAA?AW4FMOD_RESULT@@PEBDIPEAPEAVBank@23@@Z",
 		.Module = "fmodstudio.dll"
 	};
-	static FMOD::FMOD_RESULT Detour(FMOD::System* fmod_system, const char* file_name, int flags, FMOD::Sound** bank) {
+	static FMOD::FMOD_RESULT Detour(FMOD::System* fmod_system, const char* file_name, int flags, FMOD::Bank** bank) {
+		DetourFmodSystemLoadBankMemory::ParseSoundbankMemory();
+
 		if (const auto file_path = s_FmodVfs->GetFilePath(file_name)) {
 			const std::string file_path_string = file_path.value().string();
 			const FMOD::FMOD_RESULT result = Trampoline(fmod_system, file_path_string.c_str(), flags, bank);
 			if (result == FMOD::OK) {
+				DetourFmodSystemLoadBankMemory::PreloadModdedSampleData(fmod_system, *bank);
 				return FMOD::OK;
 			}
 		}
@@ -460,6 +592,29 @@ struct DetourFmodSystemLoadBankFile {
 		}
 
 		return Trampoline(fmod_system, file_name, flags, bank);
+	}
+};
+
+struct DetourFmodSystemUnloadBank {
+	inline static SigScan::Function<FMOD::FMOD_RESULT(__stdcall*)(FMOD::Bank*)> Trampoline{
+		.ProcName = "?unload@Bank@Studio@FMOD@@QEAA?AW4FMOD_RESULT@@XZ",
+		.Module = "fmodstudio.dll"
+	};
+	static FMOD::FMOD_RESULT Detour(FMOD::Bank* bank) {
+		// BOOKMARK-POSSIBLE-OPT
+		//for (auto it = DetourFmodSystemLoadBankMemory::s_FsbFiles.begin(); it != DetourFmodSystemLoadBankMemory::s_FsbFiles.end(); ++it) {
+		//	if (it->Bank == bank) {
+		//		for (const auto& sample : it->Samples) {
+		//			if (sample.Sound != nullptr) {
+		//				ReleaseSound(sample.Sound);
+		//			}
+		//		}
+		//		DetourFmodSystemLoadBankMemory::s_FsbFiles.erase(it);
+		//		break;
+		//	}
+		//}
+
+		return Trampoline(bank);
 	}
 };
 
@@ -477,23 +632,23 @@ struct DetourFmodSystemCreateSound {
 		for (const auto& fsb_file : DetourFmodSystemLoadBankMemory::s_FsbFiles) {
 			if (fsb_file.Offset == exinfo->fileoffset) {
 				const auto sample_index = exinfo->inclusionlist >> 1;
-				const std::string file_path = fmt::format("Mods/Extracted/soundbank/wav/{}.wav", fsb_file.Samples[sample_index].Name);
 
-				if (std::filesystem::exists(file_path)) {
+				// BOOKMARK-POSSIBLE-OPT
+				//*sound = fsb_file.Samples[sample_index].Sound;
+				//if (*sound != nullptr) {
+				//	return FMOD::OK;
+				//}
 
-					// TODO:
-					//	- Cache SOUND** with s_Samples (s_Samples as user data to cancel destroySound until unloading soundbank)
-					//	- Fix loading ogg files
-					//	- Don't leak `sound` on failing to load the sub_sound
-					//	- Cleanup
-
-					char empty_wav[]{
+				const auto& sample = fsb_file.Samples[sample_index];
+				{
+					static char empty_wav[]{
 						"\x52\x49\x46\x46\x25\x00\x00\x00\x57\x41\x56\x45\x66\x6D\x74\x20"
 						"\x10\x00\x00\x00\x01\x00\x01\x00\x44\xAC\x00\x00\x88\x58\x01\x00"
 						"\x02\x00\x10\x00\x64\x61\x74\x61\x74\x00\x00\x00\x00"
 					};
 
-					const FMOD::FMOD_MODE loose_mode = (FMOD::FMOD_MODE)(mode | FMOD::MODE_OPENMEMORY_POINT);
+					// Need to specify OPENMEMORY_POINT in case the .bank file is loose
+					const FMOD::FMOD_MODE loose_mode = (FMOD::FMOD_MODE)((mode | FMOD::MODE_OPENMEMORY_POINT | FMOD::MODE_CREATESAMPLE) & ~FMOD::MODE_CREATECOMPRESSEDSAMPLE);
 
 					FMOD::CREATESOUNDEXINFO loose_exinfo{
 						.cbsize = sizeof(loose_exinfo),
@@ -503,9 +658,9 @@ struct DetourFmodSystemCreateSound {
 						.inclusionlist = 1,
 						.fsbguid = exinfo->fsbguid
 					};
-					auto ret = Trampoline(fmod_system, empty_wav, loose_mode, &loose_exinfo, sound);
+					const auto create_empty_sound_res = Trampoline(fmod_system, empty_wav, loose_mode, &loose_exinfo, sound);
 
-					if (ret == FMOD::OK) {
+					if (create_empty_sound_res == FMOD::OK) {
 						auto get_sub_sound = [](FMOD::Sound* sound, int sub_sound_index) ->FMOD::Sound** {
 							const auto* num_sub_sounds = reinterpret_cast<int*>(sound) + 0x2c;
 							if (*num_sub_sounds <= sub_sound_index) {
@@ -517,37 +672,23 @@ struct DetourFmodSystemCreateSound {
 
 						if (FMOD::Sound** sub_sound = get_sub_sound(*sound, 0))
 						{
-							static auto read_file_data = [](const std::string& file_path) {
-								std::vector<char> file_data_tmp;
-								FILE* file{ nullptr };
-								auto error = fopen_s(&file, file_path.c_str(), "rb");
-								if (error == 0 && file != nullptr) {
-									auto close_file = OnScopeExit{ [file]() { fclose(file); } };
-
-									fseek(file, 0, SEEK_END);
-									const std::size_t file_size = ftell(file);
-									fseek(file, 0, SEEK_SET);
-
-									file_data_tmp.resize(file_size);
-									const auto size_read = fread(file_data_tmp.data(), 1, file_size, file);
-									if (size_read != file_size) {
-										LogInfo("Could not read file {}, this will either crash or cause glitches...", file_path);
-									}
-								}
-								return file_data_tmp;
-							};
-							std::vector<char> file_data = read_file_data(file_path);
-
-							const FMOD::FMOD_MODE loose_sub_sound_mode = (FMOD::FMOD_MODE)((mode | FMOD::MODE_OPENMEMORY) & ~FMOD::MODE_OPENMEMORY_POINT);
-
-							loose_exinfo.length = (int)file_data.size();
+							loose_exinfo.length = sample.DataSize;
 							loose_exinfo.numsubsounds = 0;
-							ret = Trampoline(fmod_system, file_data.data(), loose_sub_sound_mode, &loose_exinfo, sub_sound);
 
-							return ret;
+							const auto create_sub_sound_res = Trampoline(fmod_system, (const char*)sample.Data.get(), loose_mode, &loose_exinfo, sub_sound);
+							if (create_sub_sound_res == FMOD::OK) {
+								//FMOD::Sound* orig_sound = nullptr;
+								//Trampoline(fmod_system, file_name_or_data, mode, exinfo, &orig_sound);
+								//if (sample.Name == "ouroboros_stinger")
+								//	__debugbreak();
+
+								return FMOD::OK;
+							}
+
+							LogInfo("Failed loading loose audio file {}, falling back to loading from soundbank...", fsb_file.Samples[sample_index].Name);
+							[[maybe_unused]] const auto destroy_leaking_sound_res = ReleaseSound(*sound);
+							assert(destroy_leaking_sound_res == FMOD::OK);
 						}
-
-						// Leaking `sound` if we get here
 					}
 				}
 			}
@@ -568,6 +709,33 @@ struct DetourFmodSystemCreateStream {
 	}
 };
 
+struct DetourFmodSystemReleaseSound {
+	inline static SigScan::Function<FMOD::FMOD_RESULT(__stdcall*)(FMOD::Sound*)> Trampoline{
+		.ProcName = "?release@Sound@FMOD@@QEAA?AW4FMOD_RESULT@@XZ",
+		.Module = "fmod.dll"
+	};
+	static FMOD::FMOD_RESULT Detour(FMOD::Sound* sound) {
+		// BOOKMARK-POSSIBLE-OPT
+		//static auto get_user_data = [](FMOD::Sound* sound) {
+		//	return *(reinterpret_cast<void**>(sound) + 0x19);
+		//};
+		//const auto user_data = get_user_data(sound);
+		//if (user_data == &DetourFmodSystemLoadBankMemory::s_FsbFiles) {
+		//	return FMOD::OK;
+		//}
+
+		return Trampoline(sound);
+	}
+};
+
+inline FMOD::FMOD_RESULT CreateSound(FMOD::System* fmod_system, const char* filename_or_data, FMOD::FMOD_MODE mode, FMOD::CREATESOUNDEXINFO* exinfo, FMOD::Sound** sound) {
+	return DetourFmodSystemCreateSound::Trampoline(fmod_system, filename_or_data, mode, exinfo, sound);
+}
+
+inline FMOD::FMOD_RESULT ReleaseSound(FMOD::Sound* sound) {
+	return DetourFmodSystemReleaseSound::Trampoline(sound);
+}
+
 std::vector<DetourEntry> GetFmodDetours() {
 	const bool enable_loose_audio_files = []() {
 		return INIReader("playlunky.ini").GetBoolean("settings", "enable_loose_audio_files", true);
@@ -576,8 +744,10 @@ std::vector<DetourEntry> GetFmodDetours() {
 		return {
 			DetourHelper<DetourFmodSystemLoadBankMemory>::GetDetourEntry("FMOD::System::loadBankMemory"),
 			DetourHelper<DetourFmodSystemLoadBankFile>::GetDetourEntry("FMOD::System::loadBankFile"),
+			DetourHelper<DetourFmodSystemUnloadBank>::GetDetourEntry("FMOD::Bank::unload"),
 			DetourHelper<DetourFmodSystemCreateSound>::GetDetourEntry("FMOD::System::createSound"),
-			DetourHelper<DetourFmodSystemCreateStream>::GetDetourEntry("FMOD::System::createStream")
+			DetourHelper<DetourFmodSystemCreateStream>::GetDetourEntry("FMOD::System::createStream"),
+			DetourHelper<DetourFmodSystemReleaseSound>::GetDetourEntry("FMOD::Sound::release")
 		};
 	}
 	return {};
