@@ -4,4 +4,4 @@
 
 std::vector<struct DetourEntry> GetFileIODetours();
 
-void SetVfs(class VirtualFilesystem* vfs);
+void SetFileIOVfs(class VirtualFilesystem* vfs);

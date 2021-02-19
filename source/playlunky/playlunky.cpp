@@ -5,6 +5,7 @@
 #include "mod/virtual_filesystem.h"
 #include "detour/detour.h"
 #include "detour/file_io.h"
+#include "detour/fmod_crap.h"
 
 struct Playlunky::PlaylunkyImpl {
 	HMODULE GameModule;
@@ -51,7 +52,8 @@ void Playlunky::Init() {
 	mImpl->Vfs = std::make_unique<VirtualFilesystem>();
 	mImpl->Manager = std::make_unique<ModManager>("Mods/Packs", *mImpl->Vfs);
 
-	SetVfs(mImpl->Vfs.get());
+	SetFileIOVfs(mImpl->Vfs.get());
+	SetFmodVfs(mImpl->Vfs.get());
 }
 
 Playlunky::Playlunky(HMODULE game_module)
