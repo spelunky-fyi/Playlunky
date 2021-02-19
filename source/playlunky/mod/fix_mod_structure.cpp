@@ -23,6 +23,12 @@ static constexpr std::string_view s_FullTextureTargetPath{ "Data/Textures/Entiti
 static constexpr ctll::fixed_string s_TextureRule{ ".*\\.(DDS|png)" };
 static constexpr std::string_view s_TextureTargetPath{ "Data/Textures" };
 
+static constexpr ctll::fixed_string s_WavRule{ ".*\\.wav" };
+static constexpr std::string_view s_WavTargetPath{ "soundbank/wav" };
+
+static constexpr ctll::fixed_string s_OggRule{ ".*\\.ogg" };
+static constexpr std::string_view s_OggTargetPath{ "soundbank/ogg" };
+
 void FixModFolderStructure(const std::filesystem::path& mod_folder) {
 	namespace fs = std::filesystem;
 	struct PathMapping {
@@ -53,6 +59,12 @@ void FixModFolderStructure(const std::filesystem::path& mod_folder) {
 			}
 			else if (ctre::match<s_TextureRule>(file_name)) {
 				path_mappings.push_back({ path, mod_folder / s_TextureTargetPath / file_name });
+			}
+			else if (ctre::match<s_WavRule>(file_name)) {
+				path_mappings.push_back({ path, mod_folder / s_WavTargetPath / file_name });
+			}
+			else if (ctre::match<s_OggRule>(file_name)) {
+				path_mappings.push_back({ path, mod_folder / s_OggTargetPath / file_name });
 			}
 			else {
 				path_mappings.push_back({ path, mod_folder / file_name });
