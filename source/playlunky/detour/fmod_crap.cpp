@@ -648,15 +648,14 @@ struct DetourFmodSystemCreateSound {
 					};
 
 					// Need to specify OPENMEMORY_POINT in case the .bank file is loose
-					const FMOD::FMOD_MODE loose_mode = (FMOD::FMOD_MODE)((mode | FMOD::MODE_OPENMEMORY_POINT | FMOD::MODE_CREATESAMPLE) & ~FMOD::MODE_CREATECOMPRESSEDSAMPLE);
+					const FMOD::FMOD_MODE loose_mode = (FMOD::FMOD_MODE)(mode | FMOD::MODE_OPENMEMORY_POINT);
 
 					FMOD::CREATESOUNDEXINFO loose_exinfo{
 						.cbsize = sizeof(loose_exinfo),
 						.length = sizeof(empty_wav),
 						.fileoffset = 0,
 						.numsubsounds = 1,
-						.inclusionlist = 1,
-						.fsbguid = exinfo->fsbguid
+						.inclusionlist = 1
 					};
 					const auto create_empty_sound_res = Trampoline(fmod_system, empty_wav, loose_mode, &loose_exinfo, sound);
 
@@ -672,6 +671,10 @@ struct DetourFmodSystemCreateSound {
 
 						if (FMOD::Sound** sub_sound = get_sub_sound(*sound, 0))
 						{
+							if (*sub_sound != nullptr) {
+								ReleaseSound(*sub_sound);
+							}
+
 							loose_exinfo.length = sample.DataSize;
 							loose_exinfo.numsubsounds = 0;
 
