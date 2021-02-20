@@ -275,6 +275,9 @@ struct DetourFmodSystemLoadBankMemory {
 	}
 
 	static void ParseSoundbankMemory() {
+		if (!s_EnableLooseFiles)
+			return;
+
 		LogInfo("Parsing bank file to find all samples within...");
 
 		const auto buffer = s_LastBuffer;
@@ -422,6 +425,9 @@ struct DetourFmodSystemLoadBankMemory {
 	}
 
 	static void PreloadModdedSampleData([[maybe_unused]] FMOD::System* fmod_system, FMOD::Bank* bank) {
+		if (!s_EnableLooseFiles)
+			return;
+
 		LogInfo("Preloading any modded samples...");
 
 		std::size_t num_samples{ 0 };
@@ -580,6 +586,7 @@ struct DetourFmodSystemLoadBankMemory {
 		FMOD::Bank* Bank;
 	};
 	static inline std::vector<FsbFile> s_FsbFiles;
+	inline static bool s_EnableLooseFiles{ true };
 };
 
 struct DetourFmodSystemLoadBankFile {
@@ -763,7 +770,13 @@ std::vector<DetourEntry> GetFmodDetours() {
 			DetourHelper<DetourFmodSystemReleaseSound>::GetDetourEntry("FMOD::Sound::release")
 		};
 	}
-	return {};
+	else {
+		DetourFmodSystemLoadBankMemory::s_EnableLooseFiles = false;
+		return {
+			DetourHelper<DetourFmodSystemLoadBankMemory>::GetDetourEntry("FMOD::System::loadBankMemory"),
+			DetourHelper<DetourFmodSystemLoadBankFile>::GetDetourEntry("FMOD::System::loadBankFile")
+		};
+	}
 }
 
 void SetFmodVfs(VirtualFilesystem* vfs) {
