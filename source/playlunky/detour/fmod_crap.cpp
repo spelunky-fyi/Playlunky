@@ -640,7 +640,7 @@ struct DetourFmodSystemCreateSound {
 				//}
 
 				const auto& sample = fsb_file.Samples[sample_index];
-				{
+				if (sample.DataSize > 0) {
 					static char empty_wav[]{
 						"\x52\x49\x46\x46\x25\x00\x00\x00\x57\x41\x56\x45\x66\x6D\x74\x20"
 						"\x10\x00\x00\x00\x01\x00\x01\x00\x44\xAC\x00\x00\x88\x58\x01\x00"
