@@ -275,9 +275,12 @@ struct DetourFmodSystemLoadBankMemory {
 	}
 
 	static void ParseSoundbankMemory() {
+		LogInfo("Parsing bank file to find all samples within...");
+
 		const auto buffer = s_LastBuffer;
 		const auto length = s_LastLength;
 
+		std::size_t num_samples{ 0 };
 		if (buffer != nullptr && length != 0) {
 			const char* current_buffer_pos = buffer;
 			[[maybe_unused]] const char* first_data = buffer + 0x283340;
@@ -289,7 +292,7 @@ struct DetourFmodSystemLoadBankMemory {
 				(void)ReadFromBuffer<char[4]>(fsb_data);
 				const auto version = ReadFromBuffer<std::uint32_t>(fsb_data);
 				if (version == 1) {
-					const auto num_samples = ReadFromBuffer<std::uint32_t>(fsb_data);
+					const auto num_samples_in_fsb = ReadFromBuffer<std::uint32_t>(fsb_data);
 					const auto sample_headers_size = ReadFromBuffer<std::uint32_t>(fsb_data);
 					const auto sample_names_size = ReadFromBuffer<std::uint32_t>(fsb_data);
 					const auto sample_datas_size = ReadFromBuffer<std::uint32_t>(fsb_data);
@@ -303,9 +306,9 @@ struct DetourFmodSystemLoadBankMemory {
 					const auto sample_datas_offset = header_size + sample_headers_size + sample_names_size;
 
 					std::vector<FsbFile::Sample> samples;
-					samples.reserve(num_samples);
+					samples.reserve(num_samples_in_fsb);
 
-					for (std::uint32_t i = 0; i < num_samples; i++) {
+					for (std::uint32_t i = 0; i < num_samples_in_fsb; i++) {
 						auto read_uint64_but_offset_32 = [](const char*& buffer) {
 							const auto ret = ReadFromBuffer<std::uint64_t>(buffer);
 							buffer -= 4;
@@ -399,6 +402,7 @@ struct DetourFmodSystemLoadBankMemory {
 								.Name = this_sample_name,
 								.Offset = (std::uint32_t)data_offset
 							});
+						num_samples++;
 					}
 
 					std::sort(samples.begin(), samples.end(), [](const FsbFile::Sample& lhs, const FsbFile::Sample& rhs) { return lhs.Offset < rhs.Offset; });
@@ -413,9 +417,14 @@ struct DetourFmodSystemLoadBankMemory {
 				current_buffer_pos = fsb_data;
 			}
 		}
+
+		LogInfo("Found {} samples...", num_samples);
 	}
 
 	static void PreloadModdedSampleData([[maybe_unused]] FMOD::System* fmod_system, FMOD::Bank* bank) {
+		LogInfo("Preloading any modded samples...");
+
+		std::size_t num_samples{ 0 };
 		for (FsbFile& fsb_file : s_FsbFiles) {
 			if (fsb_file.Bank == nullptr) {
 				fsb_file.Bank = bank;
@@ -444,6 +453,8 @@ struct DetourFmodSystemLoadBankMemory {
 							if (size_read != file_size) {
 								LogInfo("Could not read file {}, this will either crash or cause glitches...", modded_sample_string);
 							}
+
+							num_samples++;
 						}
 
 						// BOOKMARK-POSSIBLE-OPT
@@ -526,6 +537,8 @@ struct DetourFmodSystemLoadBankMemory {
 				}
 			}
 		}
+		
+		LogInfo("Preloaded {} modded samples...", num_samples);
 	}
 
 	static FMOD::FMOD_RESULT DoLastLoad(FMOD::System* fmod_system, FMOD::Sound** bank) {
@@ -575,6 +588,8 @@ struct DetourFmodSystemLoadBankFile {
 		.Module = "fmodstudio.dll"
 	};
 	static FMOD::FMOD_RESULT Detour(FMOD::System* fmod_system, const char* file_name, int flags, FMOD::Bank** bank) {
+		LogInfo("Loading bank file {} into FMOD...", file_name);
+
 		DetourFmodSystemLoadBankMemory::ParseSoundbankMemory();
 
 		if (const auto file_path = s_FmodVfs->GetFilePath(file_name)) {
@@ -680,11 +695,6 @@ struct DetourFmodSystemCreateSound {
 
 							const auto create_sub_sound_res = Trampoline(fmod_system, (const char*)sample.Data.get(), loose_mode, &loose_exinfo, sub_sound);
 							if (create_sub_sound_res == FMOD::OK) {
-								//FMOD::Sound* orig_sound = nullptr;
-								//Trampoline(fmod_system, file_name_or_data, mode, exinfo, &orig_sound);
-								//if (sample.Name == "ouroboros_stinger")
-								//	__debugbreak();
-
 								return FMOD::OK;
 							}
 
