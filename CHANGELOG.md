@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Loose audio file loading for both .wav and .ogg files. Supported formats are .wav, vorbis .ogg, opus .ogg, .flac and .mp3
+- Option to determine whether loose audio files should be enabled. This is in order to avoid slow startup times or additional disk usage.
+- Option to control whether audio files should be cached in a decoded format or not. This is a tradeoff where enabling this option will result in faster startup times but require additional disk usage.
+
+### Changed
+- mod.db version, this will force a regeneration of assets on first load
 
 ## [0.5.5] - 2021-17-02
 
