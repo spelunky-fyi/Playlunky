@@ -79,6 +79,7 @@ target_link_libraries(playlunky_lib_dependencies INTERFACE
 	ctre::ctre
 	zstd::zstd
 	opencv::opencv
+	libnyquist
 	inih)
 
 

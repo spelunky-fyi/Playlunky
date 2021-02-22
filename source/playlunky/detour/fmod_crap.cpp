@@ -682,19 +682,23 @@ struct DetourFmodSystemCreateSound {
 								.length = (std::uint32_t)sample.Buffer.DataSize,
 								.numchannels = sample.Buffer.NumChannels,
 								.defaultfrequency = sample.Buffer.Frequency,
-								.format = [](std::int32_t bits_per_sample) {
+								.format = [&sample](SoundFormat bits_per_sample) {
 									switch (bits_per_sample) {
 									default:
-									case 8:
+										LogInfo("Sound format is not supported for file {}, falling back to original game audio...", sample.Name);
+										return FMOD::SOUND_FORMAT::NONE;
+									case SoundFormat::PCM_8:
 										return FMOD::SOUND_FORMAT::PCM8;
-									case 16:
+									case SoundFormat::PCM_16:
 										return FMOD::SOUND_FORMAT::PCM16;
-									case 24:
+									case SoundFormat::PCM_24:
 										return FMOD::SOUND_FORMAT::PCM24;
-									case 32:
+									case SoundFormat::PCM_32:
 										return FMOD::SOUND_FORMAT::PCM32;
+									case SoundFormat::PCM_FLOAT:
+										return FMOD::SOUND_FORMAT::PCMFLOAT;
 									}
-								}(sample.Buffer.BitsPerSample),
+								}(sample.Buffer.Format),
 								.numsubsounds = 0
 							};
 

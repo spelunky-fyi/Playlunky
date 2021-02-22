@@ -4,3 +4,6 @@
 [submodule "submodules/inih"]
 	path = submodules/inih
 	url = https://github.com/jtilly/inih.git
+[submodule "submodules/libnyquist"]
+	path = submodules/libnyquist
+	url = https://github.com/ddiakopoulos/libnyquist.git
