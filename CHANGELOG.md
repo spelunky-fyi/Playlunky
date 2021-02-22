@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.2a-orange">
 
 ### Added
-- Loose audio file loading for both .wav and .ogg files.
+- Loose audio file loading for both .wav and .ogg files. Supported formats are .wav, vorbis .ogg, opus .ogg, .flac and .mp3
 
 ## [0.5.5] - 2021-17-02
 
