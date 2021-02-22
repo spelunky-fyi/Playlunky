@@ -29,6 +29,24 @@ static constexpr std::string_view s_WavTargetPath{ "soundbank/wav" };
 static constexpr ctll::fixed_string s_OggRule{ ".*\\.ogg" };
 static constexpr std::string_view s_OggTargetPath{ "soundbank/ogg" };
 
+static constexpr ctll::fixed_string s_Mp3Rule{ ".*\\.mp3" };
+static constexpr std::string_view s_Mp3TargetPath{ "soundbank/mp3" };
+
+static constexpr ctll::fixed_string s_WvRule{ ".*\\.wv" };
+static constexpr std::string_view s_WvTargetPath{ "soundbank/wv" };
+
+static constexpr ctll::fixed_string s_OpusRule{ ".*\\.opus" };
+static constexpr std::string_view s_OpusTargetPath{ "soundbank/opus" };
+
+static constexpr ctll::fixed_string s_FlacRule{ ".*\\.flac" };
+static constexpr std::string_view s_FlacTargetPath{ "soundbank/flac" };
+
+static constexpr ctll::fixed_string s_MpcRule{ ".*\\.mpc" };
+static constexpr std::string_view s_MpcTargetPath{ "soundbank/mpc" };
+
+static constexpr ctll::fixed_string s_MppRule{ ".*\\.mpp" };
+static constexpr std::string_view s_MppTargetPath{ "soundbank/mpp" };
+
 void FixModFolderStructure(const std::filesystem::path& mod_folder) {
 	namespace fs = std::filesystem;
 	struct PathMapping {
@@ -65,6 +83,24 @@ void FixModFolderStructure(const std::filesystem::path& mod_folder) {
 			}
 			else if (ctre::match<s_OggRule>(file_name)) {
 				path_mappings.push_back({ path, mod_folder / s_OggTargetPath / file_name });
+			}
+			else if (ctre::match<s_Mp3Rule>(file_name)) {
+				path_mappings.push_back({ path, mod_folder / s_Mp3TargetPath / file_name });
+			}
+			else if (ctre::match<s_WvRule>(file_name)) {
+				path_mappings.push_back({ path, mod_folder / s_WvTargetPath / file_name });
+			}
+			else if (ctre::match<s_OpusRule>(file_name)) {
+				path_mappings.push_back({ path, mod_folder / s_OpusTargetPath / file_name });
+			}
+			else if (ctre::match<s_FlacRule>(file_name)) {
+				path_mappings.push_back({ path, mod_folder / s_FlacTargetPath / file_name });
+			}
+			else if (ctre::match<s_MpcRule>(file_name)) {
+				path_mappings.push_back({ path, mod_folder / s_MpcTargetPath / file_name });
+			}
+			else if (ctre::match<s_MppRule>(file_name)) {
+				path_mappings.push_back({ path, mod_folder / s_MppTargetPath / file_name });
 			}
 			else {
 				path_mappings.push_back({ path, mod_folder / file_name });

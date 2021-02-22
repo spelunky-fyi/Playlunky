@@ -1,5 +1,6 @@
 #include "mod_manager.h"
 
+#include "cache_audio_file.h"
 #include "character_sticker_gen.h"
 #include "extract_game_assets.h"
 #include "fix_mod_structure.h"
@@ -23,6 +24,12 @@
 #include <unordered_map>
 #include <map>
 
+#pragma warning(push)
+#pragma warning(disable : 4996)
+#pragma warning(disable : 4244)
+#include <INIReader.h>
+#pragma warning(pop)
+
 static constexpr ctll::fixed_string s_CharacterRule{ ".+char_(.*)\\.png" };
 static constexpr ctll::fixed_string s_CharacterFullRule{ ".+char_(.*)_full\\.png" };
 static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
@@ -34,6 +41,10 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 	LogInfo("Initializing Mod Manger...");
 
 	LogInfo("Scanning for mods...");
+
+	INIReader playlunky_ini("playlunky.ini");
+	const bool enable_loose_audio_files = playlunky_ini.GetBoolean("settings", "enable_loose_audio_files", true);
+	const bool cache_decoded_audio_files = enable_loose_audio_files && playlunky_ini.GetBoolean("settings", "cache_decoded_audio_files", true);
 
 	const fs::path mods_root_path{ mods_root };
 	if (fs::exists(mods_root_path) && fs::is_directory(mods_root_path)) {
@@ -263,6 +274,19 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 					}
 					else if (rel_asset_path == "shaders_mod.hlsl") {
 						has_outdated_shaders = has_outdated_shaders || outdated || deleted || new_enabled_state.has_value();
+					}
+					else if (cache_decoded_audio_files && IsSupportedAudioFile(rel_asset_path)) {
+						if (deleted) {
+							DeleteCachedAudioFile(full_asset_path, mod_db_folder);
+						}
+						else if (!HasCachedAudioFile(full_asset_path, mod_db_folder)) {
+							if (CacheAudioFile(full_asset_path, mod_db_folder, outdated)) {
+								LogInfo("Successfully cached audio file '{}'...", full_asset_path.string());
+							}
+							else {
+								LogInfo("Failed caching audio file '{}'...", full_asset_path.string());
+							}
+						}
 					}
 				});
 				mod_db.WriteDatabase();

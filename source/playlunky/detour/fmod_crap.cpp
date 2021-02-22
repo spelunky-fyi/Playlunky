@@ -4,7 +4,7 @@
 #include "detour_helper.h"
 #include "sigscan.h"
 #include "log.h"
-#include "mod/decode_audio_file.h"
+#include "mod/cache_audio_file.h"
 #include "mod/virtual_filesystem.h"
 #include "util/on_scope_exit.h"
 
@@ -437,16 +437,46 @@ struct DetourFmodSystemLoadBankMemory {
 				fsb_file.Bank = bank;
 
 				for (FsbFile::Sample& sample : fsb_file.Samples) {
-					const auto modded_sample = s_FmodVfs->GetFilePath(fmt::format("soundbank/wav/{}.wav", sample.Name))
-						.value_or(s_FmodVfs->GetFilePath(fmt::format("soundbank/ogg/{}.ogg", sample.Name))
-							.value_or("invalid.err"));
-					if (std::filesystem::exists(modded_sample)) {
+					if (s_CacheDecodedFiles) {
+						const auto modded_sample = s_FmodVfs->GetFilePath(fmt::format("raw_audio/{}.raw", sample.Name));
+						if (modded_sample.has_value() && std::filesystem::exists(modded_sample.value())) {
+							sample.Buffer = LoadCachedAudioFile(modded_sample.value());
+						}
+					}
+					else {
+						const auto modded_sample = [](const std::string& file_name) {
+							auto file_path = s_FmodVfs->GetFilePath(fmt::format("soundbank/wav/{}.wav", file_name));
+							if (!file_path.has_value()) {
+								file_path = s_FmodVfs->GetFilePath(fmt::format("soundbank/ogg/{}.ogg", file_name));
+							}
+							if (!file_path.has_value()) {
+								file_path = s_FmodVfs->GetFilePath(fmt::format("soundbank/mp3/{}.mp3", file_name));
+							}
+							if (!file_path.has_value()) {
+								file_path = s_FmodVfs->GetFilePath(fmt::format("soundbank/wv/{}.wv", file_name));
+							}
+							if (!file_path.has_value()) {
+								file_path = s_FmodVfs->GetFilePath(fmt::format("soundbank/opus/{}.opus", file_name));
+							}
+							if (!file_path.has_value()) {
+								file_path = s_FmodVfs->GetFilePath(fmt::format("soundbank/flac/{}.flac", file_name));
+							}
+							if (!file_path.has_value()) {
+								file_path = s_FmodVfs->GetFilePath(fmt::format("soundbank/mpc/{}.mpc", file_name));
+							}
+							if (!file_path.has_value()) {
+								file_path = s_FmodVfs->GetFilePath(fmt::format("soundbank/mpp/{}.mpp", file_name));
+							}
+							return file_path;
+						}(sample.Name); 
+						if (modded_sample.has_value() && std::filesystem::exists(modded_sample.value())) {
+							sample.Buffer = DecodeAudioFile(modded_sample.value());
+						}
+					}
 
-						sample.Buffer = DecodeAudioFile(modded_sample);
-
-						// BOOKMARK-POSSIBLE-OPT
-						// Possible optimization? Preload sounds here?
-						/*
+					// BOOKMARK-POSSIBLE-OPT
+					// Possible optimization? Preload sounds here?
+					/*
 						static char empty_wav[]{
 							"\x52\x49\x46\x46\x25\x00\x00\x00\x57\x41\x56\x45\x66\x6D\x74\x20"
 							"\x10\x00\x00\x00\x01\x00\x01\x00\x44\xAC\x00\x00\x88\x58\x01\x00"
@@ -515,11 +545,10 @@ struct DetourFmodSystemLoadBankMemory {
 							}
 						}
 						*/
-					}
 				}
 			}
 		}
-		
+
 		LogInfo("Preloaded {} modded samples...", num_samples);
 	}
 
@@ -536,7 +565,7 @@ struct DetourFmodSystemLoadBankMemory {
 			std::swap(flags, s_LastFlags);
 
 			auto last_load_res = Trampoline(fmod_system, buffer, length, mode, flags, bank);
-			PreloadModdedSampleData(fmod_system , *bank);
+			PreloadModdedSampleData(fmod_system, *bank);
 			return last_load_res;
 		}
 
@@ -565,6 +594,7 @@ struct DetourFmodSystemLoadBankMemory {
 	};
 	static inline std::vector<FsbFile> s_FsbFiles;
 	inline static bool s_EnableLooseFiles{ true };
+	inline static bool s_CacheDecodedFiles{ true };
 };
 
 struct DetourFmodSystemLoadBankFile {
@@ -759,10 +789,11 @@ inline FMOD::FMOD_RESULT ReleaseSound(FMOD::Sound* sound) {
 }
 
 std::vector<DetourEntry> GetFmodDetours() {
-	const bool enable_loose_audio_files = []() {
-		return INIReader("playlunky.ini").GetBoolean("settings", "enable_loose_audio_files", true);
-	}();
+	INIReader playlunky_ini("playlunky.ini");
+	const bool enable_loose_audio_files = playlunky_ini.GetBoolean("settings", "enable_loose_audio_files", true);
+	const bool cache_decoded_audio_files = playlunky_ini.GetBoolean("settings", "cache_decoded_audio_files", true);
 	if (enable_loose_audio_files) {
+		DetourFmodSystemLoadBankMemory::s_CacheDecodedFiles = cache_decoded_audio_files;
 		return {
 			DetourHelper<DetourFmodSystemLoadBankMemory>::GetDetourEntry("FMOD::System::loadBankMemory"),
 			DetourHelper<DetourFmodSystemLoadBankFile>::GetDetourEntry("FMOD::System::loadBankFile"),
