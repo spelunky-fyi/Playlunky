@@ -45,10 +45,10 @@ bool CacheAudioFile(const std::filesystem::path& file_path, const std::filesyste
 
 		if (buffer.DataSize > 0) {
 			std::ofstream output_file(output_file_path, std::ios::binary);
-			output_file << buffer.NumChannels;
-			output_file << buffer.Frequency;
-			output_file << static_cast<std::int32_t>(buffer.Format);
-			output_file << buffer.DataSize;
+			output_file.write(reinterpret_cast<const char*>(&buffer.NumChannels), sizeof(buffer.NumChannels));
+			output_file.write(reinterpret_cast<const char*>(&buffer.Frequency), sizeof(buffer.Frequency));
+			output_file.write(reinterpret_cast<const char*>(&buffer.Format), sizeof(buffer.Format));
+			output_file.write(reinterpret_cast<const char*>(&buffer.DataSize), sizeof(buffer.DataSize));
 			output_file.write(reinterpret_cast<const char*>(buffer.Data.get()), buffer.DataSize);
 		}
 		else {
@@ -62,13 +62,10 @@ DecodedAudioBuffer LoadCachedAudioFile(const std::filesystem::path& file_path) {
 	DecodedAudioBuffer buffer{};
 
 	if (std::ifstream input_file = std::ifstream(file_path, std::ios::binary)) {
-
-		input_file >> buffer.NumChannels;
-		input_file >> buffer.Frequency;
-		std::int32_t format;
-		input_file >> format;
-		buffer.Format = static_cast<SoundFormat>(format);
-		input_file >> buffer.DataSize;
+		input_file.read(reinterpret_cast<char*>(&buffer.NumChannels), sizeof(buffer.NumChannels));
+		input_file.read(reinterpret_cast<char*>(&buffer.Frequency), sizeof(buffer.Frequency));
+		input_file.read(reinterpret_cast<char*>(&buffer.Format), sizeof(buffer.Format));
+		input_file.read(reinterpret_cast<char*>(&buffer.DataSize), sizeof(buffer.DataSize));
 		buffer.Data = std::make_unique<std::byte[]>(buffer.DataSize);
 		input_file.read(reinterpret_cast<char*>(buffer.Data.get()), buffer.DataSize);
 	}
