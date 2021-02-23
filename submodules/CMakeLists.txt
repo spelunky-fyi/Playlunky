@@ -11,7 +11,7 @@ function(get_all_targets _result _dir)
 endfunction()
 
 function(add_subdirectory_with_folder _folder_name _folder)
-    add_subdirectory(${_folder} ${ARGN})
+    add_subdirectory(${_folder} ${ARGN} EXCLUDE_FROM_ALL)
     get_all_targets(_targets "${_folder}")
     foreach(_target IN LISTS _targets)
         get_target_property(_target_type ${_target} TYPE)
