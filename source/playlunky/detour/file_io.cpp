@@ -21,7 +21,8 @@ static VirtualFilesystem* s_FileIOVfs{ nullptr };
 
 struct DetourReadEncrypedFile {
 	inline static SigScan::Function<void* (__stdcall*)(const char*, void* (*)(size_t size))> Trampoline{
-		.Signature = "\x48\x8b\xc4\x48\x89\x58\x18\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8d\xa8\x38\xff\xff\xff"_sig
+		.Signature = "\x48\x8b\xc4\x48\x89\x58\x18\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8d\x6c\x24\x80\x48\x81\xec\x80\x01\x00\x00"_sig
+		
 	};
 	static void* Detour(const char* file_path, void* (*alloc_fun)(size_t size))
 	{

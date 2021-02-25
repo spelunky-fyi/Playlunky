@@ -11,7 +11,7 @@
 #include <Windows.h>
 #include <string_view>
 
-inline constexpr std::string_view s_SupportedSpelunkyVersion = "1.20.2a";
+inline constexpr std::string_view s_SupportedSpelunkyVersion = "1.20.3a";
 
 struct DetourWinMain {
 	inline static SigScan::Function<int(__stdcall*)(HINSTANCE, HINSTANCE, LPSTR, int)> Trampoline{
@@ -43,7 +43,7 @@ struct DetourWinMain {
 // This is the first function called in WinMain() after the global log is initialized
 struct DetourGetSteamHandle {
 	inline static SigScan::Function<void*(__stdcall*)()> Trampoline{
-		.Signature = "\x40\x53\x48\x83\xec\x20\x48\x8b\x05\x2a\x2a\x2a\x2a\x48\x85\xc0\x75\x6d\xe8\x2a\x2a\x2a\x2a"_sig
+		.Signature = "\x40\x53\x48\x83\xec\x20\x48\x8b\x05\x2a\x2a\x2a\x2a\x48\x85\xc0\x75\x76\x48\x39\x05\x2a\x2a\x2a\x2a"_sig
 	};
 	static void* Detour() {
 		static bool s_PlaylunkyInit{ false };
