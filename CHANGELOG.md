@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.8] - 2021-26-02
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
+
+### Changed
+- Bumped the supported version of Spelunky... again...
+
 ## [0.5.7] - 2021-25-02
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.3a-orange">
