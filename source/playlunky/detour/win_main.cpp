@@ -24,7 +24,9 @@ struct DetourWinMain {
 				const auto message = fmt::format("This version of Spelunky 2 is not supported by Playlunky, "
 					"please update your game or check if there is a new version of Playlunky available.\n"
 					" Spelunky Version: {}\n"
-					"Supported Version: {}", version_string, s_SupportedSpelunkyVersion);
+					"Supported Version: {}\n"
+					"Playlunky might still function correctly, so just press OK and give it a try."
+					"A new version will be released soon that removes this warning.", version_string, s_SupportedSpelunkyVersion);
 				MessageBox(NULL, message.c_str(), "Version Mistmacht Detected", MB_OK);
 			}
 		}
@@ -32,7 +34,9 @@ struct DetourWinMain {
 			const auto message = fmt::format("This version of Spelunky 2 is not supported by Playlunky, "
 				"please update your game or check if there is a new version of Playlunky available.\n"
 				" Spelunky Version: could not be verified\n"
-				"Supported Version: {}", s_SupportedSpelunkyVersion);
+				"Supported Version: {}\n"
+				"Playlunky might still function correctly, so just press OK and give it a try."
+				"A new version will be released soon that removes this warning.", s_SupportedSpelunkyVersion);
 			MessageBox(NULL, message.c_str(), "Version Mistmacht Detected", MB_OK);
 		}
 
@@ -42,7 +46,7 @@ struct DetourWinMain {
 
 // This is the first function called in WinMain() after the global log is initialized
 struct DetourGetSteamHandle {
-	inline static SigScan::Function<void*(__stdcall*)()> Trampoline{
+	inline static SigScan::Function<void* (__stdcall*)()> Trampoline{
 		.Signature = "\x40\x53\x48\x83\xec\x20\x48\x8b\x05\x2a\x2a\x2a\x2a\x48\x85\xc0\x75\x76\x48\x39\x05\x2a\x2a\x2a\x2a"_sig
 	};
 	static void* Detour() {
