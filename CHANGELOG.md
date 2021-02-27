@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.9] - 2021-27-02
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
+
+### Fixed
+- Issue where Playlunky would move unkown files into the top level folder when the intention was to move files to their known folders.
+- A typo in a logging message.
+
 ## [0.5.8] - 2021-26-02
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
@@ -18,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.3a-orange">
 
 ### Changed
-- Bumped the supported version of Spelunky
+- Bumped the supported version of Spelunky.
 
 ## [0.5.6] - 2021-22-02
 
@@ -57,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.2a-orange">
 
 ### Changed
-- Bumped the supported version of Spelunky
+- Bumped the supported version of Spelunky.
 
 ## [0.5.2] - 2021-01-02
 
@@ -76,7 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add random mode for character mods (configured in playlunky.ini), which picks a random character mod from all installed mods per color.
 
 ### Changed
-- Bumped the supported version of Spelunky
+- Bumped the supported version of Spelunky.
 
 ### Fixed
 - Fix a crash when deleting a mod folder that was previously loaded
@@ -86,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.1c-orange">
 
 ### Changed
-- Bumped the supported version of Spelunky
+- Bumped the supported version of Spelunky.
 
 ## [0.4.4] - 2021-22-01
 
