@@ -47,6 +47,40 @@ static constexpr std::string_view s_MpcTargetPath{ "soundbank/mpc" };
 static constexpr ctll::fixed_string s_MppRule{ ".*\\.mpp" };
 static constexpr std::string_view s_MppTargetPath{ "soundbank/mpp" };
 
+static constexpr std::string_view s_RestKnownFiles[]{
+	"soundbank.strings.bank",
+	"strings00.str",
+	"strings00_mod.str",
+	"strings00_hashed.str",
+	"strings01.str",
+	"strings01_mod.str",
+	"strings01_hashed.str",
+	"strings02.str",
+	"strings02_mod.str",
+	"strings02_hashed.str",
+	"strings03.str",
+	"strings03_mod.str",
+	"strings03_hashed.str",
+	"strings04.str",
+	"strings04_mod.str",
+	"strings04_hashed.str",
+	"strings05.str",
+	"strings05_mod.str",
+	"strings05_hashed.str",
+	"strings06.str",
+	"strings06_mod.str",
+	"strings06_hashed.str",
+	"strings07.str",
+	"strings07_mod.str",
+	"strings07_hashed.str",
+	"strings08.str",
+	"strings08_mod.str",
+	"strings08_hashed.str",
+	"shaders.hlsl",
+	"shaders_mod.hlsl",
+	"soundbank.bank"
+};
+
 void FixModFolderStructure(const std::filesystem::path& mod_folder) {
 	namespace fs = std::filesystem;
 	struct PathMapping {
@@ -102,7 +136,7 @@ void FixModFolderStructure(const std::filesystem::path& mod_folder) {
 			else if (ctre::match<s_MppRule>(file_name)) {
 				path_mappings.push_back({ path, mod_folder / s_MppTargetPath / file_name });
 			}
-			else {
+			else if (algo::contains(s_RestKnownFiles, file_name)) {
 				path_mappings.push_back({ path, mod_folder / file_name });
 			}
 		}
