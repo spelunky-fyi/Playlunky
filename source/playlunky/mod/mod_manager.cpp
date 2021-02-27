@@ -196,7 +196,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 		bool has_outdated_shaders{ false };
 
 		for (const fs::path& mod_folder : mod_folders) {
-			std::string mod_name = mod_folder.stem().string(); // Not const so we can move from it later
+			std::string mod_name = mod_folder.filename().string(); // Not const so we can move from it later
 			const auto mod_db_folder = mod_folder / ".db";
 
 			const auto [prio, enabled] = [&mod_name_to_prio, &mod_name]() mutable {
