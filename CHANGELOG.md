@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.10] - 2021-27-02
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
+
+### Fixed
+- Internal issue with mod names that sometimes caused issues with manually editing load_order.txt
+
 ## [0.5.9] - 2021-27-02
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
