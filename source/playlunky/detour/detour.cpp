@@ -108,7 +108,7 @@ void Attach() {
 
 	const LONG error = DetourTransactionCommit();
 	if (error == NO_ERROR) {
-		fmt::print(DLL_NAME ": Succees...\n");
+		fmt::print(DLL_NAME ": Success...\n");
 	}
 	else {
 		fmt::print(DLL_NAME ": Error: {}\n", error);
@@ -130,7 +130,7 @@ void Detach() {
 
 	const LONG error = DetourTransactionCommit();
 	if (error == NO_ERROR) {
-		fmt::print(DLL_NAME ": Succees...\n");
+		fmt::print(DLL_NAME ": Success...\n");
 	}
 	else {
 		fmt::print(DLL_NAME ": Error: {}\n", error);
