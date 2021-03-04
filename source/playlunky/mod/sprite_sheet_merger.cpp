@@ -175,8 +175,8 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalItemsSheet() {
 			.Size{ .Width{ 2048 }, .Height{ 960 } },
 			.TileMap = std::vector<TileMapping>{
 				TileMapping{
-					.SourceTile{ 0, 672, 160, 800 },
-					.TargetTile{ 800, 480, 960, 620 },
+					.SourceTile{ 0, 672, 160, 832 },
+					.TargetTile{ 800, 480, 960, 640 },
 				}
 			}
 		});
