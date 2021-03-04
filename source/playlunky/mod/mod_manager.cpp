@@ -45,6 +45,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 	INIReader playlunky_ini("playlunky.ini");
 	const bool enable_loose_audio_files = playlunky_ini.GetBoolean("settings", "enable_loose_audio_files", true);
 	const bool cache_decoded_audio_files = enable_loose_audio_files && playlunky_ini.GetBoolean("settings", "cache_decoded_audio_files", true);
+	bool load_order_updated{ false };
 
 	const fs::path mods_root_path{ mods_root };
 	if (fs::exists(mods_root_path) && fs::is_directory(mods_root_path)) {
@@ -55,7 +56,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 			mod_db.SetEnabled(true);
 			mod_db.UpdateDatabase();
-			mod_db.ForEachFile([&mods_root_path, &has_loose_files](const fs::path& rel_file_path, bool outdated, [[maybe_unused]] bool deleted, [[maybe_unused]] std::optional<bool> new_enabled_state) {
+			mod_db.ForEachFile([&mods_root_path, &has_loose_files, &load_order_updated](const fs::path& rel_file_path, bool outdated, bool deleted, [[maybe_unused]] std::optional<bool> new_enabled_state) {
 				if (outdated) {
 					if (rel_file_path.extension() == ".zip") {
 						const fs::path zip_path = mods_root_path / rel_file_path;
@@ -64,7 +65,10 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 							UnzipMod(zip_path);
 						}
 					}
-					else if (rel_file_path.filename() != "load_order.txt") {
+					else if (rel_file_path.filename() == "load_order.txt" && (outdated || deleted)) {
+						load_order_updated = true;
+					}
+					else {
 						has_loose_files = true;
 					}
 				}
@@ -226,7 +230,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 						if (auto character_match = ctre::match<s_CharacterRule>(full_asset_path_string)) {
 							const std::string_view color = character_match.get<1>().to_view();
-							if (!sticker_gen.RegisterCharacter(color, outdated || new_enabled_state.has_value())) {
+							if (!sticker_gen.RegisterCharacter(color, outdated || load_order_updated || new_enabled_state.has_value())) {
 								const std::string character_file_name = full_asset_path.filename().string();
 								if (!ctre::match<s_CharacterFullRule>(full_asset_path_string)) {
 									LogInfo("Mod '{}' contains an unkown character file '{}'", mod_name, character_file_name);
@@ -236,7 +240,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 						const bool is_entity_asset = rel_asset_path.parent_path().filename() == "Entities";
 						if (is_entity_asset) {
-							sprite_sheet_merger.RegisterSheet(rel_asset_path, outdated, deleted);
+							sprite_sheet_merger.RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);
 						}
 
 						if (outdated || deleted) {
