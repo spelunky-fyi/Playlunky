@@ -73,8 +73,8 @@ bool SpriteSheetMerger::NeedsRegeneration(const std::filesystem::path& destinati
 bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::filesystem::path& destination_folder) const {
 	namespace fs = std::filesystem;
 
+	const bool does_exist = fs::exists(fs::path{ destination_folder / target_sheet.Path }.replace_extension(".DDS"));
 	for (const SourceSheet& source_sheet : target_sheet.SourceSheets) {
-		const bool does_exist = fs::exists(fs::path{ destination_folder / target_sheet.Path }.replace_extension(".DDS"));
 		if (const RegisteredSourceSheet* registered_sheet = algo::find_if(m_RegisteredSourceSheets,
 			[&source_sheet](const RegisteredSourceSheet& sheet) { return sheet.Path == source_sheet.Path; })) {
 			if (!does_exist
