@@ -1,7 +1,6 @@
 #include "mod_manager.h"
 
 #include "cache_audio_file.h"
-#include "character_sticker_gen.h"
 #include "extract_game_assets.h"
 #include "fix_mod_structure.h"
 #include "mod_database.h"
@@ -30,8 +29,6 @@
 #include <INIReader.h>
 #pragma warning(pop)
 
-static constexpr ctll::fixed_string s_CharacterRule{ ".+char_(.*)\\.png" };
-static constexpr ctll::fixed_string s_CharacterFullRule{ ".+char_(.*)_full\\.png" };
 static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
@@ -194,7 +191,6 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			return mod_name_to_prio;
 		}();
 
-		CharacterStickerGenerator sticker_gen;
 		SpriteSheetMerger sprite_sheet_merger;
 		StringMerger string_merger;
 		bool has_outdated_shaders{ false };
@@ -227,17 +223,6 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 					const auto full_asset_path = mod_folder / rel_asset_path;
 					const auto full_asset_path_string = full_asset_path.string();
 					if (rel_asset_path.extension() == ".png") {
-
-						if (auto character_match = ctre::match<s_CharacterRule>(full_asset_path_string)) {
-							const std::string_view color = character_match.get<1>().to_view();
-							if (!sticker_gen.RegisterCharacter(color, outdated || load_order_updated || new_enabled_state.has_value())) {
-								const std::string character_file_name = full_asset_path.filename().string();
-								if (!ctre::match<s_CharacterFullRule>(full_asset_path_string)) {
-									LogInfo("Mod '{}' contains an unkown character file '{}'", mod_name, character_file_name);
-								}
-							}
-						}
-
 						const bool is_entity_asset = rel_asset_path.parent_path().filename() == "Entities";
 						if (is_entity_asset) {
 							sprite_sheet_merger.RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);
@@ -304,14 +289,29 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			mMods.push_back(std::move(mod_name));
 		}
 
-		if (sticker_gen.NeedsRegeneration() || !fs::exists(db_folder / "Data/Textures/journal_stickers.DDS")) {
-			if (sticker_gen.GenerateStickers(db_original_folder, db_folder, "Data/Textures/journal_stickers.png", "Data/Textures/journal_entry_people.png", vfs)) {
-				LogInfo("Successfully generated sticker and journal entries from installed character mods...");
-			}
-			else {
-				LogInfo("Failed generating sticker and journal entries from installed character mods...");
-			}
-		}
+		// Bind char pathes
+		vfs.BindPathes({ "Data/Textures/char_orange.png", "Data/Textures/Entities/char_orange_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_pink.png", "Data/Textures/Entities/char_pink_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_red.png", "Data/Textures/Entities/char_red_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_violet.png", "Data/Textures/Entities/char_violet_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_white.png", "Data/Textures/Entities/char_white_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_yellow.png", "Data/Textures/Entities/char_yellow_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_black.png", "Data/Textures/Entities/char_black_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_blue.png", "Data/Textures/Entities/char_blue_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_cerulean.png", "Data/Textures/Entities/char_cerulean_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_cinnabar.png", "Data/Textures/Entities/char_cinnabar_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_cyan.png", "Data/Textures/Entities/char_cyan_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_eggchild.png", "Data/Textures/Entities/char_eggchild_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_gold.png", "Data/Textures/Entities/char_gold_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_gray.png", "Data/Textures/Entities/char_gray_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_green.png", "Data/Textures/Entities/char_green_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_hired.png", "Data/Textures/Entities/char_hired_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_iris.png", "Data/Textures/Entities/char_iris_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_khaki.png", "Data/Textures/Entities/char_khaki_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_lemon.png", "Data/Textures/Entities/char_lemon_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_lime.png", "Data/Textures/Entities/char_lime_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_magenta.png", "Data/Textures/Entities/char_magenta_full.png" });
+		vfs.BindPathes({ "Data/Textures/char_olive.png", "Data/Textures/Entities/char_olive_full.png" });
 
 		if (sprite_sheet_merger.NeedsRegeneration(db_folder)) {
 			if (sprite_sheet_merger.GenerateRequiredSheets(db_original_folder, db_folder, vfs)) {

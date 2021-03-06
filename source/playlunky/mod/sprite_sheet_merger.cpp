@@ -88,7 +88,6 @@ bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::f
 	return false;
 }
 
-
 bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, VirtualFilesystem& vfs) {
 	for (const TargetSheet& target_sheet : m_TargetSheets) {
 		if (NeedsRegen(target_sheet, destination_folder)) {
@@ -96,9 +95,9 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 			Image target_image;
 			target_image.LoadFromPng(target_file_path);
 
-			// TODO: Scaling based on largest source image
-			// TODO: Scaling based on largest target image
-			assert(target_image.GetWidth() == target_sheet.Size.Width && target_image.GetHeight() == target_sheet.Size.Height);
+			// TODO: Scaling based on largest target image?
+			const float target_width_scaling = static_cast<float>(target_image.GetWidth()) / target_sheet.Size.Width;
+			const float target_height_scaling = static_cast<float>(target_image.GetHeight()) / target_sheet.Size.Height;
 
 			for (const SourceSheet& source_sheet : target_sheet.SourceSheets) {
 				const auto source_file_path = vfs.GetFilePath(source_sheet.Path);
@@ -106,25 +105,28 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 					Image source_image;
 					source_image.LoadFromPng(source_file_path.value());
 
-					// TODO: Scaling based on actual image sizes (in case mods ship with scaled assets)
-					assert(source_image.GetWidth() == source_sheet.Size.Width && source_image.GetHeight() == source_sheet.Size.Height);
+					const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / source_sheet.Size.Width;
+					const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / source_sheet.Size.Height;
 
 					for (const TileMapping& tile_mapping : source_sheet.TileMap) {
 						const ImageSubRegion source_region = ImageSubRegion{
-							.x{ tile_mapping.SourceTile.Left },
-							.y{ tile_mapping.SourceTile.Top },
-							.width{ tile_mapping.SourceTile.Right - tile_mapping.SourceTile.Left },
-							.height{ tile_mapping.SourceTile.Bottom - tile_mapping.SourceTile.Top },
+							.x{ static_cast<std::uint32_t>(tile_mapping.SourceTile.Left * source_width_scaling) },
+							.y{ static_cast<std::uint32_t>(tile_mapping.SourceTile.Top * source_height_scaling) },
+							.width{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Right - tile_mapping.SourceTile.Left) * source_width_scaling) },
+							.height{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Bottom - tile_mapping.SourceTile.Top) * source_height_scaling) },
 						};
 						const ImageSubRegion target_region = ImageSubRegion{
-							.x{ tile_mapping.TargetTile.Left },
-							.y{ tile_mapping.TargetTile.Top },
-							.width{ tile_mapping.TargetTile.Right - tile_mapping.TargetTile.Left },
-							.height{ tile_mapping.TargetTile.Bottom - tile_mapping.TargetTile.Top },
+							.x{ static_cast<std::uint32_t>(tile_mapping.TargetTile.Left * target_height_scaling) },
+							.y{ static_cast<std::uint32_t>(tile_mapping.TargetTile.Top * source_height_scaling) },
+							.width{ static_cast<std::uint32_t>((tile_mapping.TargetTile.Right - tile_mapping.TargetTile.Left) * target_height_scaling) },
+							.height{ static_cast<std::uint32_t>((tile_mapping.TargetTile.Bottom - tile_mapping.TargetTile.Top) * source_height_scaling) },
 						};
 
-						// TODO: Scaling based on subimage sizes
 						Image source_tile = source_image.GetSubImage(source_region);
+						if (source_tile.GetWidth() != target_region.width || source_tile.GetHeight() != target_region.height) {
+							source_tile.Resize(::ImageSize{ .x = target_region.width, .y = target_region.height });
+						}
+
 						try {
 							target_image.Blit(source_tile, target_region);
 						}
@@ -285,6 +287,16 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet() {
 						}
 					}
 				});
+			source_sheets.push_back(SourceSheet{
+					.Path{ fmt::format("Data/Textures/char_{}.png", color) },
+					.Size{ .Width{ 2048 }, .Height{ 2048 } },
+					.TileMap = std::vector<TileMapping>{
+						TileMapping{
+							.SourceTile{ 0, 0, 128, 128 },
+							.TargetTile{ char_x * 160, char_y * 160, char_x * 160 + 160, char_y * 160 + 160 },
+						}
+					}
+				});
 			char_x++;
 			if (char_x >= 10) {
 				char_x = 0;
@@ -304,12 +316,32 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet() {
 			}
 		});
 	source_sheets.push_back(SourceSheet{
+			.Path{ "Data/Textures/char_eggchild.png" },
+			.Size{ .Width{ 2048 }, .Height{ 2048 } },
+			.TileMap = std::vector<TileMapping>{
+				TileMapping{
+					.SourceTile{ 0, 0, 128, 128 },
+					.TargetTile{ 160, 320, 320, 480 },
+				}
+			}
+		});
+	source_sheets.push_back(SourceSheet{
 			.Path{ "Data/Textures/Entities/char_hired_full.png" },
 			.Size{ .Width{ 2048 }, .Height{ 2080 } },
 			.TileMap = std::vector<TileMapping>{
 				TileMapping{
 					.SourceTile{ 0, 1920, 160, 2080 },
-					.TargetTile{ 160, 320, 320, 480 },
+					.TargetTile{ 0, 320, 160, 480 },
+				}
+			}
+		});
+	source_sheets.push_back(SourceSheet{
+			.Path{ "Data/Textures/Entities/char_hired.png" },
+			.Size{ .Width{ 2048 }, .Height{ 2048 } },
+			.TileMap = std::vector<TileMapping>{
+				TileMapping{
+					.SourceTile{ 0, 0, 128, 128 },
+					.TargetTile{ 0, 320, 160, 480 },
 				}
 			}
 		});
@@ -334,6 +366,16 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalStickerSheet() {
 					.TileMap = std::vector<TileMapping>{
 						TileMapping{
 							.SourceTile{ 0, 2080, 80, 2160 },
+							.TargetTile{ char_x * 80, char_y * 80, char_x * 80 + 80, char_y * 80 + 80 },
+						}
+					}
+				});
+			source_sheets.push_back(SourceSheet{
+					.Path{ fmt::format("Data/Textures/char_{}.png", color) },
+					.Size{ .Width{ 2048 }, .Height{ 2048 } },
+					.TileMap = std::vector<TileMapping>{
+						TileMapping{
+							.SourceTile{ 0, 0, 128, 128 },
 							.TargetTile{ char_x * 80, char_y * 80, char_x * 80 + 80, char_y * 80 + 80 },
 						}
 					}
@@ -416,6 +458,16 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeCharacterTargetSheet(std::
 		SourceSheet{
 			.Path{ fmt::format("Data/Textures/Entities/char_{}_full.png", color) },
 			.Size{ .Width{ 2048 }, .Height{ image_height } },
+			.TileMap = std::vector<TileMapping>{
+				TileMapping{
+					.SourceTile{ 0, 0, 2048, 1920 },
+					.TargetTile{ 0, 0, 2048, 1920 },
+				}
+			}
+		},
+		SourceSheet{
+			.Path{ fmt::format("Data/Textures/char_{}.png", color) },
+			.Size{ .Width{ 2048 }, .Height{ 2048 } },
 			.TileMap = std::vector<TileMapping>{
 				TileMapping{
 					.SourceTile{ 0, 0, 2048, 1920 },
