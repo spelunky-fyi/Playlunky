@@ -2,8 +2,10 @@
 
 #include <filesystem>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string_view>
+#include <variant>
 #include <vector>
 
 class VirtualFilesystem {
@@ -19,6 +21,7 @@ public:
 	void MountFolder(std::string_view path, std::int64_t priority);
 	void BindPathes(std::vector<std::string_view> pathes);
 
+	// Interface for runtime loading
 	struct FileInfo {
 		void* Data{ nullptr };
 		int _member_1{ 0 };
@@ -27,8 +30,10 @@ public:
 		int _member_4{ 0 };
 	};
 	FileInfo* LoadFile(const char* path, void* (*allocator)(std::size_t) = nullptr) const;
-	FileInfo* LoadSpecificFile(const char* specific_path, void* (*allocator)(std::size_t) = nullptr) const;
+
+	// Interface for loading during preprocessing
 	std::optional<std::filesystem::path> GetFilePath(const std::filesystem::path& path) const;
+	std::optional<std::filesystem::path> GetRandomFilePath(const std::filesystem::path& path) const;
 	std::vector<std::filesystem::path> GetAllFilePaths(const std::filesystem::path& path) const;
 
 private:
@@ -40,6 +45,14 @@ private:
 
 	struct VfsMount;
 	std::vector<VfsMount> mMounts;
+
+	using CachedRandomFileKey = std::variant<const BoundPathes*, std::filesystem::path>;
+	struct CachedRandomFile {
+		CachedRandomFileKey TargetPath;
+		std::optional<std::filesystem::path> ResultPath;
+	};
+	mutable std::mutex m_RandomCacheMutex;
+	mutable std::vector<CachedRandomFile> m_RandomCache;
 
 	std::vector<BoundPathes> m_BoundPathes;
 };

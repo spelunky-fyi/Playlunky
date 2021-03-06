@@ -7,6 +7,10 @@ namespace algo {
 		const auto first_mismatch = std::mismatch(path.begin(), path.end(), base.begin(), base.end());
 		return first_mismatch.second == base.end();
 	}
+	bool is_end_of_path(const std::filesystem::path& path, const std::filesystem::path& base) {
+		const auto begin_of_sub_path = std::search(base.begin(), base.end(), path.begin(), path.end());
+		return std::distance(begin_of_sub_path, base.end()) == std::distance(path.begin(), path.end());
+	}
 
 	std::string trim(std::string str) {
 		str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) {

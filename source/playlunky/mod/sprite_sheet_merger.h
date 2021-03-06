@@ -59,6 +59,7 @@ private:
 		std::filesystem::path Path;
 		ImageSize Size;
 		std::vector<SourceSheet> SourceSheets;
+		bool RandomSelect;
 	};
 	std::vector<TargetSheet> m_TargetSheets;
 

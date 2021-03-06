@@ -10,8 +10,18 @@
 
 #pragma warning(push)
 #pragma warning(disable : 5054)
+#pragma warning(disable : 4996)
+#pragma warning(disable : 4244)
 #include <opencv2/imgproc.hpp>
+#include <INIReader.h>
 #pragma warning(pop)
+
+bool RandomCharacterSelectEnabled() {
+	static const bool random_char_select = []() {
+		return INIReader("playlunky.ini").GetBoolean("settings", "random_character_select", false);
+	}();
+	return random_char_select;
+}
 
 SpriteSheetMerger::SpriteSheetMerger()
 	: m_TargetSheets{
@@ -74,10 +84,12 @@ bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::f
 	namespace fs = std::filesystem;
 
 	const bool does_exist = fs::exists(fs::path{ destination_folder / target_sheet.Path }.replace_extension(".DDS"));
+	const bool random_select = target_sheet.RandomSelect;
 	for (const SourceSheet& source_sheet : target_sheet.SourceSheets) {
 		if (const RegisteredSourceSheet* registered_sheet = algo::find_if(m_RegisteredSourceSheets,
 			[&source_sheet](const RegisteredSourceSheet& sheet) { return sheet.Path == source_sheet.Path; })) {
 			if (!does_exist
+				|| random_select
 				|| registered_sheet->Outdated
 				|| registered_sheet->Deleted) {
 				return true;
@@ -89,6 +101,8 @@ bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::f
 }
 
 bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, VirtualFilesystem& vfs) {
+	namespace fs = std::filesystem;
+
 	for (const TargetSheet& target_sheet : m_TargetSheets) {
 		if (NeedsRegen(target_sheet, destination_folder)) {
 			const auto target_file_path = vfs.GetFilePath(target_sheet.Path).value_or(source_folder / target_sheet.Path);
@@ -100,7 +114,14 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 			const float target_height_scaling = static_cast<float>(target_image.GetHeight()) / target_sheet.Size.Height;
 
 			for (const SourceSheet& source_sheet : target_sheet.SourceSheets) {
-				const auto source_file_path = vfs.GetFilePath(source_sheet.Path);
+				const auto source_file_path = [&vfs, &source_sheet, random_select = target_sheet.RandomSelect]() {
+					if (!random_select) {
+						return vfs.GetFilePath(source_sheet.Path);
+					}
+					else {
+						return vfs.GetRandomFilePath(source_sheet.Path);
+					}
+				}();
 				if (source_file_path) {
 					Image source_image;
 					source_image.LoadFromPng(source_file_path.value());
@@ -137,7 +158,6 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 				}
 			}
 
-			namespace fs = std::filesystem;
 			const auto destination_file_path = fs::path{ destination_folder / target_sheet.Path }.replace_extension(".DDS");
 			if (!ConvertRBGAToDds(target_image.GetData(), target_image.GetWidth(), target_image.GetHeight(), destination_file_path)) {
 				return false;
@@ -349,7 +369,8 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet() {
 	return TargetSheet{
 		.Path{ "Data/Textures/journal_entry_people.png" },
 		.Size{ .Width{ 1600 }, .Height{ 800 } },
-		.SourceSheets{ std::move(source_sheets) }
+		.SourceSheets{ std::move(source_sheets) },
+		.RandomSelect{ RandomCharacterSelectEnabled() }
 	};
 }
 SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalStickerSheet() {
@@ -391,7 +412,8 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalStickerSheet() {
 	return TargetSheet{
 		.Path{ "Data/Textures/journal_stickers.png" },
 		.Size{ .Width{ 800 }, .Height{ 800 } },
-		.SourceSheets{ std::move(source_sheets) }
+		.SourceSheets{ std::move(source_sheets) },
+		.RandomSelect{ RandomCharacterSelectEnabled() }
 	};
 }
 SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeMountsTargetSheet() {
@@ -479,6 +501,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeCharacterTargetSheet(std::
 	return TargetSheet{
 		.Path{ fmt::format("Data/Textures/char_{}.png", color) },
 		.Size{ .Width{ 2048 }, .Height{ 2048 } },
-		.SourceSheets{ std::move(source_sheets) }
+		.SourceSheets{ std::move(source_sheets) },
+		.RandomSelect{ RandomCharacterSelectEnabled() }
 	};
 }

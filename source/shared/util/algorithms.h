@@ -81,6 +81,7 @@ namespace algo {
 	}
 
 	bool is_sub_path(const std::filesystem::path& path, const std::filesystem::path& base);
+	bool is_end_of_path(const std::filesystem::path& path, const std::filesystem::path& base);
 
 	std::string trim(std::string str);
 	std::string trim(std::string str, char to_strip);
