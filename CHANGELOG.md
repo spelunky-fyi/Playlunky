@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
+
+### Changed
+- Merged sticker gen with entity merging code, thus full char sheets and regular char sheets work well together
+- Make random character select work with full char sheets
+
+### Fixed
+- Correctly invalidate combined sprite sheets when updating load_order.txt (might have to be optimized in the future)
+- Bad size in turkey sheet
+- Bad tile pos for journal entry of hired hand
+- Small bug that caused a tiny performance loss during startup
+
 ## [0.5.10] - 2021-27-02
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
