@@ -1,6 +1,7 @@
 #include "virtual_filesystem.h"
 
 #include "log.h"
+#include "util/algorithms.h"
 #include "util/on_scope_exit.h"
 
 #include <Windows.h>
@@ -113,8 +114,22 @@ void VirtualFilesystem::MountFolder(std::string_view path, std::int64_t priority
 			.MountImpl = std::make_unique<VfsFolderMount>(path)
 		});
 }
+void VirtualFilesystem::BindPathes(std::vector<std::string_view> pathes) {
+	if (std::vector<std::string_view>* bound_pathes = GetBoundPathes(pathes)) {
+		for (std::string_view path : pathes) {
+			if (!algo::contains(*bound_pathes, path)) {
+				bound_pathes->push_back(path);
+			}
+		}
+	}
+	else {
+		m_BoundPathes.push_back(std::move(pathes));
+	}
+}
 
 VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void* (*allocator)(std::size_t)) const {
+	// Should not need to use bound pathes here because those should all be handled during preprocessing
+	// Bound pathes should usually contain one 'actual' game asset and the rest addon assets
 	for (const VfsMount& mount : mMounts) {
 		if (FileInfo* loaded_data = mount.MountImpl->LoadFile(path, allocator)) {
 			return loaded_data;
@@ -135,9 +150,43 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadSpecificFile(const char* spe
 }
 
 std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::filesystem::path& path) const {
-	for (const VfsMount& mount : mMounts) {
-		if (auto file_path = mount.MountImpl->GetFilePath(path)) {
-			return file_path;
+	if (const BoundPathes* bound_pathes = GetBoundPathes(path.string())) {
+		std::int64_t current_file_prio{ std::numeric_limits<std::int64_t>::max() };
+		std::optional<std::filesystem::path> file_path{ std::nullopt };
+
+		for (std::string_view bound_path : *bound_pathes) {
+			for (const VfsMount& mount : mMounts) {
+				if (mount.Priority < current_file_prio) {
+					if (auto bound_file_path = mount.MountImpl->GetFilePath(bound_path)) {
+						current_file_prio = mount.Priority;
+
+						// Only assign pathes that we are actually looking for
+						// Anything else blocks lower prio files by design
+						if (std::search(bound_file_path->begin(), bound_file_path->end(), path.begin(), path.end()) != bound_file_path->end()) {
+							file_path = std::move(bound_file_path).value();
+						}
+						else {
+							file_path.reset();
+						}
+
+						break; // into loop over bound pathes
+					}
+				}
+			}
+
+			// No need to continue looking if we found a file in the first mount
+			if (current_file_prio == mMounts.front().Priority) {
+				break;
+			}
+		}
+
+		return file_path;
+	}
+	else {
+		for (const VfsMount& mount : mMounts) {
+			if (auto file_path = mount.MountImpl->GetFilePath(path)) {
+				return file_path;
+			}
 		}
 	}
 
@@ -154,4 +203,27 @@ std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std:
 	}
 
 	return file_paths;
+}
+
+VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(std::string_view path) {
+	return const_cast<BoundPathes*>(static_cast<const VirtualFilesystem*>(this)->GetBoundPathes(path));
+}
+VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(const BoundPathes& pathes) {
+	return const_cast<BoundPathes*>(static_cast<const VirtualFilesystem*>(this)->GetBoundPathes(pathes));
+
+}
+const VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(std::string_view path) const {
+	return algo::find_if(m_BoundPathes,
+		[path](const std::vector<std::string_view>& bound_pathes) {
+		return algo::contains(bound_pathes, path);
+	});
+}
+const VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(const BoundPathes& pathes) const {
+	return algo::find_if(m_BoundPathes,
+		[&pathes](const std::vector<std::string_view>& bound_pathes) {
+		return algo::contains_if(bound_pathes,
+			[&pathes](std::string_view bound_path) {
+				return algo::contains(pathes, bound_path);
+			});
+	});
 }

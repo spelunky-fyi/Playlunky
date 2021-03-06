@@ -17,6 +17,7 @@ public:
 	VirtualFilesystem& operator=(VirtualFilesystem&&) = delete;
 
 	void MountFolder(std::string_view path, std::int64_t priority);
+	void BindPathes(std::vector<std::string_view> pathes);
 
 	struct FileInfo {
 		void* Data{ nullptr };
@@ -31,6 +32,14 @@ public:
 	std::vector<std::filesystem::path> GetAllFilePaths(const std::filesystem::path& path) const;
 
 private:
+	using BoundPathes = std::vector<std::string_view>;
+	BoundPathes* GetBoundPathes(std::string_view path);
+	BoundPathes* GetBoundPathes(const BoundPathes& pathes);
+	const BoundPathes* GetBoundPathes(std::string_view path) const;
+	const BoundPathes* GetBoundPathes(const BoundPathes& pathes) const;
+
 	struct VfsMount;
 	std::vector<VfsMount> mMounts;
+
+	std::vector<BoundPathes> m_BoundPathes;
 };
