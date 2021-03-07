@@ -5,9 +5,6 @@
 #include "sigscan.h"
 #include "log.h"
 #include "mod/virtual_filesystem.h"
-#include "util/regex.h"
-
-#include <cstdint>
 
 static VirtualFilesystem* s_FileIOVfs{ nullptr };
 
