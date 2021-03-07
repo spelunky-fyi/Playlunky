@@ -129,7 +129,6 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				fs::path{ "strings05.str" },
 				fs::path{ "strings06.str" },
 				fs::path{ "strings07.str" },
-				fs::path{ "strings08.str" },
 			};
 			if (ExtractGameAssets(files, db_original_folder)) {
 				LogInfo("Successfully extracted all required game assets...");
