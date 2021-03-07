@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.9)
 project(Playlunky LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/publish")
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
 # --------------------------------------------------
