@@ -363,6 +363,14 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			}
 		}
 
+		{
+			// Rewrite mod database so we don't trigger changes on files written during mod load (e.g. load_order.txt)
+			ModDatabase mod_db{ mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
+			mod_db.SetEnabled(true);
+			mod_db.UpdateDatabase();
+			mod_db.WriteDatabase();
+		}
+
 		LogInfo("All mods initialized...");
 	}
 	else {
