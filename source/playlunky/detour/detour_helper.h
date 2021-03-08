@@ -6,6 +6,19 @@
 
 #include <type_traits>
 
+template<class FunT>
+struct c_style_function;
+template<typename T, typename R, typename ...Args>
+struct c_style_function<R(T::*)(Args...)> {
+	using type = R(*)(T*, Args...);
+};
+template<typename T, typename R, typename ...Args>
+struct c_style_function<R(T::*)(Args...) const> {
+	using type = R(*)(const T*, Args...);
+};
+template<class FunT>
+using c_style_function_t = typename c_style_function<FunT>::type;
+
 template<class DetourT>
 struct DetourHelper {
 	static DetourEntry GetDetourEntry(const char* function_name)
@@ -24,6 +37,17 @@ struct DetourHelper {
 				.Signature = &DetourT::Trampoline.Signature,
 				.ProcName = DetourT::Trampoline.ProcName,
 				.Module = DetourT::Trampoline.Module,
+				.FunctionName = function_name
+			};
+		}
+		else if constexpr (std::is_member_function_pointer_v<decltype(trampoline)>) {
+			static_assert(std::is_same_v<c_style_function_t<decltype(trampoline)>, decltype(detour)>);
+			return {
+				.Trampoline = &(void_ptr&)DetourT::Trampoline,
+				.Detour = &DetourT::Detour,
+				.Signature = nullptr,
+				.ProcName = nullptr,
+				.Module = nullptr,
 				.FunctionName = function_name
 			};
 		}
