@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "file_io.h"
 #include "fmod_crap.h"
+#include "imgui.h"
 #include "logger.h"
 #include "win_main.h"
 
@@ -61,6 +62,7 @@ std::vector<DetourEntry> CollectDetourEntries() {
 	append(detour_entries, GetLogDetours());
 	append(detour_entries, GetFileIODetours());
 	append(detour_entries, GetFmodDetours());
+	append(detour_entries, GetImguiDetours());
 	append(detour_entries, GetMainDetours());
 
 	if (IsDebuggerPresent()) {

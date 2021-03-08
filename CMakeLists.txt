@@ -49,6 +49,7 @@ find_package(libzip REQUIRED)
 find_package(ctre REQUIRED)
 find_package(zstd REQUIRED)
 find_package(opencv REQUIRED)
+find_package(imgui REQUIRED)
 
 
 # --------------------------------------------------
@@ -80,6 +81,7 @@ target_link_libraries(playlunky_lib_dependencies INTERFACE
 	ctre::ctre
 	zstd::zstd
 	opencv::opencv
+	imgui::imgui
 	libnyquist
 	inih)
 
