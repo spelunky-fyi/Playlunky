@@ -40,6 +40,14 @@ struct DetourCreateWindowEx {
 	inline static HWND s_Window{ nullptr };
 };
 
+struct DetourWindowProc {
+	inline static WNDPROC Trampoline{ nullptr };
+	static LRESULT Detour(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
+		ImGui_ImplWin32_WndProcHandler(window, message, wParam, lParam);
+		return CallWindowProc(Trampoline, window, message, wParam, lParam);
+	}
+};
+
 struct DetourSwapChainPresent {
 	inline static SigScan::Function<HRESULT(__stdcall*) (IDXGISwapChain*, UINT, UINT)> Trampoline{
 		.Signature = "\x48\x89\x5c\x24\x10\x48\x89\x74\x24\x20\x55\x57\x41\x56\x48\x8d\x6c\x24\x90\x48\x81\xec\x70\x01\x00\x00"_sig,
@@ -60,6 +68,8 @@ struct DetourSwapChainPresent {
 #endif
 
 				CreateRenderTargetView();
+
+				DetourWindowProc::Trampoline = reinterpret_cast<WNDPROC>(SetWindowLongPtr(DetourCreateWindowEx::s_Window, GWLP_WNDPROC, LONG_PTR(DetourWindowProc::Detour)));
 				
 				auto init_imgui = []() {
 					ImGui::CreateContext();
@@ -82,7 +92,7 @@ struct DetourSwapChainPresent {
 			// TODO: Hook any other UI
 
 			ImGui::SetNextWindowSize({ -1, 30 });
-			ImGui::SetNextWindowPos({ -1, 30 });
+			ImGui::SetNextWindowPos({ 0, ImGui::GetIO().DisplaySize.y - 30 });
 			ImGui::Begin(
 				"Overlay",
 				nullptr,
@@ -90,13 +100,9 @@ struct DetourSwapChainPresent {
 				ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
 				ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
 			ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, .3f), "Playlunky " PLAYLUNKY_VERSION);
-			ImGui::SetWindowPos({ 0, ImGui::GetIO().DisplaySize.y - 30 }, ImGuiCond_Always);
 			ImGui::End();
 
-			//ImGui::ShowMetricsWindow();
-			//ImGui::Begin("Styles");
-			//ImGui::ShowStyleEditor();
-			//ImGui::End();
+			ImGui::ShowMetricsWindow();
 
 			ImGui::Render();
 
@@ -149,23 +155,10 @@ struct DetourSwapChainResizeBuffers {
 	}
 };
 
-struct DetourWindowProc {
-	inline static SigScan::Function<WNDPROC> Trampoline{
-		.Signature = "\x40\x55\x56\x57\x41\x54\x41\x57\x48\x8d\x6c\x24\xc9\x48\x81\xec\xb0\x00\x00\x00\x48\x8b\x05"_sig
-	};
-	static LRESULT Detour(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
-		ImGui_ImplWin32_WndProcHandler(window, message, wParam, lParam);
-		return Trampoline(window, message, wParam, lParam);
-	}
-
-	inline static bool s_MouseDownOnNonClientArea{ false };
-};
-
 std::vector<DetourEntry> GetImguiDetours() {
 	return {
 		DetourHelper<DetourCreateWindowEx>::GetDetourEntry("CreateWindowEx"),
 		DetourHelper<DetourSwapChainPresent>::GetDetourEntry("IDXGISwapChain::Present"),
-		DetourHelper<DetourSwapChainResizeBuffers>::GetDetourEntry("IDXGISwapChain::ResizeBuffers"),
-		DetourHelper<DetourWindowProc>::GetDetourEntry("WindowProc")
+		DetourHelper<DetourSwapChainResizeBuffers>::GetDetourEntry("IDXGISwapChain::ResizeBuffers")
 	};
 }
