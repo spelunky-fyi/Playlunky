@@ -46,7 +46,7 @@ struct DetourIsDebuggerPresent
 					// Wait for it to finish
 					DWORD res = WaitForSingleObject(pi.hProcess, 2000);
 					if (res == WAIT_TIMEOUT) {
-						LogInfo("Scyllahide process timed out...");
+						LogError("Scyllahide process timed out...");
 					}
 
 					CloseHandle(pi.hProcess);
@@ -55,11 +55,11 @@ struct DetourIsDebuggerPresent
 					LogInfo("Successfully injected ScyllaHide...");
 				}
 				else {
-					LogInfo("Failed launching ScyllaHide process: {}", GetLastError());
+					LogError("Failed launching ScyllaHide process: {}", GetLastError());
 				}
 			}
 			else {
-				LogInfo("Could not find ScyllaHide in game directory...");
+				LogError("Could not find ScyllaHide in game directory...");
 			}
 		}
 

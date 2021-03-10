@@ -140,13 +140,13 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 							LogInfo("Successfully created hashed strings file...");
 						}
 						else {
-							LogInfo("Failed creating hashed strings file...");
+							LogError("Failed creating hashed strings file...");
 						}
 					}
 				}
 			}
 			else {
-				LogInfo("Failed extracting all required game assets, some features might not function...");
+				LogError("Failed extracting all required game assets, some features might not function...");
 			}
 		}
 
@@ -240,7 +240,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 								LogInfo("Successfully converted file '{}' to be readable by the game...", full_asset_path.string());
 							}
 							else {
-								LogInfo("Failed converting file '{}' to be readable by the game...", full_asset_path.string());
+								LogError("Failed converting file '{}' to be readable by the game...", full_asset_path.string());
 							}
 						}
 					}
@@ -272,7 +272,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 								LogInfo("Successfully cached audio file '{}'...", full_asset_path.string());
 							}
 							else {
-								LogInfo("Failed caching audio file '{}'...", full_asset_path.string());
+								LogError("Failed caching audio file '{}'...", full_asset_path.string());
 							}
 						}
 					}
@@ -317,7 +317,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				LogInfo("Successfully generated merged sheets from mods...");
 			}
 			else {
-				LogInfo("Failed generating merged sheets from mods...");
+				LogError("Failed generating merged sheets from mods...");
 			}
 		}
 
@@ -326,7 +326,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				LogInfo("Successfully generated a full shader file from installed shader mods...");
 			}
 			else {
-				LogInfo("Failed generating a full shader file from installed shader mods...");
+				LogError("Failed generating a full shader file from installed shader mods...");
 			}
 		}
 
@@ -335,7 +335,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				LogInfo("Successfully generated a full string file from installed string mods...");
 			}
 			else {
-				LogInfo("Failed generating a full string file from installed string mods...");
+				LogError("Failed generating a full string file from installed string mods...");
 			}
 		}
 

@@ -110,7 +110,7 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 				}
 				else if (c == '}') {
 					if (scope_depth == 0) {
-						LogInfo("Shader {} contains syntax errors...", shader_mod.string());
+						LogError("Shader {} contains syntax errors...", shader_mod.string());
 						break;
 					}
 					else {
@@ -178,7 +178,7 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 			}
 		}
 		else {
-			LogInfo("Could not place function with declaration '{}' into shaders. "
+			LogError("Could not place function with declaration '{}' into shaders. "
 				"If you are just using this mod report the issue to the mods creator. "
 				"If you developed this mod, make sure it's signature matches exactly the original function's signature...", modded_function.Declaration);
 		}

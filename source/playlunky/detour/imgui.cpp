@@ -94,13 +94,30 @@ struct DetourSwapChainPresent {
 			ImGui::SetNextWindowSize({ -1, 30 });
 			ImGui::SetNextWindowPos({ 0, ImGui::GetIO().DisplaySize.y - 30 });
 			ImGui::Begin(
-				"Overlay",
+				"Version Overlay",
 				nullptr,
 				ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
 				ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
 				ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
-			ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, .3f), "Playlunky " PLAYLUNKY_VERSION);
+			ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, .2f), "Playlunky " PLAYLUNKY_VERSION);
 			ImGui::End();
+
+			if (!s_ErrorMessages.empty()) {
+				ImGui::SetNextWindowSize({ -1, -1 });
+				ImGui::SetNextWindowPos({ 0, 0 });
+				ImGui::Begin(
+					"Error Overlay",
+					nullptr,
+					ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+					ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
+					ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
+				for (auto& [message, timer] : s_ErrorMessages) {
+					timer -= 1.0f / 60.0f; // Stupid hax
+					ImGui::TextColored(ImVec4(1.0f, 0.1f, 0.2f, 1.0f), message.c_str());
+				}
+				std::erase_if(s_ErrorMessages, [](const ErrorMessage& msg) { return msg.Timer < 0.0f; });
+				ImGui::End();
+			}
 
 			ImGui::Render();
 
@@ -126,6 +143,16 @@ struct DetourSwapChainPresent {
 			s_MainRenderTargetView = nullptr;
 		}
 	}
+
+	static void PrintError(std::string message, float time) {
+		s_ErrorMessages.push_back(ErrorMessage{ .Message{ std::move(message) }, .Timer{ time } });
+	}
+
+	struct ErrorMessage {
+		std::string Message;
+		float Timer;
+	};
+	inline static std::vector<ErrorMessage> s_ErrorMessages;
 
 	inline static IDXGISwapChain* s_SwapChain{ nullptr };
 	inline static ID3D11Device* s_Device { nullptr };
@@ -159,4 +186,9 @@ std::vector<DetourEntry> GetImguiDetours() {
 		DetourHelper<DetourSwapChainPresent>::GetDetourEntry("IDXGISwapChain::Present"),
 		DetourHelper<DetourSwapChainResizeBuffers>::GetDetourEntry("IDXGISwapChain::ResizeBuffers")
 	};
+}
+
+void PrintError(std::string message, float time)
+{
+	DetourSwapChainPresent::PrintError(std::move(message), time);
 }

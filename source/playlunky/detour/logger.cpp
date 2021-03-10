@@ -1,6 +1,7 @@
 #include "logger.h"
 #include "log.h"
 
+#include "imgui.h"
 #include "detour_entry.h"
 #include "detour_helper.h"
 #include "sigfun.h"
@@ -48,6 +49,10 @@ std::vector<DetourEntry> GetLogDetours() {
 	};
 }
 
-void Log(const char* message, LogLevel log_level) {
-	DetourDoLog::Log(message, log_level);
+void Log(std::string message, LogLevel log_level) {
+	LogLevel spelunky_log_level = static_cast<int>(log_level) > static_cast<int>(LogLevel::Fatal) ? LogLevel::Info : log_level;
+	DetourDoLog::Log(message.c_str(), spelunky_log_level);
+	if (static_cast<int>(log_level) > static_cast<int>(LogLevel::Fatal)) {
+		PrintError(std::move(message));
+	}
 }

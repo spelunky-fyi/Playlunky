@@ -47,7 +47,7 @@ public:
 				void* data = static_cast<void*>(reinterpret_cast<char*>(buf) + 24);
 				const auto size_read = fread(data, 1, file_size, file);
 				if (size_read != file_size) {
-					LogInfo("Could not read file {}, this will either crash or cause glitches...", full_path);
+					LogError("Could not read file {}, this will either crash or cause glitches...", full_path);
 				}
 
 				FileInfo* file_info = new (buf) FileInfo();

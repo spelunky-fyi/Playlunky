@@ -10,6 +10,6 @@ void UnzipMod(const std::filesystem::path& zip_file) {
 
 	const auto mod_folder = fs::path{ zip_file }.replace_extension("");
 	if (ZipError err = UnzipFile(zip_file, mod_folder)) {
-		LogInfo("Can't open zip archive '{}': {}/n", zip_file.string(), err.value());
+		LogError("Can't open zip archive '{}': {}/n", zip_file.string(), err.value());
 	}
 }

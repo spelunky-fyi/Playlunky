@@ -106,29 +106,29 @@ bool StringMerger::MergeStrings(
 										std::uint32_t hash;
 										auto result = std::from_chars(hash_string.data(), hash_string.data() + hash_string.size(), hash, 16);
 										if (result.ec == std::errc::invalid_argument) {
-											LogInfo("Failed parsing string hash '0x{}', modded string '{}' will be discarded...", hash_string, modded_string);
+											LogError("Failed parsing string hash '0x{}', modded string '{}' will be discarded...", hash_string, modded_string);
 											return false;
 										}
 
 										if (!algo::contains_if(modded_strings,
 											[full_hash_string](const ModdedString& modded_string) {
-												return modded_string.Hash == full_hash_string;
-											})) {
+											return modded_string.Hash == full_hash_string;
+										})) {
 
 											const std::size_t string_start = 2 + hash_string.size();
 											std::string_view string = std::string_view{ modded_string }.substr(modded_string.find_first_not_of(' ', string_start + 1));
 											modded_strings.push_back(ModdedString{
 												.Hash{ std::string{ full_hash_string } },
 												.String{ std::string{ string } }
-											});
+												});
 										}
 									}
 									else {
-										LogInfo("Failed parsing modded string '{}', expected ':' after hash, the string will be discarded...", modded_string);
+										LogError("Failed parsing modded string '{}', expected ':' after hash, the string will be discarded...", modded_string);
 									}
 								}
 								else if (modded_string.size() > 0 && modded_string[0] != '#') {
-									LogInfo("Failed parsing modded string '{}', expected hash at beginning of line, the string will be discarded...", modded_string);
+									LogError("Failed parsing modded string '{}', expected hash at beginning of line, the string will be discarded...", modded_string);
 								}
 							}
 						}

@@ -539,7 +539,7 @@ struct DetourFmodSystemLoadBankMemory {
 									return FMOD::OK;
 								}
 
-								LogInfo("Failed loading loose audio file {}, falling back to loading from soundbank...", sample.Name);
+								LogError("Failed loading loose audio file {}, falling back to loading from soundbank...", sample.Name);
 								[[maybe_unused]] const auto destroy_leaking_sound_res = ReleaseSound(*sound);
 								assert(destroy_leaking_sound_res == FMOD::OK);
 							}
@@ -715,7 +715,7 @@ struct DetourFmodSystemCreateSound {
 								.format = [&sample](SoundFormat format) {
 									switch (format) {
 									default:
-										LogInfo("Sound format is not supported for file {}, falling back to original game audio...", sample.Name);
+										LogError("Sound format is not supported for file {}, falling back to original game audio...", sample.Name);
 										return FMOD::SOUND_FORMAT::NONE;
 									case SoundFormat::PCM_8:
 										return FMOD::SOUND_FORMAT::PCM8;
@@ -737,7 +737,7 @@ struct DetourFmodSystemCreateSound {
 								return FMOD::OK;
 							}
 
-							LogInfo("Failed loading loose audio file {}, falling back to loading from soundbank...", sample.Name);
+							LogError("Failed loading loose audio file {}, falling back to loading from soundbank...", sample.Name);
 							[[maybe_unused]] const auto destroy_leaking_sound_res = ReleaseSound(*sound);
 							assert(destroy_leaking_sound_res == FMOD::OK);
 						}
@@ -756,7 +756,7 @@ struct DetourFmodSystemCreateStream {
 		.Module = "fmod.dll"
 	};
 	static FMOD::FMOD_RESULT Detour(FMOD::System* fmod_system, const char* file_name_or_data, FMOD::FMOD_MODE mode, FMOD::CREATESOUNDEXINFO* exinfo, FMOD::Sound** sound) {
-		LogInfo("Loading an audio stream which has not been patched, falling back to loading original stream...");
+		LogError("Loading an audio stream which has not been patched, falling back to loading original stream...");
 		return Trampoline(fmod_system, file_name_or_data, mode, exinfo, sound);
 	}
 };
