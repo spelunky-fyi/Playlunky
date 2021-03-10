@@ -102,8 +102,6 @@ struct DetourSwapChainPresent {
 			ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, .3f), "Playlunky " PLAYLUNKY_VERSION);
 			ImGui::End();
 
-			ImGui::ShowMetricsWindow();
-
 			ImGui::Render();
 
 			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
