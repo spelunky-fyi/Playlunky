@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2021-03-10
+
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
+
+### Added
+- Hooks the games rendering now to add imgui in preparation for script support (which is still ways off)
+- On-screen error printouts
+- A watermark with version and all
 
 ### Changed
 - Merged sticker gen with entity merging code, thus full char sheets and regular char sheets work well together
