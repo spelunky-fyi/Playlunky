@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2021-03-11
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
+
+### Fixed
+- Removed cursor since it's not needed and interferes with Overlunky
+
 ## [0.6.0] - 2021-03-10
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
