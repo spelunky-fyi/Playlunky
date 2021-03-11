@@ -75,7 +75,6 @@ struct DetourSwapChainPresent {
 					ImGui::CreateContext();
 					ImGuiIO& io = ImGui::GetIO();
 					io.ConfigFlags = ImGuiConfigFlags_NoMouseCursorChange;
-					io.MouseDrawCursor = true;
 					ImGui_ImplWin32_Init(DetourCreateWindowEx::s_Window);
 					ImGui_ImplDX11_Init(s_Device, s_Context);
 				};
