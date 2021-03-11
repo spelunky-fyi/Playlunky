@@ -56,7 +56,7 @@ bool StringMerger::MergeStrings(
 
 	if (auto hash_file = std::ifstream{ source_folder / hash_file_path }) {
 		{
-			std::vector<std::uint8_t> all_string_tables{ 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+			std::vector<std::uint8_t> all_string_tables{ 0, 1, 2, 3, 4, 5, 6, 7 };
 
 			for (auto outdated_string_table : mOutdatedStringTables) {
 				if (outdated_string_table.Modded) {
