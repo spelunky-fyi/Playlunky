@@ -16,9 +16,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 2
-          submodules: true
+
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
 
       - uses: actions/setup-python@v2
       - uses: lukka/get-cmake@latest
