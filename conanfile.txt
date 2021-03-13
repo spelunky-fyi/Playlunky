@@ -1,5 +1,4 @@
 [requires]
-fmt/7.0.1
 structopt/0.1.1
 lodepng/cci.20200615
 libzip/1.7.3
@@ -7,7 +6,6 @@ ctre/3.3.4
 zstd/1.4.8
 zlib/1.2.11
 opencv/4.5.1
-imgui/1.81
 
 [generators]
 cmake_multi

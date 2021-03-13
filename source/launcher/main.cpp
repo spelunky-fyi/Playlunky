@@ -89,8 +89,16 @@ int WinMain(
 		char dir_path[MAX_PATH] = {};
 		GetCurrentDirectoryA(MAX_PATH, dir_path);
 
-		char dll_path[MAX_PATH] = {};
-		sprintf_s(dll_path, MAX_PATH, "%s/playlunky64.dll", dir_path);
+		char spel2_dll_path[MAX_PATH] = {};
+		sprintf_s(spel2_dll_path, MAX_PATH, "%s/spel2.dll", dir_path);
+
+		char playlunky_dll_path[MAX_PATH] = {};
+		sprintf_s(playlunky_dll_path, MAX_PATH, "%s/playlunky64.dll", dir_path);
+
+		const char* dll_paths[] = {
+			spel2_dll_path,
+			playlunky_dll_path
+		};
 
 		if (!options.exe_dir.has_value())
 		{
@@ -123,7 +131,7 @@ int WinMain(
 		si.dwFlags |= STARTF_USESTDHANDLES;
 
 		PROCESS_INFORMATION pi{};
-		if (DetourCreateProcessWithDllExA(NULL, exe_path, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE, NULL, cwd_path, &si, &pi, dll_path, NULL)) {
+		if (DetourCreateProcessWithDlls(NULL, exe_path, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE, NULL, cwd_path, &si, &pi, sizeof(dll_paths) / sizeof(const char*), dll_paths, NULL)) {
 			fmt::print("Spawned process: {}, PID: {}\n", exe_path, pi.dwProcessId);
 
 			s_Process = pi.hProcess;

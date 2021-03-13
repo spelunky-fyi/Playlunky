@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.9)
 project(Playlunky LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/publish")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
@@ -42,14 +43,12 @@ run_conan()
 
 # --------------------------------------------------
 # Find packages
-find_package(fmt REQUIRED)
 find_package(structopt REQUIRED)
 find_package(lodepng REQUIRED)
 find_package(libzip REQUIRED)
 find_package(ctre REQUIRED)
 find_package(zstd REQUIRED)
 find_package(opencv REQUIRED)
-find_package(imgui REQUIRED)
 
 
 # --------------------------------------------------
@@ -63,12 +62,13 @@ endif()
 
 add_library(playlunky_definitions INTERFACE)
 target_compile_definitions(playlunky_definitions INTERFACE
+	_WIN32_MEAN_AND_LEAN
 	NOMINMAX
 	"PLAYLUNKY_VERSION=\"${PLAYLUNKY_GIT_VERSION}\"")
 
 add_library(playlunky_dependencies INTERFACE)
 target_link_libraries(playlunky_dependencies INTERFACE
-	fmt::fmt
+	fmt
 	libzip::libzip)
 
 add_library(playlunky_inject_dependencies INTERFACE)
@@ -81,9 +81,10 @@ target_link_libraries(playlunky_lib_dependencies INTERFACE
 	ctre::ctre
 	zstd::zstd
 	opencv::opencv
-	imgui::imgui
+	imgui
 	libnyquist
-	inih)
+	inih
+	spel2)
 
 
 # --------------------------------------------------
@@ -211,6 +212,7 @@ install(TARGETS
 	playlunky64
 	playlunky_launcher
 	playlunky_installer
+	spel2
 	RUNTIME
 	DESTINATION .)
 install(FILES
