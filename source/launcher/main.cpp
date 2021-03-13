@@ -1,8 +1,9 @@
+#include "util/format.h"
+
 #include <Windows.h>
 #include <fstream>
 
 #include <detours.h>
-#include <fmt/format.h>
 #include <structopt/app.hpp>
 
 enum ReturnReason {

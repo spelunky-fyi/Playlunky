@@ -5,8 +5,8 @@
 #include "detour_entry.h"
 #include "detour_helper.h"
 #include "sigfun.h"
+#include "util/format.h"
 
-#include <fmt/format.h>
 #include <cstdio>
 #include <memory>
 #include <fstream>

@@ -2,8 +2,7 @@
 
 #include "log.h"
 #include "util/unzip_file.h"
-
-#include <fmt/format.h>
+#include "util/format.h"
 
 void UnzipMod(const std::filesystem::path& zip_file) {
 	namespace fs = std::filesystem;

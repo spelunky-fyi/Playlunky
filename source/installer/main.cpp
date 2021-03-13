@@ -1,9 +1,9 @@
 #include "util/unzip_file.h"
+#include "util/format.h"
 
 #include <iostream>
 #include <filesystem>
 
-#include <fmt/format.h>
 
 namespace fs = std::filesystem;
 

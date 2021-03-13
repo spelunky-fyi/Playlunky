@@ -4,9 +4,9 @@
 #include "virtual_filesystem.h"
 #include "util/algorithms.h"
 #include "util/image.h"
+#include "util/format.h"
 
 #include <cassert>
-#include <fmt/format.h>
 
 #pragma warning(push)
 #pragma warning(disable : 5054)

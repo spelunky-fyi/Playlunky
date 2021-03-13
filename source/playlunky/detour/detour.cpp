@@ -8,11 +8,11 @@
 #include "imgui.h"
 #include "logger.h"
 #include "win_main.h"
+#include "util/format.h"
 
 #include <Windows.h>
 #include <detours.h>
 #include <fmt/core.h>
-#include <fmt/format.h>
 #include <span>
 
 #define DLL_NAME "playlunky" DETOURS_STRINGIFY(DETOURS_BITS) ".dll"

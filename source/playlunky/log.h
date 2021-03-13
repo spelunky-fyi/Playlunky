@@ -1,6 +1,6 @@
 #pragma once
 
-#include <fmt/format.h>
+#include "util/format.h"
 
 enum class LogLevel {
 	Info = 0,

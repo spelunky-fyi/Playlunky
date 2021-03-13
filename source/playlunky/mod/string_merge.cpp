@@ -3,8 +3,8 @@
 #include "log.h"
 #include "virtual_filesystem.h"
 #include "util/algorithms.h"
+#include "util/format.h"
 
-#include <fmt/format.h>
 #include <charconv>
 #include <fstream>
 #include <unordered_map>
