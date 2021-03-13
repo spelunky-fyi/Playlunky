@@ -20,8 +20,10 @@ function(add_subdirectory_with_folder _folder_name _folder)
             set_target_properties(${_target} PROPERTIES
                                   FOLDER "${_folder_name}/${_current_folder_name}")
                                   
-            target_compile_options(${_target} PRIVATE
-                "/W0")
+            if (NOT _target_type STREQUAL "UTILITY")
+                target_compile_options(${_target} PRIVATE
+                    "/W0")
+            endif()
         endif()
     endforeach()
 endfunction()
@@ -67,3 +69,9 @@ set_target_properties(inih PROPERTIES
 # --------------------------------------------------
 # nyquist
 add_subdirectory_with_folder("3rd_party" libnyquist)
+
+# --------------------------------------------------
+# overlunky -- later to be spelunky-api
+option(BUILD_OVERLUNKY CACHE OFF)
+option(BUILD_SPEL2_DLL CACHE ON)
+add_subdirectory_with_folder("3rd_party" overlunky)
