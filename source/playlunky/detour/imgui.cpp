@@ -5,23 +5,13 @@
 #include "sigscan.h"
 #include "log.h"
 #include "mod/virtual_filesystem.h"
+#include "util/call_once.h"
 
 #include <d3d11.h>
 #include <Windows.h>
 
 #include <imgui.h>
 #include <spel2.h>
-
-template<class FunT>
-struct RunOnce {
-	RunOnce(FunT&& fun) {
-		static bool already_run = false;
-		if (!already_run) {
-			fun();
-			already_run = true;
-		}
-	}
-};
 
 struct DetourSwapChainPresent {
 	inline static SigScan::Function<HRESULT(__stdcall*) (IDXGISwapChain*, UINT, UINT)> Trampoline{
@@ -30,7 +20,7 @@ struct DetourSwapChainPresent {
 	};
 	static HRESULT Detour(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
 	{
-		RunOnce([pSwapChain]() {
+		CallOnce([pSwapChain]() {
 			RegisterImguiInitFunc(&ImguiInit);
 			RegisterImguiDrawFunc(&ImguiDraw);
 			InitSwapChainHooks(pSwapChain);
