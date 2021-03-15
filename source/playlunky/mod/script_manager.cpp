@@ -7,18 +7,18 @@
 
 #include <imgui.h>
 
-bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::filesystem::path& main_path) {
+bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::filesystem::path& main_path, bool enabled) {
 	if (algo::contains(mMods, &RegisteredMainScript::ModName, mod_name)) {
 		return false;
 	}
-	mMods.push_back(RegisteredMainScript{ .ModName{ std::string{ mod_name } }, .MainPath{ main_path } });
+	mMods.push_back(RegisteredMainScript{ .ModName{ std::string{ mod_name } }, .MainPath{ main_path }, .Enabled{ enabled } });
 	return true;
 }
 
 void ScriptManager::CommitScripts() {
 	for (RegisteredMainScript& mod : mMods) {
 		const std::string path_string = mod.MainPath.string();
-		mod.Script = CreateScript(path_string.c_str(), true);
+		mod.Script = CreateScript(path_string.c_str(), mod.Enabled);
 		if (const char* res = SpelunkyScript_GetResult(mod.Script)) {
 			if (res != std::string_view{ "OK" }) {
 				LogError("Lua Error:\n\tMod: {}\n\tError: {}", mod.ModName, res);
