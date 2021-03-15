@@ -122,7 +122,7 @@ void ModDatabase::UpdateDatabase() {
 					const auto system_clock_time = time_point_cast<system_clock::duration>(get_last_folder_write_time(path) - fs_clock::now() + system_clock::now());
 					const auto last_write_time = system_clock::to_time_t(system_clock_time);
 
-					if (ItemDescriptor* existing_file = algo::find_if(mFolders, &ItemDescriptor::Path, rel_folder_path)) {
+					if (ItemDescriptor* existing_file = algo::find(mFolders, &ItemDescriptor::Path, rel_folder_path)) {
 						existing_file->LastWrite = last_write_time;
 					}
 					else {
