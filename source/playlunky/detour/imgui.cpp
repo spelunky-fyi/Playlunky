@@ -22,7 +22,6 @@ struct DetourSwapChainPresent {
 	{
 		CallOnce([pSwapChain]() {
 			RegisterImguiInitFunc(&ImguiInit);
-			RegisterImguiDrawFunc(&ImguiDraw);
 			InitSwapChainHooks(pSwapChain);
 		});
 		return Trampoline(pSwapChain, SyncInterval, Flags);
@@ -79,7 +78,10 @@ std::vector<DetourEntry> GetImguiDetours() {
 	};
 }
 
-void PrintError(std::string message, float time)
-{
+void PrintError(std::string message, float time) {
 	DetourSwapChainPresent::PrintError(std::move(message), time);
+}
+
+void DrawImguiOverlay() {
+	DetourSwapChainPresent::ImguiDraw();
 }

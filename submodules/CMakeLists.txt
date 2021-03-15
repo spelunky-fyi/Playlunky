@@ -72,6 +72,6 @@ add_subdirectory_with_folder("3rd_party" libnyquist)
 
 # --------------------------------------------------
 # overlunky -- later to be spelunky-api
-option(BUILD_OVERLUNKY CACHE OFF)
+option(BUILD_OVERLUNKY CACHE ON)
 option(BUILD_SPEL2_DLL CACHE ON)
 add_subdirectory_with_folder("3rd_party" overlunky)

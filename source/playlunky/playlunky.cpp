@@ -56,6 +56,12 @@ void Playlunky::Init() {
 	SetFmodVfs(mImpl->Vfs.get());
 }
 
+void Playlunky::PostGameInit() {
+	LogInfo("Finalizing Playlunky setup...");
+	
+	mImpl->Manager->PostGameInit();
+}
+
 Playlunky::Playlunky(HMODULE game_module)
 	: mImpl{ new PlaylunkyImpl{ game_module } }
 {

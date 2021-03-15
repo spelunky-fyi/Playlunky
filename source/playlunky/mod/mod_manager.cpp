@@ -14,7 +14,12 @@
 
 #include "log.h"
 #include "util/algorithms.h"
+#include "util/function_pointer.h"
 #include "util/regex.h"
+
+#include "detour/imgui.h"
+
+#include <spel2.h>
 
 #include <Windows.h>
 #include <zip.h>
@@ -29,6 +34,7 @@
 #include <INIReader.h>
 #pragma warning(pop)
 
+static constexpr ctll::fixed_string s_CharacterRule{ ".+char_(.*)\\.png" };
 static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
@@ -223,7 +229,8 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 					const auto full_asset_path_string = full_asset_path.string();
 					if (rel_asset_path.extension() == ".png") {
 						const bool is_entity_asset = rel_asset_path.parent_path().filename() == "Entities";
-						if (is_entity_asset) {
+						const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
+						if (is_entity_asset || is_character_asset) {
 							sprite_sheet_merger.RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);
 						}
 
@@ -274,6 +281,11 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 							else {
 								LogError("Failed caching audio file '{}'...", full_asset_path.string());
 							}
+						}
+					}
+					else if (rel_asset_path.filename() == "main.lua") {
+						if (!mScriptManager.RegisterModWithScript(mod_name, full_asset_path)) {
+							LogError("Mod {} appears to contain multiple main.lua files... {} will be ignored...", mod_name, full_asset_path_string);
 						}
 					}
 				});
@@ -380,4 +392,19 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 		LogInfo("No mods were initialized...");
 	}
+}
+
+void ModManager::PostGameInit() {
+	mScriptManager.CommitScripts();
+
+	RegisterPreDrawFunc(FunctionPointer<void(), struct ModManagerUpdate>(&ModManager::Update, this));
+	RegisterImguiDrawFunc(FunctionPointer<void(), struct ModManagerDraw>(&ModManager::Draw, this));
+}
+
+void ModManager::Update() {
+	mScriptManager.Update();
+}
+void ModManager::Draw() {
+	mScriptManager.Draw();
+	DrawImguiOverlay();
 }

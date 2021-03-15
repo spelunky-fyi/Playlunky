@@ -11,6 +11,8 @@ public:
 	static void Destroy();
 
 	void Init();
+	void PostGameInit();
+
 private:
 	Playlunky(HMODULE game_module);
 	~Playlunky();

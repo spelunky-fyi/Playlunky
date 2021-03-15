@@ -4,6 +4,7 @@
 #include "detour_helper.h"
 #include "sigfun.h"
 #include "sigscan.h"
+#include "util/call_once.h"
 
 #include "../playlunky.h"
 #include "log.h"
@@ -48,18 +49,29 @@ struct DetourGetSteamHandle {
 		.Signature = "\x40\x53\x48\x83\xec\x20\x48\x8b\x05\x2a\x2a\x2a\x2a\x48\x85\xc0\x75\x76\x48\x39\x05\x2a\x2a\x2a\x2a"_sig
 	};
 	static void* Detour() {
-		static bool s_PlaylunkyInit{ false };
-		if (!s_PlaylunkyInit) {
+		CallOnce([]() {
 			Playlunky::Get().Init();
-			s_PlaylunkyInit = true;
-		}
+		});
 		return Trampoline();
+	}
+};
+
+// This is the last function called during game initialization
+struct DetourGameInitFinalize {
+	inline static SigScan::Function<void* (__stdcall*)(void*, void*, void*)> Trampoline{
+		.Signature = "\x48\x89\x5c\x24\x18\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x83\xec\x30\x48\x8b\xf1\x80\x39\x00\x74\x3a\x48\x8b\x0d\x2a\x2a\x2a\x2a\x48\x8b\x01"_sig
+	};
+	static void* Detour(void* game_ptr, void* other_ptr, void* some_func_ptr) {
+		void* res = Trampoline(game_ptr, other_ptr, some_func_ptr);
+		Playlunky::Get().PostGameInit();
+		return res;
 	}
 };
 
 std::vector<struct DetourEntry> GetMainDetours() {
 	return {
 		DetourHelper<DetourWinMain>::GetDetourEntry("WinMain"),
-		DetourHelper<DetourGetSteamHandle>::GetDetourEntry("GetSteamHandle")
+		DetourHelper<DetourGetSteamHandle>::GetDetourEntry("GetSteamHandle"),
+		DetourHelper<DetourGameInitFinalize>::GetDetourEntry("GameInitFinalize")
 	};
 }
