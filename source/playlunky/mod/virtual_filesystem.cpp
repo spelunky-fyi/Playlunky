@@ -170,9 +170,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePath(const 
 	if (const BoundPathes* bound_pathes = GetBoundPathes(path.string())) {
 
 		std::lock_guard lock{ m_RandomCacheMutex };
-		const CachedRandomFile* cached_file = algo::find_if(m_RandomCache, [bound_pathes](const CachedRandomFile& cached_file) {
-			return cached_file.TargetPath == CachedRandomFileKey{ bound_pathes };
-		});
+		const CachedRandomFile* cached_file = algo::find(m_RandomCache, &CachedRandomFile::TargetPath, CachedRandomFileKey{ bound_pathes });
 		if (cached_file == nullptr) {
 			std::vector<std::filesystem::path> file_paths;
 			for (std::string_view bound_path : *bound_pathes) {
@@ -199,9 +197,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePath(const 
 	else {
 
 		std::lock_guard lock{ m_RandomCacheMutex };
-		const CachedRandomFile* cached_file = algo::find_if(m_RandomCache, [&path](const CachedRandomFile& cached_file) {
-			return cached_file.TargetPath == CachedRandomFileKey{ path };
-		});
+		const CachedRandomFile* cached_file = algo::find(m_RandomCache, &CachedRandomFile::TargetPath, CachedRandomFileKey{ path });
 		if (cached_file == nullptr) {
 			std::vector<std::filesystem::path> file_paths;
 			for (const VfsMount& mount : mMounts) {

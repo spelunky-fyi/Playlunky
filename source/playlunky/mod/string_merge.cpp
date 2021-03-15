@@ -36,7 +36,7 @@ bool StringMerger::RegisterModdedStringTable(std::string_view table) {
 	if (string_table > 8) {
 		return false;
 	}
-	if (auto* existing_table = algo::find_if(mOutdatedStringTables, [string_table](const OutdatedStringTable& table) { return table.Index == string_table; })) {
+	if (auto* existing_table = algo::find(mOutdatedStringTables, &OutdatedStringTable::Index, string_table)) {
 		existing_table->Modded = true;
 	}
 	else {
@@ -153,10 +153,7 @@ bool StringMerger::MergeStrings(
 						std::getline(hash_file, hash_string);
 						
 						if (hash_string != "0xdeadbeef") {
-							if (auto* modded_string = algo::find_if(modded_strings,
-								[&hash_string](const ModdedString& modded_string) {
-									return modded_string.Hash == hash_string;
-								}))
+							if (auto* modded_string = algo::find(modded_strings, &ModdedString::Hash, hash_string))
 							{
 								strings_destination_file << modded_string->String << '\n';
 								continue;
