@@ -20,7 +20,7 @@ void ScriptManager::CommitScripts() {
 		const std::string path_string = mod.MainPath.string();
 		mod.Script = CreateScript(path_string.c_str(), mod.Enabled);
 		if (const char* res = SpelunkyScript_GetResult(mod.Script)) {
-			if (res != std::string_view{ "OK" }) {
+			if (res != std::string_view{ "Got metadata" }) {
 				LogError("Lua Error:\n\tMod: {}\n\tError: {}", mod.ModName, res);
 			}
 		}

@@ -284,7 +284,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 						}
 					}
 					else if (rel_asset_path.filename() == "main.lua") {
-						if (!mScriptManager.RegisterModWithScript(mod_name, full_asset_path)) {
+						if (!mScriptManager.RegisterModWithScript(mod_name, full_asset_path, enabled)) {
 							LogError("Mod {} appears to contain multiple main.lua files... {} will be ignored...", mod_name, full_asset_path_string);
 						}
 					}
