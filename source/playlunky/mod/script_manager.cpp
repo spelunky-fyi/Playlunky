@@ -19,22 +19,20 @@ void ScriptManager::CommitScripts() {
 	for (RegisteredMainScript& mod : mMods) {
 		const std::string path_string = mod.MainPath.string();
 		mod.Script = CreateScript(path_string.c_str(), mod.Enabled);
-		if (const char* res = SpelunkyScript_GetResult(mod.Script)) {
-			if (res != std::string_view{ "Got metadata" }) {
-				LogError("Lua Error:\n\tMod: {}\n\tError: {}", mod.ModName, res);
-			}
-		}
+		mod.TestScriptResult("Got metadata");
+	}
+}
+void ScriptManager::RefreshScripts() {
+	for (RegisteredMainScript& mod : mMods) {
+		const std::string path_string = mod.MainPath.string();
+		SpelunkyScipt_ReloadScript(mod.Script, path_string.c_str());
+		mod.TestScriptResult();
 	}
 }
 void ScriptManager::Update() {
 	for (RegisteredMainScript& mod : mMods) {
 		if (mod.Script) {
 			SpelunkyScript_Update(mod.Script);
-			if (const char* res = SpelunkyScript_GetResult(mod.Script)) {
-				if (res != std::string_view{ "OK" }) {
-					LogError("Lua Error:\n\tMod: {}\n\tError: {}", mod.ModName, res);
-				}
-			}
 		}
 	}
 }
@@ -57,4 +55,13 @@ void ScriptManager::Draw() {
 	}
 
 	ImGui::End();
+}
+
+void ScriptManager::RegisteredMainScript::TestScriptResult(std::string_view expected) {
+	if (const char* res = SpelunkyScript_GetResult(Script)) {
+		if (res != expected && res != LastResult) {
+			LogError("Lua Error:\n\tMod: {}\n\tError: {}", ModName, res);
+		}
+		LastResult = res;
+	}
 }

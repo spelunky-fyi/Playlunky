@@ -412,10 +412,19 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 void ModManager::PostGameInit() {
 	mScriptManager.CommitScripts();
 
-	RegisterPreDrawFunc(FunctionPointer<void(), struct ModManagerUpdate>(&ModManager::Update, this));
-	RegisterImguiDrawFunc(FunctionPointer<void(), struct ModManagerDraw>(&ModManager::Draw, this));
+	RegisterOnInputFunc(FunctionPointer<std::remove_pointer_t<OnInputFunc>, struct ModManagerOnInput>(&ModManager::OnInput, this));
+	RegisterPreDrawFunc(FunctionPointer<std::remove_pointer_t<PreDrawFunc>, struct ModManagerUpdate>(&ModManager::Update, this));
+	RegisterImguiDrawFunc(FunctionPointer<std::remove_pointer_t<ImguiDrawFunc>, struct ModManagerDraw>(&ModManager::Draw, this));
 }
 
+bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t /*l_param*/) {
+	if (msg == WM_KEYUP) {
+		if (w_param == VK_F5) {
+			mScriptManager.RefreshScripts();
+		}
+	}
+	return false;
+}
 void ModManager::Update() {
 	mScriptManager.Update();
 }
