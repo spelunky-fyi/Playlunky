@@ -52,10 +52,12 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 	const fs::path mods_root_path{ mods_root };
 	if (fs::exists(mods_root_path) && fs::is_directory(mods_root_path)) {
+		const auto db_folder = mods_root_path / ".db";
+
 		{
 			bool has_loose_files{ false };
 
-			ModDatabase mod_db{ mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
+			ModDatabase mod_db{ db_folder, mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
 
 			mod_db.SetEnabled(true);
 			mod_db.UpdateDatabase();
@@ -93,7 +95,6 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			}
 		}
 
-		const auto db_folder = mods_root_path / ".db";
 		const auto db_original_folder = db_folder / "Original";
 		{
 			const auto files = std::array{
@@ -156,13 +157,25 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			}
 		}
 
-		const std::vector<fs::path> mod_folders = [this](const fs::path& root_folder) {
+		const std::vector<fs::path> mod_folders = [this, mods_root_path, db_folder](const fs::path& root_folder) {
 			std::vector<fs::path> mod_folders;
 
 			for (fs::path sub_path : fs::directory_iterator{ root_folder }) {
-				const std::string folder_name = sub_path.stem().string();
 				if (fs::is_directory(sub_path) && sub_path.stem() != ".db") {
 					mod_folders.push_back(sub_path);
+				}
+			}
+
+			// Add all mods that were deleted since last load
+			{
+				const auto mod_db_folder{ db_folder / "Mods" };
+				if (fs::exists(mod_db_folder)) {
+					for (fs::path sub_path : fs::directory_iterator{ mod_db_folder }) {
+						const auto mod_folder = mods_root_path / fs::relative(sub_path, mod_db_folder);
+						if (!algo::contains(mod_folders, mod_folder)) {
+							mod_folders.push_back(mod_folder);
+						}
+					}
 				}
 			}
 
@@ -202,9 +215,9 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 		for (const fs::path& mod_folder : mod_folders) {
 			std::string mod_name = mod_folder.filename().string(); // Not const so we can move from it later
-			const auto mod_db_folder = mod_folder / ".db";
+			const auto mod_db_folder = db_folder / "Mods" / mod_name;
 
-			const auto [prio, enabled] = [&mod_name_to_prio, &mod_name]() mutable {
+			const auto [prio, enabled] = [&mod_name_to_prio, &mod_name, &mod_folder]() mutable {
 				std::int64_t prio{ static_cast<std::int64_t>(mod_name_to_prio.size()) };
 				bool enabled{ true };
 				if (mod_name_to_prio.contains(mod_name)) {
@@ -213,13 +226,13 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 					enabled = prio_and_state.Enabled;
 				}
 				else {
-					mod_name_to_prio[mod_name] = { prio, true };
+					mod_name_to_prio[mod_name] = { prio, fs::exists(mod_folder) };
 				}
 				return std::pair{ prio, enabled };
 			}();
 
 			{
-				ModDatabase mod_db{ mod_folder, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Recurse) };
+				ModDatabase mod_db{ mod_db_folder, mod_folder, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Recurse) };
 				mod_db.SetEnabled(enabled);
 				mod_db.UpdateDatabase();
 				mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool outdated, bool deleted, std::optional<bool> new_enabled_state) {
@@ -242,7 +255,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 									LogInfo("Successfully deleted file '{}' that was removed from a mod...", full_asset_path.string());
 								}
 							}
-							else if (!is_entity_asset && ConvertPngToDds(full_asset_path, db_destination))
+							else if (ConvertPngToDds(full_asset_path, db_destination))
 							{
 								LogInfo("Successfully converted file '{}' to be readable by the game...", full_asset_path.string());
 							}
@@ -292,12 +305,14 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 				mod_db.WriteDatabase();
 			}
 
-			if (enabled) {
-				vfs.MountFolder(mod_folder.string(), prio);
-				vfs.MountFolder(mod_db_folder.string(), prio);
-			}
+			if (fs::exists(mod_folder)) {
+				if (enabled) {
+					vfs.MountFolder(mod_folder.string(), prio);
+					vfs.MountFolder(mod_db_folder.string(), prio);
+				}
 
-			mMods.push_back(std::move(mod_name));
+				mMods.push_back(std::move(mod_name));
+			}
 		}
 
 		// Bind char pathes
@@ -377,7 +392,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 
 		{
 			// Rewrite mod database so we don't trigger changes on files written during mod load (e.g. load_order.txt)
-			ModDatabase mod_db{ mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
+			ModDatabase mod_db{ db_folder, mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
 			mod_db.SetEnabled(true);
 			mod_db.UpdateDatabase();
 			mod_db.WriteDatabase();

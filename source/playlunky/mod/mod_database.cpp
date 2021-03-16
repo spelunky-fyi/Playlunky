@@ -12,14 +12,22 @@
 //		0xBADAB000 -- v0.5.6 (latest)
 static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xBADAB000 };
 
-ModDatabase::ModDatabase(std::filesystem::path root_folder, ModDatabaseFlags flags)
-	: mRootFolder(std::move(root_folder))
+ModDatabase::ModDatabase(std::filesystem::path database_folder, std::filesystem::path mod_folder, ModDatabaseFlags flags)
+	: mDatabaseFolder(std::move(database_folder))
+	, mModFolder(std::move(mod_folder))
 	, mFlags(flags) {
 	namespace fs = std::filesystem;
 
-	if (fs::exists(mRootFolder) && fs::is_directory(mRootFolder)) {
-		const fs::path db_folder = mRootFolder / ".db";
-		const fs::path db_path = db_folder / "mod.db";
+	const bool is_global_db = algo::is_sub_path(mDatabaseFolder, mModFolder);
+	if (!is_global_db) {
+		const fs::path old_db_folder = mModFolder / ".db";
+		if (fs::exists(old_db_folder) && fs::is_directory(old_db_folder)) {
+			fs::remove_all(old_db_folder);
+		}
+	}
+
+	if (fs::exists(mDatabaseFolder) && fs::is_directory(mDatabaseFolder)) {
+		const fs::path db_path = mDatabaseFolder / "mod.db";
 		if (fs::exists(db_path) && fs::is_regular_file(db_path)) {
 			std::ifstream db_file(db_path, std::ios::binary);
 
@@ -28,7 +36,7 @@ ModDatabase::ModDatabase(std::filesystem::path root_folder, ModDatabaseFlags fla
 				db_file.read(reinterpret_cast<char*>(&magic_number), sizeof(magic_number));
 				if (magic_number != s_ModDatabaseMagicNumber) {
 					db_file.close();
-					fs::remove_all(db_folder);
+					fs::remove_all(mDatabaseFolder);
 					return;
 				}
 			}
@@ -82,13 +90,14 @@ ModDatabase::~ModDatabase() = default;
 void ModDatabase::UpdateDatabase() {
 	namespace fs = std::filesystem;
 
-	if (fs::exists(mRootFolder) && fs::is_directory(mRootFolder)) {
-		const fs::path db_folder = mRootFolder / ".db";
-
-		auto do_iteration = [this, &db_folder](const fs::path& path) {
-			if (!algo::is_sub_path(path, db_folder)) {
+	if (fs::exists(mModFolder) && fs::is_directory(mModFolder)) {
+		auto do_iteration = [this](const fs::path& path) {
+			if (algo::is_sub_path(path, mDatabaseFolder)) {
+				return false;
+			}
+			else {
 				if (fs::is_regular_file(path) && (mFlags & ModDatabaseFlags_Files)) {
-					const auto rel_file_path = fs::relative(path, mRootFolder);
+					const auto rel_file_path = fs::relative(path, mModFolder);
 
 					using fs_clock = fs::file_time_type::clock;
 					using std::chrono::system_clock;
@@ -106,7 +115,7 @@ void ModDatabase::UpdateDatabase() {
 					}
 				}
 				else if (fs::is_directory(path) && (mFlags & ModDatabaseFlags_Folders)) {
-					const auto rel_folder_path = fs::relative(path, mRootFolder);
+					const auto rel_folder_path = fs::relative(path, mModFolder);
 
 					auto get_last_folder_write_time = [](const fs::path& folder_path) {
 						auto oldest_write_time = fs::last_write_time(folder_path);
@@ -132,17 +141,25 @@ void ModDatabase::UpdateDatabase() {
 							});
 					}
 				}
+				return true;
 			}
 		};
 
 		if (mFlags & ModDatabaseFlags_Recurse) {
-			for (auto& path : fs::recursive_directory_iterator(mRootFolder)) {
-				do_iteration(path);
-			}
+			auto iter_recurse = [&do_iteration](const auto& path, auto& self) -> void {
+				for (auto& sub_path : fs::directory_iterator(path)) {
+					if (do_iteration(sub_path)) {
+						if (fs::is_directory(sub_path)) {
+							self(sub_path, self);
+						}
+					}
+				}
+			};
+			iter_recurse(mModFolder, iter_recurse);
 		}
 		else {
-			for (auto& path : fs::directory_iterator(mRootFolder)) {
-				do_iteration(path);
+			for (auto& path : fs::directory_iterator(mModFolder)) {
+				(void)do_iteration(path);
 			}
 		}
 	}
@@ -150,16 +167,21 @@ void ModDatabase::UpdateDatabase() {
 void ModDatabase::WriteDatabase() {
 	namespace fs = std::filesystem;
 
-	if (fs::exists(mRootFolder) && fs::is_directory(mRootFolder)) {
-		const fs::path db_folder = mRootFolder / ".db";
-		if (!fs::exists(db_folder) || !fs::is_directory(db_folder)) {
-			if (fs::exists(db_folder)) {
-				fs::remove_all(db_folder);
-			}
-			fs::create_directory(db_folder);
+	if (!fs::exists(mModFolder)) {
+		if (fs::exists(mDatabaseFolder)) {
+			fs::remove_all(mDatabaseFolder);
 		}
+		return;
+	}
+	else if (!fs::exists(mDatabaseFolder) || !fs::is_directory(mDatabaseFolder)) {
+		if (fs::exists(mDatabaseFolder)) {
+			fs::remove_all(mDatabaseFolder);
+		}
+		fs::create_directories(mDatabaseFolder);
+	}
 
-		const fs::path db_path = db_folder / "mod.db";
+	if (fs::exists(mDatabaseFolder) && fs::is_directory(mDatabaseFolder)) {
+		const fs::path db_path = mDatabaseFolder / "mod.db";
 		if (fs::exists(db_path)) {
 			fs::remove_all(db_path);
 		}
@@ -169,11 +191,11 @@ void ModDatabase::WriteDatabase() {
 		db_file.write(reinterpret_cast<const char*>(&mIsEnabled), sizeof(mIsEnabled));
 
 		if (mFlags & ModDatabaseFlags_Files) {
-			const std::size_t num_files = algo::count_if(mFiles, [](const auto& file) { return file.LastWrite != std::nullopt; });
+			const std::size_t num_files = algo::count_if(mFiles, [](const auto& file) { return file.Exists(); });
 			db_file.write(reinterpret_cast<const char*>(&num_files), sizeof(num_files));
 
 			for (ItemDescriptor& file : mFiles) {
-				if (file.LastWrite != std::nullopt) {
+				if (file.Exists()) {
 					const std::string path_string = file.Path.string();
 					const std::size_t path_size = path_string.size();
 					db_file.write(reinterpret_cast<const char*>(&path_size), sizeof(path_size));
@@ -190,11 +212,11 @@ void ModDatabase::WriteDatabase() {
 		}
 
 		if (mFlags & ModDatabaseFlags_Folders) {
-			const std::size_t num_folders = algo::count_if(mFolders, [](const auto& folder) { return folder.LastWrite != std::nullopt; });
+			const std::size_t num_folders = algo::count_if(mFolders, [](const auto& folder) { return folder.Exists(); });
 			db_file.write(reinterpret_cast<const char*>(&num_folders), sizeof(num_folders));
 
 			for (ItemDescriptor& folder : mFolders) {
-				if (folder.LastWrite != std::nullopt) {
+				if (folder.Exists()) {
 					const std::string path_string = folder.Path.string();
 					const std::size_t path_size = path_string.size();
 					db_file.write(reinterpret_cast<const char*>(&path_size), sizeof(path_size));

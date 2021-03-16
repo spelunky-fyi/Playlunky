@@ -12,7 +12,7 @@ enum ModDatabaseFlags : ModDatabaseFlagsInt {
 
 class ModDatabase {
 public:
-	ModDatabase(std::filesystem::path root_folder, ModDatabaseFlags flags);
+	ModDatabase(std::filesystem::path database_folder, std::filesystem::path mod_folder, ModDatabaseFlags flags);
 	~ModDatabase();
 
 	void SetEnabled(bool enabled) { mIsEnabled = enabled; }
@@ -26,9 +26,8 @@ public:
 			? std::optional<bool>{ mIsEnabled }
 			: std::nullopt;
 		for (const ItemDescriptor& file : mFiles) {
-			const bool outdated = (!file.LastKnownWrite.has_value() && file.LastWrite.has_value()) ||
-				(file.LastKnownWrite.has_value() && file.LastWrite.has_value() && file.LastKnownWrite.value() < file.LastWrite.value());
-			const bool deleted = file.LastKnownWrite.has_value() && !file.LastWrite.has_value();
+			const bool outdated = file.IsNew() || file.IsChanged();
+			const bool deleted = file.IsDeleted();
 			fun(file.Path, outdated, deleted, new_enabled_state);
 		}
 	}
@@ -40,21 +39,37 @@ public:
 			? std::optional<bool>{ mIsEnabled }
 			: std::nullopt;
 		for (const ItemDescriptor& folder : mFolders) {
-			const bool outdated = (!folder.LastKnownWrite.has_value() && folder.LastWrite.has_value()) ||
-				(folder.LastKnownWrite.has_value() && folder.LastWrite.has_value() && folder.LastKnownWrite.value() < folder.LastWrite.value());
-			const bool deleted = folder.LastKnownWrite.has_value() && !folder.LastWrite.has_value();
+			const bool outdated = folder.IsNew() || folder.IsChanged();
+			const bool deleted = folder.IsDeleted();
 			fun(folder.Path, outdated, deleted, new_enabled_state);
 		}
 	}
 
 private:
-	const std::filesystem::path mRootFolder;
+	const std::filesystem::path mDatabaseFolder;
+	const std::filesystem::path mModFolder;
 	const ModDatabaseFlags mFlags;
 
 	struct ItemDescriptor {
 		std::filesystem::path Path{};
 		std::optional<std::time_t> LastKnownWrite{ std::nullopt };
 		std::optional<std::time_t> LastWrite{ std::nullopt };
+
+		bool Exists() const {
+			return LastWrite.has_value();
+		}
+		bool Existed() const {
+			return LastKnownWrite.has_value();
+		}
+		bool IsNew() const {
+			return !Existed() && Exists();
+		}
+		bool IsChanged() const {
+			return Exists() && Existed() && LastKnownWrite.value() < LastWrite.value();
+		}
+		bool IsDeleted() const {
+			return Existed() && !Exists();
+		}
 	};
 
 	std::vector<ItemDescriptor> mFiles;
