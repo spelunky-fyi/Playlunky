@@ -9,4 +9,4 @@
 	url = https://github.com/ddiakopoulos/libnyquist.git
 [submodule "submodules/overlunky"]
 	path = submodules/overlunky
-	url = git@github.com:Malacath-92/overlunky.git
+	url = https://github.com/spelunky-fyi/overlunky.git
