@@ -419,8 +419,13 @@ void ModManager::PostGameInit() {
 
 bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t /*l_param*/) {
 	if (msg == WM_KEYUP) {
-		if (w_param == VK_F5) {
-			mScriptManager.RefreshScripts();
+		if (GetKeyState(VK_CONTROL)) {
+			if (w_param == VK_F4) {
+				mScriptManager.ToggleForceShowOptions();
+			}
+			else if (w_param == VK_F5) {
+				mScriptManager.RefreshScripts();
+			}
 		}
 	}
 	return false;

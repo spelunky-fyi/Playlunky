@@ -11,14 +11,14 @@ bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::
 	if (algo::contains(mMods, &RegisteredMainScript::ModName, mod_name)) {
 		return false;
 	}
-	mMods.push_back(RegisteredMainScript{ .ModName{ std::string{ mod_name } }, .MainPath{ main_path }, .Enabled{ enabled } });
+	mMods.push_back(RegisteredMainScript{ .ModName{ std::string{ mod_name } }, .MainPath{ main_path }, .Enabled{ enabled }, .ScriptEnabled{ enabled } });
 	return true;
 }
 
 void ScriptManager::CommitScripts() {
 	for (RegisteredMainScript& mod : mMods) {
 		const std::string path_string = mod.MainPath.string();
-		mod.Script = CreateScript(path_string.c_str(), mod.Enabled);
+		mod.Script = CreateScript(path_string.c_str(), mod.ScriptEnabled);
 		mod.TestScriptResult("Got metadata");
 	}
 }
@@ -38,6 +38,30 @@ void ScriptManager::Update() {
 }
 void ScriptManager::Draw() {
 	ImGuiIO& io = ImGui::GetIO();
+
+	if (mForceShowOptions || SpelunkyState_GetScreen() == SpelunkyScreen::Menu) {
+		ImGui::SetNextWindowSize({ io.DisplaySize.x / 4, io.DisplaySize.y });
+		ImGui::SetNextWindowPos({ io.DisplaySize.x * 3 / 4, 0 });
+		ImGui::Begin(
+			"Mod Options",
+			NULL,
+			ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration);
+
+		ImGui::TextUnformatted("Mod Options");
+
+		for (RegisteredMainScript& mod : mMods) {
+			if (mod.Script && mod.Enabled) {
+				ImGui::Separator();
+				if (ImGui::Checkbox(mod.ModName.c_str(), &mod.ScriptEnabled)) {
+					SpelunkyScipt_SetEnabled(mod.Script, mod.ScriptEnabled);
+				}
+				SpelunkyScript_DrawOptions(mod.Script);
+			}
+		}
+
+		ImGui::End();
+	}
+
 	ImGui::SetNextWindowSize(io.DisplaySize);
 	ImGui::SetNextWindowPos({ 0, 0 });
 	ImGui::Begin(

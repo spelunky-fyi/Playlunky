@@ -16,15 +16,19 @@ public:
 	void Update();
 	void Draw();
 
+	void ToggleForceShowOptions() { mForceShowOptions = !mForceShowOptions; }
+
 private:
 	struct RegisteredMainScript{
 		std::string ModName;
 		std::filesystem::path MainPath;
 		bool Enabled;
+		bool ScriptEnabled;
 		std::string LastResult;
 		SpelunkyScript* Script{ nullptr };
 
 		void TestScriptResult(std::string_view expected = "OK");
 	};
 	std::vector<RegisteredMainScript> mMods;
+	bool mForceShowOptions{ false };
 };
