@@ -1,5 +1,7 @@
 #include "unzip_file.h"
 
+#include "util/on_scope_exit.h"
+
 #include <string>
 
 #include <zip.h>
@@ -18,6 +20,7 @@ ZipError UnzipFile(const std::filesystem::path& source_file, const std::filesyst
 
 	std::int32_t error;
 	if (zip* archive = zip_open(source_file_string.c_str(), 0, &error)) {
+		OnScopeExit close_archive([archive]() { zip_close(archive); });
 		for (zip_int64_t i = 0; i < zip_get_num_entries(archive, 0); i++) {
 			struct zip_stat entry_stat {};
 			if (zip_stat_index(archive, i, 0, &entry_stat) == 0) {
