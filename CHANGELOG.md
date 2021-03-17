@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0-beta] - 2021-03-11
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
+
+### Added
+- Script support based on Overlunky
+
+### Changed
+- Moved mod .db into the global Packs/.db folder
+
+### Fixed
+- Correctly handle deleted mods
+- Correctly regenerate stickers, journal and characters when modifying a plain character sheet
+- Avoid converting texture files that are not read by the game
+
 ## [0.6.2] - 2021-03-11
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
