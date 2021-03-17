@@ -8,7 +8,7 @@
 
 class ModManager {
 public:
-	ModManager(std::string_view mods_root, class VirtualFilesystem& vfs);
+	ModManager(std::string_view mods_root, const class PlaylunkySettings& settings, class VirtualFilesystem& vfs);
 	~ModManager() = default;
 
 	ModManager() = delete;
@@ -26,4 +26,5 @@ public:
 private:
 	std::vector<std::string> mMods;
 	ScriptManager mScriptManager;
+	bool mDeveloperMode;
 };

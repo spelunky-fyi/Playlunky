@@ -5,5 +5,6 @@
 
 #include <type_traits>
 
-void Attach();
-void Detach();
+class PlaylunkySettings;
+void Attach(const PlaylunkySettings& settings);
+void Detach(const PlaylunkySettings& settings);

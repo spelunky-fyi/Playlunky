@@ -6,9 +6,11 @@
 #include "detour/detour.h"
 #include "detour/file_io.h"
 #include "detour/fmod_crap.h"
+#include "playlunky_settings.h"
 
 struct Playlunky::PlaylunkyImpl {
 	HMODULE GameModule;
+	PlaylunkySettings Settings;
 	std::unique_ptr<VirtualFilesystem> Vfs;
 	std::unique_ptr<ModManager> Manager;
 };
@@ -50,7 +52,7 @@ void Playlunky::Init() {
 	LogInfo("Playlunky Version: " PLAYLUNKY_VERSION);
 
 	mImpl->Vfs = std::make_unique<VirtualFilesystem>();
-	mImpl->Manager = std::make_unique<ModManager>("Mods/Packs", *mImpl->Vfs);
+	mImpl->Manager = std::make_unique<ModManager>("Mods/Packs", mImpl->Settings, *mImpl->Vfs);
 
 	SetFileIOVfs(mImpl->Vfs.get());
 	SetFmodVfs(mImpl->Vfs.get());
@@ -62,12 +64,17 @@ void Playlunky::PostGameInit() {
 	mImpl->Manager->PostGameInit();
 }
 
+const PlaylunkySettings& Playlunky::GetSettings() const {
+	return mImpl->Settings;
+}
+
+
 Playlunky::Playlunky(HMODULE game_module)
-	: mImpl{ new PlaylunkyImpl{ game_module } }
+	: mImpl{ new PlaylunkyImpl{.GameModule{ game_module }, .Settings{ "playlunky.ini" } } }
 {
-	Attach();
+	Attach(mImpl->Settings);
 }
 
 Playlunky::~Playlunky() {
-	Detach();
+	Detach(mImpl->Settings);
 }

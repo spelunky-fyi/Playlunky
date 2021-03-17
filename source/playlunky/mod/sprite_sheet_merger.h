@@ -10,7 +10,7 @@ class VirtualFilesystem;
 
 class SpriteSheetMerger {
 public:
-	SpriteSheetMerger();
+	SpriteSheetMerger(const class PlaylunkySettings& settings);
 	SpriteSheetMerger(const SpriteSheetMerger&) = delete;
 	SpriteSheetMerger(SpriteSheetMerger&&) = delete;
 	SpriteSheetMerger& operator=(const SpriteSheetMerger&) = delete;
@@ -30,11 +30,13 @@ private:
 	static TargetSheet MakeItemsSheet();
 	static TargetSheet MakeJournalItemsSheet();
 	static TargetSheet MakeJournalMonstersSheet();
-	static TargetSheet MakeJournalPeopleSheet();
-	static TargetSheet MakeJournalStickerSheet();
+	static TargetSheet MakeJournalPeopleSheet(bool random_character_select_enabled);
+	static TargetSheet MakeJournalStickerSheet(bool random_character_select_enabled);
 	static TargetSheet MakeMountsTargetSheet();
 	static TargetSheet MakePetsTargetSheet();
-	static TargetSheet MakeCharacterTargetSheet(std::string_view color);
+	static TargetSheet MakeCharacterTargetSheet(std::string_view color, bool random_character_select_enabled);
+
+	bool mRandomCharacterSelectEnabled;
 
 	struct ImageSize {
 		std::uint32_t Width;

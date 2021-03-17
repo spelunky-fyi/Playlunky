@@ -53,7 +53,7 @@ struct fmt::formatter<ByteStr> {
 	}
 };
 
-std::vector<DetourEntry> CollectDetourEntries() {
+std::vector<DetourEntry> CollectDetourEntries(const PlaylunkySettings& settings) {
 	auto append = [](std::vector<DetourEntry>& dst, std::vector<DetourEntry> src) {
 		std::move(src.begin(), src.end(), std::back_inserter(dst));
 	};
@@ -61,7 +61,7 @@ std::vector<DetourEntry> CollectDetourEntries() {
 	std::vector<DetourEntry> detour_entries;
 	append(detour_entries, GetLogDetours());
 	append(detour_entries, GetFileIODetours());
-	append(detour_entries, GetFmodDetours());
+	append(detour_entries, GetFmodDetours(settings));
 	append(detour_entries, GetImguiDetours());
 	append(detour_entries, GetMainDetours());
 
@@ -72,10 +72,10 @@ std::vector<DetourEntry> CollectDetourEntries() {
 	return detour_entries;
 }
 
-void Attach() {
+void Attach(const PlaylunkySettings& settings) {
 	fmt::print(DLL_NAME "-" PLAYLUNKY_VERSION ": Attaching...\n");
 
-	std::vector<DetourEntry> detour_entries = CollectDetourEntries();
+	std::vector<DetourEntry> detour_entries = CollectDetourEntries(settings);
 
 	DetourRestoreAfterWith();
 
@@ -118,10 +118,10 @@ void Attach() {
 	std::fflush(stdout);
 }
 
-void Detach() {
+void Detach(const PlaylunkySettings& settings) {
 	fmt::print(DLL_NAME ": Detaching...\n");
 
-	std::vector<DetourEntry> detour_entries = CollectDetourEntries();
+	std::vector<DetourEntry> detour_entries = CollectDetourEntries(settings);
 
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());

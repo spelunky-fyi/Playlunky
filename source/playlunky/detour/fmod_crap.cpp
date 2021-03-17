@@ -7,15 +7,10 @@
 #include "mod/cache_audio_file.h"
 #include "mod/virtual_filesystem.h"
 #include "util/on_scope_exit.h"
+#include "playlunky_settings.h"
 
 #include <cassert>
 #include <cstdint>
-
-#pragma warning(push)
-#pragma warning(disable : 4996)
-#pragma warning(disable : 4244)
-#include <INIReader.h>
-#pragma warning(pop)
 
 static VirtualFilesystem* s_FmodVfs{ nullptr };
 
@@ -788,10 +783,9 @@ inline FMOD::FMOD_RESULT ReleaseSound(FMOD::Sound* sound) {
 	return DetourFmodSystemReleaseSound::Trampoline(sound);
 }
 
-std::vector<DetourEntry> GetFmodDetours() {
-	INIReader playlunky_ini("playlunky.ini");
-	const bool enable_loose_audio_files = playlunky_ini.GetBoolean("settings", "enable_loose_audio_files", true);
-	const bool cache_decoded_audio_files = playlunky_ini.GetBoolean("settings", "cache_decoded_audio_files", true);
+std::vector<DetourEntry> GetFmodDetours(const PlaylunkySettings& settings) {
+	static const bool enable_loose_audio_files = settings.GetBool("settings", "enable_loose_audio_files", true);
+	static const bool cache_decoded_audio_files = settings.GetBool("settings", "cache_decoded_audio_files", true);
 	if (enable_loose_audio_files) {
 		DetourFmodSystemLoadBankMemory::s_CacheDecodedFiles = cache_decoded_audio_files;
 		return {

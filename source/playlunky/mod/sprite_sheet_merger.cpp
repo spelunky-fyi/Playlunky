@@ -2,6 +2,7 @@
 
 #include "png_dds_conversion.h"
 #include "virtual_filesystem.h"
+#include "playlunky_settings.h"
 #include "util/algorithms.h"
 #include "util/image.h"
 #include "util/format.h"
@@ -13,47 +14,40 @@
 #pragma warning(disable : 4996)
 #pragma warning(disable : 4244)
 #include <opencv2/imgproc.hpp>
-#include <INIReader.h>
 #pragma warning(pop)
 
-bool RandomCharacterSelectEnabled() {
-	static const bool random_char_select = []() {
-		return INIReader("playlunky.ini").GetBoolean("settings", "random_character_select", false);
-	}();
-	return random_char_select;
-}
-
-SpriteSheetMerger::SpriteSheetMerger()
-	: m_TargetSheets{
+SpriteSheetMerger::SpriteSheetMerger(const PlaylunkySettings& settings)
+	: mRandomCharacterSelectEnabled{ settings.GetBool("settings", "random_character_select", false) }
+	, m_TargetSheets{
 		MakeItemsSheet(),
 		MakeJournalItemsSheet(),
 		MakeJournalMonstersSheet(),
-		MakeJournalPeopleSheet(),
-		MakeJournalStickerSheet(),
+		MakeJournalPeopleSheet(mRandomCharacterSelectEnabled),
+		MakeJournalStickerSheet(mRandomCharacterSelectEnabled),
 		MakeMountsTargetSheet(),
 		MakePetsTargetSheet(),
-		MakeCharacterTargetSheet("black"),
-		MakeCharacterTargetSheet("blue"),
-		MakeCharacterTargetSheet("cerulean"),
-		MakeCharacterTargetSheet("cinnabar"),
-		MakeCharacterTargetSheet("cyan"),
-		MakeCharacterTargetSheet("eggchild"),
-		MakeCharacterTargetSheet("gold"),
-		MakeCharacterTargetSheet("gray"),
-		MakeCharacterTargetSheet("green"),
-		MakeCharacterTargetSheet("hired"),
-		MakeCharacterTargetSheet("iris"),
-		MakeCharacterTargetSheet("khaki"),
-		MakeCharacterTargetSheet("lemon"),
-		MakeCharacterTargetSheet("lime"),
-		MakeCharacterTargetSheet("magenta"),
-		MakeCharacterTargetSheet("olive"),
-		MakeCharacterTargetSheet("orange"),
-		MakeCharacterTargetSheet("pink"),
-		MakeCharacterTargetSheet("red"),
-		MakeCharacterTargetSheet("violet"),
-		MakeCharacterTargetSheet("white"),
-		MakeCharacterTargetSheet("yellow"),
+		MakeCharacterTargetSheet("black", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("blue", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("cerulean", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("cinnabar", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("cyan", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("eggchild", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("gold", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("gray", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("green", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("hired", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("iris", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("khaki", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("lemon", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("lime", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("magenta", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("olive", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("orange", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("pink", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("red", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("violet", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("white", mRandomCharacterSelectEnabled),
+		MakeCharacterTargetSheet("yellow", mRandomCharacterSelectEnabled),
 	}
 {}
 
@@ -289,7 +283,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalMonstersSheet() {
 		.SourceSheets{ std::move(source_sheets) }
 	};
 }
-SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet() {
+SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet(bool random_character_select_enabled) {
 	std::vector<SourceSheet> source_sheets;
 
 	{
@@ -370,10 +364,10 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet() {
 		.Path{ "Data/Textures/journal_entry_people.png" },
 		.Size{ .Width{ 1600 }, .Height{ 800 } },
 		.SourceSheets{ std::move(source_sheets) },
-		.RandomSelect{ RandomCharacterSelectEnabled() }
+		.RandomSelect{ random_character_select_enabled }
 	};
 }
-SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalStickerSheet() {
+SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalStickerSheet(bool random_character_select_enabled) {
 	std::vector<SourceSheet> source_sheets;
 
 	{
@@ -413,7 +407,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalStickerSheet() {
 		.Path{ "Data/Textures/journal_stickers.png" },
 		.Size{ .Width{ 800 }, .Height{ 800 } },
 		.SourceSheets{ std::move(source_sheets) },
-		.RandomSelect{ RandomCharacterSelectEnabled() }
+		.RandomSelect{ random_character_select_enabled }
 	};
 }
 SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeMountsTargetSheet() {
@@ -473,7 +467,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakePetsTargetSheet() {
 		.SourceSheets{ std::move(source_sheets) }
 	};
 }
-SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeCharacterTargetSheet(std::string_view color) {
+SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeCharacterTargetSheet(std::string_view color, bool random_character_select_enabled) {
 	const bool is_npc = color == "hired" || color == "eggchild";
 	const std::uint32_t image_height = is_npc ? 2080 : 2160;
 	std::vector<SourceSheet> source_sheets{
@@ -502,6 +496,6 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeCharacterTargetSheet(std::
 		.Path{ fmt::format("Data/Textures/char_{}.png", color) },
 		.Size{ .Width{ 2048 }, .Height{ 2048 } },
 		.SourceSheets{ std::move(source_sheets) },
-		.RandomSelect{ RandomCharacterSelectEnabled() }
+		.RandomSelect{ random_character_select_enabled }
 	};
 }

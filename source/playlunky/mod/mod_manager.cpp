@@ -11,6 +11,7 @@
 #include "string_merge.h"
 #include "unzip_mod.h"
 #include "virtual_filesystem.h"
+#include "playlunky_settings.h"
 
 #include "log.h"
 #include "util/algorithms.h"
@@ -28,26 +29,20 @@
 #include <unordered_map>
 #include <map>
 
-#pragma warning(push)
-#pragma warning(disable : 4996)
-#pragma warning(disable : 4244)
-#include <INIReader.h>
-#pragma warning(pop)
-
 static constexpr ctll::fixed_string s_CharacterRule{ ".+char_(.*)\\.png" };
 static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
-ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
+ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& settings, VirtualFilesystem& vfs)
+	: mDeveloperMode{ settings.GetBool("settings", "enable_developer_mode", false) } {
 	namespace fs = std::filesystem;
 
 	LogInfo("Initializing Mod Manger...");
 
 	LogInfo("Scanning for mods...");
 
-	INIReader playlunky_ini("playlunky.ini");
-	const bool enable_loose_audio_files = playlunky_ini.GetBoolean("settings", "enable_loose_audio_files", true);
-	const bool cache_decoded_audio_files = enable_loose_audio_files && playlunky_ini.GetBoolean("settings", "cache_decoded_audio_files", true);
+	const bool enable_loose_audio_files = settings.GetBool("settings", "enable_loose_audio_files", true);
+	const bool cache_decoded_audio_files = enable_loose_audio_files && settings.GetBool("settings", "cache_decoded_audio_files", true);
 	bool load_order_updated{ false };
 
 	const fs::path mods_root_path{ mods_root };
@@ -209,7 +204,7 @@ ModManager::ModManager(std::string_view mods_root, VirtualFilesystem& vfs) {
 			return mod_name_to_prio;
 		}();
 
-		SpriteSheetMerger sprite_sheet_merger;
+		SpriteSheetMerger sprite_sheet_merger{ settings };
 		StringMerger string_merger;
 		bool has_outdated_shaders{ false };
 
@@ -419,12 +414,16 @@ void ModManager::PostGameInit() {
 
 bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t /*l_param*/) {
 	if (msg == WM_KEYUP) {
-		if (GetKeyState(VK_CONTROL)) {
-			if (w_param == VK_F4) {
+		if (w_param == VK_F4) {
+			if (GetKeyState(VK_CONTROL)) {
 				mScriptManager.ToggleForceShowOptions();
 			}
-			else if (w_param == VK_F5) {
-				mScriptManager.RefreshScripts();
+		}
+		else if (w_param == VK_F5) {
+			if (GetKeyState(VK_CONTROL)) {
+				if (mDeveloperMode) {
+					mScriptManager.RefreshScripts();
+				}
 			}
 		}
 	}

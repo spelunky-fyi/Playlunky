@@ -3,6 +3,8 @@
 #include <Windows.h>
 #include <memory>
 
+class PlaylunkySettings;
+
 class Playlunky {
 public:
 	static Playlunky& Get();
@@ -12,6 +14,8 @@ public:
 
 	void Init();
 	void PostGameInit();
+
+	const PlaylunkySettings& GetSettings() const;
 
 private:
 	Playlunky(HMODULE game_module);
