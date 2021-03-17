@@ -240,6 +240,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 						const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
 						if (is_entity_asset || is_character_asset) {
 							sprite_sheet_merger.RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);
+							return;
 						}
 
 						if (outdated || deleted) {
