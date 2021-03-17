@@ -19,6 +19,8 @@ public:
 	VirtualFilesystem& operator=(VirtualFilesystem&&) = delete;
 
 	void MountFolder(std::string_view path, std::int64_t priority);
+
+	// Binding pathes makes sure that only one of the bound files can be loaded
 	void BindPathes(std::vector<std::string_view> pathes);
 
 	// Interface for runtime loading

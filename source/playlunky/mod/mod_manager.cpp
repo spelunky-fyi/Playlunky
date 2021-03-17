@@ -335,6 +335,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 		vfs.BindPathes({ "Data/Textures/char_magenta.png", "Data/Textures/Entities/char_magenta_full.png" });
 		vfs.BindPathes({ "Data/Textures/char_olive.png", "Data/Textures/Entities/char_olive_full.png" });
 
+		LogInfo("Merging entity sheets... This includes the automatic generationg of stickers...");
 		if (sprite_sheet_merger.NeedsRegeneration(db_folder)) {
 			if (sprite_sheet_merger.GenerateRequiredSheets(db_original_folder, db_folder, vfs)) {
 				LogInfo("Successfully generated merged sheets from mods...");
@@ -344,6 +345,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 			}
 		}
 
+		LogInfo("Merging shader mods...");
 		if (has_outdated_shaders || !fs::exists(db_folder / "shaders.hlsl")) {
 			if (MergeShaders(db_original_folder, db_folder, "shaders.hlsl", vfs)) {
 				LogInfo("Successfully generated a full shader file from installed shader mods...");
@@ -353,6 +355,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 			}
 		}
 
+		LogInfo("Merging string mods...");
 		if (string_merger.NeedsRegen() || !fs::exists(db_folder / "strings00.str")) {
 			if (string_merger.MergeStrings(db_original_folder, db_folder, "strings_hashes.hash", vfs)) {
 				LogInfo("Successfully generated a full string file from installed string mods...");
