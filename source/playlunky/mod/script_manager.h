@@ -27,7 +27,7 @@ private:
 		std::string LastResult;
 		SpelunkyScript* Script{ nullptr };
 
-		void TestScriptResult(std::string_view expected = "OK");
+		void TestScriptResult();
 	};
 	std::vector<RegisteredMainScript> mMods;
 	bool mForceShowOptions{ false };
