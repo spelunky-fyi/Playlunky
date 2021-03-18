@@ -43,33 +43,40 @@ struct DetourSwapChainPresent {
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, .2f), "Playlunky " PLAYLUNKY_VERSION);
 		ImGui::End();
 
-		if (!s_ErrorMessages.empty()) {
+		if (!s_Messages.empty()) {
 			ImGui::SetNextWindowSize({ -1, -1 });
 			ImGui::SetNextWindowPos({ 0, 0 });
 			ImGui::Begin(
-				"Error Overlay",
+				"Message Overlay",
 				nullptr,
 				ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
 				ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
 				ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
-			for (auto& [message, timer] : s_ErrorMessages) {
+			for (auto& [message, color, timer] : s_Messages) {
 				timer -= 1.0f / 60.0f; // Stupid hax
-				ImGui::TextColored(ImVec4(1.0f, 0.1f, 0.2f, 1.0f), message.c_str());
+				const float alpha = std::min(1.0f, timer);
+				const ImVec4 faded_color{ color.x, color.y, color.z, color.w * alpha };
+				ImGui::TextColored(faded_color, message.c_str());
 			}
-			std::erase_if(s_ErrorMessages, [](const ErrorMessage& msg) { return msg.Timer < 0.0f; });
+			std::erase_if(s_Messages, [](const ErrorMessage& msg) { return msg.Timer < 0.0f; });
 			ImGui::End();
 		}
 	}
-	
+
 	static void PrintError(std::string message, float time) {
-		s_ErrorMessages.push_back(ErrorMessage{ .Message{ std::move(message) }, .Timer{ time } });
+		s_Messages.push_back(ErrorMessage{ .Message{ std::move(message) }, .Color{ 1.0f, 0.1f, 0.2f, 1.0f }, .Timer{ time } });
+	}
+
+	static void PrintInfo(std::string message, float time) {
+		s_Messages.push_back(ErrorMessage{ .Message{ std::move(message) }, .Color{ 1.0f, 1.0f, 1.0f, 1.0f }, .Timer{ time } });
 	}
 
 	struct ErrorMessage {
 		std::string Message;
+		ImVec4 Color;
 		float Timer;
 	};
-	inline static std::vector<ErrorMessage> s_ErrorMessages;
+	inline static std::vector<ErrorMessage> s_Messages;
 };
 
 std::vector<DetourEntry> GetImguiDetours() {
@@ -80,6 +87,10 @@ std::vector<DetourEntry> GetImguiDetours() {
 
 void PrintError(std::string message, float time) {
 	DetourSwapChainPresent::PrintError(std::move(message), time);
+}
+
+void PrintInfo(std::string message, float time) {
+	DetourSwapChainPresent::PrintInfo(std::move(message), time);
 }
 
 void DrawImguiOverlay() {

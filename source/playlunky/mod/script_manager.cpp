@@ -34,6 +34,15 @@ void ScriptManager::Update() {
 		if (mod.Script) {
 			SpelunkyScript_Update(mod.Script);
 			mod.TestScriptResult();
+
+			const std::size_t num_messages = SpelunkyScript_GetNumMessages(mod.Script);
+			for (std::size_t i = 0; i < num_messages; i++) {
+				SpelunkyScriptMessage message = SpelunkyScript_GetMessage(mod.Script, i);
+				if (message.Message != nullptr && message.TimeMilliSecond > mod.MessageTime) {
+					LogInfoScreen("[{}]: {}", mod.ModName, message.Message);
+				}
+			}
+			mod.MessageTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		}
 	}
 }

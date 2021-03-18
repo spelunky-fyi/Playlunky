@@ -52,7 +52,10 @@ std::vector<DetourEntry> GetLogDetours() {
 void Log(std::string message, LogLevel log_level) {
 	LogLevel spelunky_log_level = static_cast<int>(log_level) > static_cast<int>(LogLevel::Fatal) ? LogLevel::Info : log_level;
 	DetourDoLog::Log(message.c_str(), spelunky_log_level);
-	if (static_cast<int>(log_level) > static_cast<int>(LogLevel::Fatal)) {
+	if (log_level == LogLevel::Error) {
 		PrintError(std::move(message));
+	}
+	else if (log_level == LogLevel::InfoScreen) {
+		PrintInfo(std::move(message));
 	}
 }
