@@ -410,7 +410,6 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 }
 
 void ModManager::PostGameInit() {
-	mScriptManager.CommitScripts();
 	InitSoundManager([](const char* file_path) {
 		DecodedAudioBuffer buffer = DecodeAudioFile(std::filesystem::path{ file_path });
 		return Spelunky_DecodedAudioBuffer{
@@ -421,6 +420,7 @@ void ModManager::PostGameInit() {
 			.data_size{ buffer.DataSize }
 		};
 	});
+	mScriptManager.CommitScripts();
 
 	RegisterOnInputFunc(FunctionPointer<std::remove_pointer_t<OnInputFunc>, struct ModManagerOnInput>(&ModManager::OnInput, this));
 	RegisterPreDrawFunc(FunctionPointer<std::remove_pointer_t<PreDrawFunc>, struct ModManagerUpdate>(&ModManager::Update, this));
