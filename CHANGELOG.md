@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Correctly regenerate stickers, journal and characters when modifying a plain character sheet
 - Avoid converting texture files that are not read by the game
 - Don't leak memory when unzipping a mod
+- A typo in a log message
 
 ## [0.6.2] - 2021-03-11
 
