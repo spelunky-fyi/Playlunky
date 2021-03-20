@@ -1,8 +1,6 @@
 #include "decode_audio_file.h"
 
 #include "log.h"
-#include "util/algorithms.h"
-#include "util/on_scope_exit.h"
 
 #include <cassert>
 

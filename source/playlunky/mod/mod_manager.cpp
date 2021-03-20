@@ -1,6 +1,7 @@
 #include "mod_manager.h"
 
 #include "cache_audio_file.h"
+#include "decode_audio_file.h"
 #include "extract_game_assets.h"
 #include "fix_mod_structure.h"
 #include "mod_database.h"
@@ -410,6 +411,16 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
 void ModManager::PostGameInit() {
 	mScriptManager.CommitScripts();
+	InitSoundManager([](const char* file_path) {
+		DecodedAudioBuffer buffer = DecodeAudioFile(std::filesystem::path{ file_path });
+		return Spelunky_DecodedAudioBuffer{
+			.num_channels{ buffer.NumChannels },
+			.frequency{ buffer.Frequency },
+			.format{ static_cast<Spelunky_SoundFormat>(buffer.Format) },
+			.data{ reinterpret_cast<const char*>(buffer.Data.release()) },
+			.data_size{ buffer.DataSize }
+		};
+	});
 
 	RegisterOnInputFunc(FunctionPointer<std::remove_pointer_t<OnInputFunc>, struct ModManagerOnInput>(&ModManager::OnInput, this));
 	RegisterPreDrawFunc(FunctionPointer<std::remove_pointer_t<PreDrawFunc>, struct ModManagerUpdate>(&ModManager::Update, this));

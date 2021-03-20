@@ -66,8 +66,9 @@ DecodedAudioBuffer LoadCachedAudioFile(const std::filesystem::path& file_path) {
 		input_file.read(reinterpret_cast<char*>(&buffer.Frequency), sizeof(buffer.Frequency));
 		input_file.read(reinterpret_cast<char*>(&buffer.Format), sizeof(buffer.Format));
 		input_file.read(reinterpret_cast<char*>(&buffer.DataSize), sizeof(buffer.DataSize));
-		buffer.Data = std::make_unique<std::byte[]>(buffer.DataSize);
-		input_file.read(reinterpret_cast<char*>(buffer.Data.get()), buffer.DataSize);
+		auto data = std::make_unique<std::byte[]>(buffer.DataSize);
+		input_file.read(reinterpret_cast<char*>(data.get()), buffer.DataSize);
+		buffer.Data = std::move(data);
 	}
 
 	return buffer;

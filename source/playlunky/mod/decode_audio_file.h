@@ -18,7 +18,7 @@ struct DecodedAudioBuffer {
 	std::int32_t NumChannels;
 	std::int32_t Frequency;
 	SoundFormat Format;
-	std::unique_ptr<std::byte[]> Data;
+	std::unique_ptr<const std::byte[]> Data;
 	std::size_t DataSize;
 };
 
