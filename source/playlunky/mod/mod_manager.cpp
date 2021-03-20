@@ -38,7 +38,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 	: mDeveloperMode{ settings.GetBool("settings", "enable_developer_mode", false) } {
 	namespace fs = std::filesystem;
 
-	LogInfo("Initializing Mod Manger...");
+	LogInfo("Initializing Mod Manager...");
 
 	LogInfo("Scanning for mods...");
 
