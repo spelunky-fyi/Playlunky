@@ -68,6 +68,7 @@ set_target_properties(inih PROPERTIES
 
 # --------------------------------------------------
 # nyquist
+option(BUILD_EXAMPLE "Build example application" OFF)
 add_subdirectory_with_folder("3rd_party" libnyquist)
 
 # --------------------------------------------------
