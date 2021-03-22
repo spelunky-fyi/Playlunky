@@ -8,9 +8,11 @@
 #include "util/call_once.h"
 
 #include <d3d11.h>
+#include <imgui.h>
+#include <ShlObj.h>
+#include <Shlwapi.h>
 #include <Windows.h>
 
-#include <imgui.h>
 #include <spel2.h>
 
 struct DetourSwapChainPresent {
@@ -29,6 +31,41 @@ struct DetourSwapChainPresent {
 
 	static void ImguiInit(ImGuiContext* imgui_context) {
 		ImGui::SetCurrentContext(imgui_context);
+
+		const bool loaded_font = []() {
+			ImGuiIO& io = ImGui::GetIO();
+			io.FontAllowUserScaling = true;
+
+			bool loaded_font{ false };
+
+			PWSTR fontdir;
+			if (SHGetKnownFolderPath(FOLDERID_Fonts, 0, NULL, &fontdir) == S_OK)
+			{
+				char fontdir_conv[256]{};
+				int length = WideCharToMultiByte(CP_UTF8, 0, fontdir, -1, 0, 0, NULL, NULL);
+				assert(length < sizeof(fontdir_conv));
+				WideCharToMultiByte(CP_UTF8, 0, fontdir, -1, fontdir_conv, length, NULL, NULL);
+
+				char fontpath[256]{};
+				fmt::format_to(fontpath, "{}\\segoeuib.ttf", fontdir_conv);
+
+				if (GetFileAttributesA(fontpath) != INVALID_FILE_ATTRIBUTES)
+				{
+					loaded_font = io.Fonts->AddFontFromFileTTF(fontpath, 18.0f) || loaded_font;
+					loaded_font = io.Fonts->AddFontFromFileTTF(fontpath, 36.0f) || loaded_font;
+					loaded_font = io.Fonts->AddFontFromFileTTF(fontpath, 72.0f) || loaded_font;
+				}
+			}
+
+			CoTaskMemFree(fontdir);
+			return loaded_font;
+		}();
+
+		if (!loaded_font)
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			io.Fonts->AddFontDefault();
+		}
 	}
 
 	static void ImguiDraw() {
