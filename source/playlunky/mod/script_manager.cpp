@@ -50,6 +50,10 @@ void ScriptManager::Draw() {
 	ImGuiIO& io = ImGui::GetIO();
 
 	if (mForceShowOptions || SpelunkyState_GetScreen() == SpelunkyScreen::Menu) {
+		if (!GetShowCursor()) {
+			SetShowCursor(true);
+		}
+
 		ImGui::SetNextWindowSize({ io.DisplaySize.x / 4, io.DisplaySize.y });
 		ImGui::SetNextWindowPos({ io.DisplaySize.x * 3 / 4, 0 });
 		ImGui::Begin(
@@ -70,6 +74,9 @@ void ScriptManager::Draw() {
 		}
 
 		ImGui::End();
+	}
+	else if (GetShowCursor()) {
+		SetShowCursor(false);
 	}
 
 	ImGui::SetNextWindowSize(io.DisplaySize);
