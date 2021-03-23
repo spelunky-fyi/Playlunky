@@ -124,6 +124,9 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
 }
 
 std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::filesystem::path& path) const {
+	if (mMounts.empty())
+		return std::nullopt;
+
 	if (const BoundPathes* bound_pathes = GetBoundPathes(path.string())) {
 		std::int64_t current_file_prio{ std::numeric_limits<std::int64_t>::max() };
 		std::optional<std::filesystem::path> file_path{ std::nullopt };
