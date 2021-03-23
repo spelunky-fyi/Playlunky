@@ -2,6 +2,9 @@
 
 #include "util/span_util.h"
 
+#include <array>
+#include <fstream>
+
 #pragma warning(push)
 #pragma warning(disable : 5054)
 #include <opencv2/imgproc.hpp>
@@ -21,12 +24,37 @@ Image::Image(Image&&) noexcept = default;
 Image& Image::operator=(Image&&) noexcept = default;
 Image::~Image() = default;
 
+bool Image::LoadInfoFromPng(const std::filesystem::path& file)
+{
+	if (file.extension() != ".png") {
+		return false;
+	}
+
+	namespace fs = std::filesystem;
+	if (fs::exists(file) && fs::is_regular_file(file)) {
+		mImpl = std::make_unique<ImageImpl>();
+
+		std::ifstream png_file(file, std::ios::binary);
+
+		std::array<unsigned char, 128> first_chunk;
+		png_file.read((char*)first_chunk.data(), first_chunk.size());
+
+		lodepng::State state;
+		return lodepng_inspect(&mImpl->Width, &mImpl->Height, &state, first_chunk.data(), first_chunk.size()) == 0;
+	}
+
+	return false;
+}
+
 bool Image::LoadFromPng(const std::filesystem::path& file) {
 	if (file.extension() != ".png") {
 		return false;
 	}
 
-	mImpl = std::make_unique<ImageImpl>();
+	if (mImpl == nullptr)
+	{
+		mImpl = std::make_unique<ImageImpl>();
+	}
 
 	{
 		const std::uint32_t error = lodepng::decode(mImpl->Buffer, mImpl->Width, mImpl->Height, file.string(), LCT_RGBA, 8);

@@ -38,6 +38,7 @@ public:
 	Image& operator=(Image&&) noexcept;
 	~Image();
 
+	bool LoadInfoFromPng(const std::filesystem::path& file);
 	bool LoadFromPng(const std::filesystem::path& file);
 
 	Image GetSubImage(ImageSubRegion region);
