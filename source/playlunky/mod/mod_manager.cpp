@@ -337,7 +337,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 		vfs.BindPathes({ "Data/Textures/char_magenta.png", "Data/Textures/Entities/char_magenta_full.png" });
 		vfs.BindPathes({ "Data/Textures/char_olive.png", "Data/Textures/Entities/char_olive_full.png" });
 
-		LogInfo("Merging entity sheets... This includes the automatic generationg of stickers...");
+		LogInfo("Merging entity sheets... This includes the automatic generating of stickers...");
 		if (sprite_sheet_merger.NeedsRegeneration(db_folder)) {
 			if (sprite_sheet_merger.GenerateRequiredSheets(db_original_folder, db_folder, vfs)) {
 				LogInfo("Successfully generated merged sheets from mods...");
