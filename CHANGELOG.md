@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Script support based on Overlunky
+- Support for new character sheets
 
 ### Changed
 - Moved mod .db into the global Packs/.db folder
@@ -22,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Avoid converting texture files that are not read by the game
 - Don't leak memory when unzipping a mod
 - A typo in a log message
+- A crash when no mods were enabled
+- Another typo in a log message
 
 ## [0.6.2] - 2021-03-11
 
