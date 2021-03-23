@@ -35,6 +35,7 @@ private:
 	static TargetSheet MakeMountsTargetSheet();
 	static TargetSheet MakePetsTargetSheet();
 	static TargetSheet MakeCharacterTargetSheet(std::string_view color, bool random_character_select_enabled);
+	static TargetSheet MakeMenuLeaderTargetSheet(bool random_character_select_enabled);
 
 	bool mRandomCharacterSelectEnabled;
 

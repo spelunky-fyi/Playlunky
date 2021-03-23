@@ -48,6 +48,7 @@ SpriteSheetMerger::SpriteSheetMerger(const PlaylunkySettings& settings)
 		MakeCharacterTargetSheet("violet", mRandomCharacterSelectEnabled),
 		MakeCharacterTargetSheet("white", mRandomCharacterSelectEnabled),
 		MakeCharacterTargetSheet("yellow", mRandomCharacterSelectEnabled),
+		MakeMenuLeaderTargetSheet(mRandomCharacterSelectEnabled)
 	}
 {}
 
@@ -91,7 +92,7 @@ bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::f
 		}
 	}
 
-	return false;
+	return true;
 }
 
 bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, VirtualFilesystem& vfs) {
@@ -118,10 +119,24 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 				}();
 				if (source_file_path) {
 					Image source_image;
-					source_image.LoadFromPng(source_file_path.value());
+					source_image.LoadInfoFromPng(source_file_path.value());
+
+					// Skip images with wrong aspect ratio
+					const std::uint64_t aspect_ratio_offset = 
+						std::abs(
+							static_cast<int64_t>(source_sheet.Size.Width) * source_image.GetHeight()
+							- static_cast<int64_t>(source_image.GetWidth()) * source_sheet.Size.Height
+						);
+					// We accept images that are 10 pixels off in width
+					static constexpr std::uint64_t s_AcceptedPixelError{ 10 };
+					if (aspect_ratio_offset > source_sheet.Size.Height * s_AcceptedPixelError) {
+						continue;
+					}
 
 					const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / source_sheet.Size.Width;
 					const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / source_sheet.Size.Height;
+
+					source_image.LoadFromPng(source_file_path.value());
 
 					for (const TileMapping& tile_mapping : source_sheet.TileMap) {
 						const ImageSubRegion source_region = ImageSubRegion{
@@ -301,6 +316,8 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet(bool ra
 						}
 					}
 				});
+			source_sheets.push_back(source_sheets.back());
+			source_sheets.back().Size.Height = 2224;
 			source_sheets.push_back(SourceSheet{
 					.Path{ fmt::format("Data/Textures/char_{}.png", color) },
 					.Size{ .Width{ 2048 }, .Height{ 2048 } },
@@ -385,6 +402,8 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalStickerSheet(bool r
 						}
 					}
 				});
+			source_sheets.push_back(source_sheets.back());
+			source_sheets.back().Size.Height = 2224;
 			source_sheets.push_back(SourceSheet{
 					.Path{ fmt::format("Data/Textures/char_{}.png", color) },
 					.Size{ .Width{ 2048 }, .Height{ 2048 } },
@@ -469,11 +488,12 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakePetsTargetSheet() {
 }
 SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeCharacterTargetSheet(std::string_view color, bool random_character_select_enabled) {
 	const bool is_npc = color == "hired" || color == "eggchild";
-	const std::uint32_t image_height = is_npc ? 2080 : 2160;
+	const std::uint32_t old_image_height = is_npc ? 2080 : 2160;
+	const std::uint32_t image_height = is_npc ? 2080 : 2224;
 	std::vector<SourceSheet> source_sheets{
 		SourceSheet{
 			.Path{ fmt::format("Data/Textures/Entities/char_{}_full.png", color) },
-			.Size{ .Width{ 2048 }, .Height{ image_height } },
+			.Size{ .Width{ 2048 }, .Height{ old_image_height } },
 			.TileMap = std::vector<TileMapping>{
 				TileMapping{
 					.SourceTile{ 0, 0, 2048, 1920 },
@@ -492,9 +512,44 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeCharacterTargetSheet(std::
 			}
 		}
 	};
+	source_sheets.push_back(source_sheets.front());
+	source_sheets.back().Size.Height = 2224;
 	return TargetSheet{
 		.Path{ fmt::format("Data/Textures/char_{}.png", color) },
 		.Size{ .Width{ 2048 }, .Height{ 2048 } },
+		.SourceSheets{ std::move(source_sheets) },
+		.RandomSelect{ random_character_select_enabled }
+	};
+}
+SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeMenuLeaderTargetSheet(bool random_character_select_enabled) {
+	std::vector<SourceSheet> source_sheets;
+
+	{
+		std::uint32_t char_x{ 0 };
+		std::uint32_t char_y{ 0 };
+		for (std::string_view color : { "yellow", "magenta", "cyan", "black", "cinnabar", "green", "olive", "white", "cerulean", "blue",
+			"lime", "lemon", "iris", "gold", "red", "pink", "violet", "gray", "khaki", "orange" }) {
+			source_sheets.push_back(SourceSheet{
+					.Path{ fmt::format("Data/Textures/Entities/char_{}_full.png", color) },
+					.Size{ .Width{ 2048 }, .Height{ 2224 } },
+					.TileMap = std::vector<TileMapping>{
+						TileMapping{
+							.SourceTile{ 0, 2160, 128, 2224 },
+							.TargetTile{ char_x * 128, 448 + char_y * 128, char_x * 128 + 128, 448 + char_y * 128 + 64 },
+						}
+					}
+				});
+			char_x++;
+			if (char_x >= 10) {
+				char_x = 0;
+				char_y++;
+			}
+		}
+	}
+
+	return TargetSheet{
+		.Path{ "Data/Textures/menu_leader.png" },
+		.Size{ .Width{ 1280 }, .Height{ 1280 } },
 		.SourceSheets{ std::move(source_sheets) },
 		.RandomSelect{ random_character_select_enabled }
 	};
