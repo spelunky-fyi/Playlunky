@@ -15,9 +15,9 @@ int main(int argc, char** argv) {
 	fmt::print("Installing mod from files...\n");
 
 	{
-		if (fs::current_path().stem() != "Spelunky 2") {
+		if (!fs::exists("Spel2.exe")) {
 			const fs::path exe_path{ fs::path{ argv[0] }.parent_path() };
-			if (exe_path.stem() != "Spelunky 2") {
+			if (!fs::exists(exe_path.stem() / "Spel2.exe")) {
 				fmt::print("Not running from game folder, please move this executable to the game folder...\n");
 				std::system("pause");
 				return 1;
