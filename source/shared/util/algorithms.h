@@ -116,11 +116,15 @@ namespace algo {
 		return static_cast<std::size_t>(std::count_if(begin_it, end_it, std::forward<FunT>(fun)));
 	}
 
+	bool is_same_path(const std::filesystem::path& lhs, const std::filesystem::path& rhs);
 	bool is_sub_path(const std::filesystem::path& path, const std::filesystem::path& base);
 	bool is_end_of_path(const std::filesystem::path& path, const std::filesystem::path& base);
 
 	std::string trim(std::string str);
 	std::string trim(std::string str, char to_strip);
+
+	std::string to_lower(std::string str);
+	std::string to_upper(std::string str);
 
 	bool case_insensitive_equal(std::string_view lhs, std::string_view rhs);
 	template<std::size_t N>

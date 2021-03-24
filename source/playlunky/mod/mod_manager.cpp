@@ -59,14 +59,14 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 			mod_db.UpdateDatabase();
 			mod_db.ForEachFile([&mods_root_path, &has_loose_files, &load_order_updated](const fs::path& rel_file_path, bool outdated, bool deleted, [[maybe_unused]] std::optional<bool> new_enabled_state) {
 				if (outdated) {
-					if (rel_file_path.extension() == ".zip") {
+					if (algo::is_same_path(rel_file_path.extension(), ".zip")) {
 						const fs::path zip_path = mods_root_path / rel_file_path;
 						const auto message = fmt::format("Found archive '{}' in mods packs folder. Do you want to unzip it in order for it to be loadable as a mod?", zip_path.filename().string());
 						if (MessageBox(NULL, message.c_str(), "Zipped Mod Found", MB_YESNO) == IDYES) {
 							UnzipMod(zip_path);
 						}
 					}
-					else if (rel_file_path.filename() == "load_order.txt" && (outdated || deleted)) {
+					else if (algo::is_same_path(rel_file_path.filename(), "load_order.txt") && (outdated || deleted)) {
 						load_order_updated = true;
 					}
 					else {
@@ -237,8 +237,8 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
 					const auto full_asset_path = mod_folder / rel_asset_path;
 					const auto full_asset_path_string = full_asset_path.string();
-					if (rel_asset_path.extension() == ".png") {
-						const bool is_entity_asset = rel_asset_path.parent_path().filename() == "Entities";
+					if (algo::is_same_path(rel_asset_path.extension(), ".png")) {
+						const bool is_entity_asset = algo::is_same_path(rel_asset_path.parent_path().filename(), "Entities");
 						const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
 						if (is_entity_asset || is_character_asset) {
 							sprite_sheet_merger.RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);
@@ -262,7 +262,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 							}
 						}
 					}
-					else if (rel_asset_path.extension() == ".str") {
+					else if (algo::is_same_path(rel_asset_path.extension(), ".str")) {
 						if (outdated || deleted || new_enabled_state.has_value()) {
 							if (auto string_match = ctre::match<s_StringFileRule>(rel_asset_path_string)) {
 								const auto table = string_match.get<1>().to_view();
@@ -276,9 +276,9 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 									LogInfo("String mod {} is not a valid string mod...", full_asset_path_string);
 								}
 							}
-						} 
+						}
 					}
-					else if (rel_asset_path == "shaders_mod.hlsl") {
+					else if (algo::is_same_path(rel_asset_path, "shaders_mod.hlsl")) {
 						has_outdated_shaders = has_outdated_shaders || outdated || deleted || new_enabled_state.has_value();
 					}
 					else if (cache_decoded_audio_files && IsSupportedAudioFile(rel_asset_path)) {
@@ -294,7 +294,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 							}
 						}
 					}
-					else if (rel_asset_path.filename() == "main.lua") {
+					else if (algo::is_same_path(rel_asset_path.filename(), "main.lua")) {
 						if (!mScriptManager.RegisterModWithScript(mod_name, full_asset_path, enabled)) {
 							LogError("Mod {} appears to contain multiple main.lua files... {} will be ignored...", mod_name, full_asset_path_string);
 						}

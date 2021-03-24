@@ -3,6 +3,14 @@
 #include <cctype>
 
 namespace algo {
+	bool is_same_path(const std::filesystem::path& lhs, const std::filesystem::path& rhs)
+	{
+		auto lhs_str = lhs.string();
+		std::replace(lhs_str.begin(), lhs_str.end(), '\\', '/');
+		auto rhs_str = rhs.string();
+		std::replace(rhs_str.begin(), rhs_str.end(), '\\', '/');
+		return case_insensitive_equal(lhs_str, rhs_str);
+	}
 	bool is_sub_path(const std::filesystem::path& path, const std::filesystem::path& base) {
 		const auto first_mismatch = std::mismatch(path.begin(), path.end(), base.begin(), base.end());
 		return first_mismatch.second == base.end();
@@ -29,6 +37,19 @@ namespace algo {
 			return ch != to_strip;
 		}).base(), str.end());
 		return std::move(str);
+	}
+
+	std::string to_lower(std::string str) {
+		std::string lower_case{ std::move(str) };
+		std::transform(lower_case.begin(), lower_case.end(), lower_case.begin(),
+			[](char c) { return static_cast<char>(std::tolower(c)); });
+		return lower_case;
+	}
+	std::string to_upper(std::string str) {
+		std::string upper_case{ std::move(str) };
+		std::transform(upper_case.begin(), upper_case.end(), upper_case.begin(),
+			[](char c) { return static_cast<char>(std::toupper(c)); });
+		return upper_case;
 	}
 
 	bool case_insensitive_equal(std::string_view lhs, std::string_view rhs) {

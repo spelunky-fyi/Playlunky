@@ -1,6 +1,7 @@
 #include "cache_audio_file.h"
 
 #include "decode_audio_file.h"
+#include "util/algorithms.h"
 
 #include <cassert>
 #include <fstream>
@@ -15,7 +16,7 @@ inline auto GetCachedAudioFilePath(const std::filesystem::path& file_path, const
 
 bool IsSupportedAudioFile(const std::filesystem::path& file_path) {
 	static nqr::NyquistIO s_Loader;
-	return s_Loader.IsFileSupported(file_path.extension().string());
+	return s_Loader.IsFileSupported(algo::to_lower(file_path.extension().string()));
 }
 bool HasCachedAudioFile(const std::filesystem::path& file_path, const std::filesystem::path& output_path) {
 	namespace fs = std::filesystem;
