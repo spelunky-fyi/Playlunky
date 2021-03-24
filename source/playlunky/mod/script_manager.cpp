@@ -47,6 +47,9 @@ void ScriptManager::Update() {
 	}
 }
 void ScriptManager::Draw() {
+	if (mMods.empty())
+		return;
+
 	ImGuiIO& io = ImGui::GetIO();
 
 	if (mForceShowOptions || SpelunkyState_GetScreen() == SpelunkyScreen::Menu) {
