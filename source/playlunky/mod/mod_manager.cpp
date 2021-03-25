@@ -294,7 +294,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 							}
 						}
 					}
-					else if (algo::is_same_path(rel_asset_path.filename(), "main.lua")) {
+					else if (enabled && algo::is_same_path(rel_asset_path.filename(), "main.lua")) {
 						if (!mScriptManager.RegisterModWithScript(mod_name, full_asset_path, enabled)) {
 							LogError("Mod {} appears to contain multiple main.lua files... {} will be ignored...", mod_name, full_asset_path_string);
 						}
