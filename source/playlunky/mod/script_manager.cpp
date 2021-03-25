@@ -52,6 +52,36 @@ void ScriptManager::Draw() {
 
 	ImGuiIO& io = ImGui::GetIO();
 
+	if (SpelunkyState_GetScreen() == SpelunkyScreen::Online)
+	{
+		ImGui::SetNextWindowSize({ -1, -1 });
+		ImGui::Begin(
+			"Online Warning Overlay",
+			nullptr,
+			ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+			ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
+			ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
+		{
+			const int num_colors = 64;
+			const float frequency = 10.0f / num_colors;
+			for (int i = 0; i < num_colors; ++i)
+			{
+				const float red = std::sin(frequency * i + 0) * 0.5f + 0.5f;
+				const float green = std::sin(frequency * i + 2) * 0.5f + 0.5f;
+				const float blue = std::sin(frequency * i + 4) * 0.5f + 0.5f;
+
+				ImGui::TextColored(ImVec4(red, green, blue, 1.0f), "Do not use script mods online! Your game will not work! ");
+				for (int j = 0; j < 6; j++)
+				{
+					ImGui::SameLine();
+					ImGui::TextColored(ImVec4(red, green, blue, 1.0f), "Do not use script mods online! Your game will not work! ");
+				}
+			}
+		}
+		ImGui::SetWindowPos({ ImGui::GetIO().DisplaySize.x / 2 - ImGui::GetWindowWidth() / 2, ImGui::GetIO().DisplaySize.y / 2 - ImGui::GetWindowHeight() / 2 }, ImGuiCond_Always);
+		ImGui::End();
+	}
+
 	if (mForceShowOptions || SpelunkyState_GetScreen() == SpelunkyScreen::Menu) {
 		if (!GetShowCursor()) {
 			SetShowCursor(true);
