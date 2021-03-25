@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for new character sheets
 
 ### Changed
+- Bumped the supported version of Spelunky
 - Moved mod .db into the global Packs/.db folder
 
 ### Fixed
@@ -25,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A typo in a log message
 - A crash when no mods were enabled
 - Another typo in a log message
+- Problem with the installer expecting to be run from a folder called "Spelunky 2"
+- Some issues with files that use weird case
 
 ## [0.6.2] - 2021-03-11
 
