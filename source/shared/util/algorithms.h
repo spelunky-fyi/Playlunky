@@ -88,7 +88,7 @@ namespace algo {
 	}
 	template<class ContainerT, class T, class U, class V>
 	requires range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>
-		bool contains(ContainerT&& container, U T::* member, V&& val) {
+	bool contains(ContainerT&& container, U T::* member, V&& val) {
 		return contains_if(std::forward<ContainerT>(container), [member, val = std::forward<V>(val)](auto& element) {
 			return element.*member == val;
 		});

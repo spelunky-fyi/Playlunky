@@ -52,7 +52,7 @@ void ScriptManager::Draw() {
 
 	ImGuiIO& io = ImGui::GetIO();
 
-	if (SpelunkyState_GetScreen() == SpelunkyScreen::Online)
+	if (SpelunkyState_GetScreen() == SpelunkyScreen::Online && algo::contains(mMods, &RegisteredMainScript::ScriptEnabled, true))
 	{
 		ImGui::SetNextWindowSize({ -1, -1 });
 		ImGui::Begin(
@@ -70,11 +70,11 @@ void ScriptManager::Draw() {
 				const float green = std::sin(frequency * i + 2) * 0.5f + 0.5f;
 				const float blue = std::sin(frequency * i + 4) * 0.5f + 0.5f;
 
-				ImGui::TextColored(ImVec4(red, green, blue, 1.0f), "Do not use script mods online! Your game will not work! ");
-				for (int j = 0; j < 6; j++)
+				ImGui::TextColored(ImVec4(red, green, blue, 1.0f), "Do not use script mods online! Your game will not work! Press Ctrl+F4 and disable your mods! ");
+				for (int j = 0; j < 4; j++)
 				{
 					ImGui::SameLine();
-					ImGui::TextColored(ImVec4(red, green, blue, 1.0f), "Do not use script mods online! Your game will not work! ");
+					ImGui::TextColored(ImVec4(red, green, blue, 1.0f), "Do not use script mods online! Your game will not work! Press Ctrl+F4 and disable your mods! ");
 				}
 			}
 		}
