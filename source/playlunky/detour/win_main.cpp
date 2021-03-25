@@ -12,7 +12,7 @@
 #include <Windows.h>
 #include <string_view>
 
-inline constexpr std::string_view s_SupportedSpelunkyVersion = "1.20.4a";
+inline constexpr std::string_view s_SupportedSpelunkyVersion = "1.20.4d";
 
 struct DetourWinMain {
 	inline static SigScan::Function<int(__stdcall*)(HINSTANCE, HINSTANCE, LPSTR, int)> Trampoline{
