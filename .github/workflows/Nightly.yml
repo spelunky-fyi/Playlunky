@@ -3,8 +3,6 @@ name: Github Actions Nightly
 on:
   schedule:
     - cron: '0 15 * * *' # run at 3 PM UTC every day
-  push:
-    branches: [main]
 
 jobs:
   release:
