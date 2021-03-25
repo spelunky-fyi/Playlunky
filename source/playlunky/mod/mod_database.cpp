@@ -9,8 +9,10 @@
 //		0xAFFED00F -- v0.4.0
 //		0xD00FAFFE -- v0.4.1
 //		0xABAD1DEA -- v0.4.2
-//		0xBADAB000 -- v0.5.6 (latest)
-static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xBADAB000 };
+//		0xBADAB000 -- v0.5.6
+//		0xABCDEF16 -- v0.7.0 (beta)
+//		0xABACAB00 -- v0.7.0 (latest)
+static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xABCDEF16 };
 
 ModDatabase::ModDatabase(std::filesystem::path database_folder, std::filesystem::path mod_folder, ModDatabaseFlags flags)
 	: mDatabaseFolder(std::move(database_folder))
