@@ -1,0 +1,63 @@
+name: Github Actions Nightly
+
+on:
+  schedule:
+    - cron: '0 15 * * *' # run at 3 PM UTC every day
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    name: Windows ${{ matrix.build_type }}
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: lukka/get-cmake@latest
+
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+
+      - name: Pull latest Overlunky
+        run: |
+          pushd submodules/overlunky
+          git pull origin main
+          popd
+
+      - name: Prepare
+        run: |
+          python -m pip install --upgrade pip
+          pip install conan
+
+      - name: Configure
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release
+
+      - name: Install
+        run: |
+          cd build
+          cmake --install . --config Release
+
+      - name: Zip Release
+        run: |
+          cd publish
+          tar -a -c -f ../playlunky_nightly.zip *
+
+      - name: Create release
+        uses: marvinpinto/action-automatic-releases@v1.1.0
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: "true"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "nightly"
+          prerelease: true
+          title: "Nightly Build"
+          files: ./playlunky_nightly.zip
