@@ -27,17 +27,19 @@ private:
 	struct TargetSheet;
 	bool NeedsRegen(const TargetSheet& target_sheet, const std::filesystem::path& destination_folder) const;
 
-	static TargetSheet MakeItemsSheet();
-	static TargetSheet MakeJournalItemsSheet();
-	static TargetSheet MakeJournalMonstersSheet();
-	static TargetSheet MakeJournalPeopleSheet(bool random_character_select_enabled);
-	static TargetSheet MakeJournalStickerSheet(bool random_character_select_enabled);
-	static TargetSheet MakeMountsTargetSheet();
-	static TargetSheet MakePetsTargetSheet();
-	static TargetSheet MakeCharacterTargetSheet(std::string_view color, bool random_character_select_enabled);
-	static TargetSheet MakeMenuLeaderTargetSheet(bool random_character_select_enabled);
+	TargetSheet MakeItemsSheet();
+	TargetSheet MakeJournalItemsSheet();
+	TargetSheet MakeJournalMonstersSheet();
+	TargetSheet MakeJournalPeopleSheet();
+	TargetSheet MakeJournalStickerSheet();
+	TargetSheet MakeMountsTargetSheet();
+	TargetSheet MakePetsTargetSheet();
+	TargetSheet MakeCharacterTargetSheet(std::string_view color);
+	TargetSheet MakeMenuLeaderTargetSheet();
 
 	bool mRandomCharacterSelectEnabled;
+	bool mGenerateCharacterJournalStickersEnabled;
+	bool mGenerateCharacterJournalEntriesEnabled;
 
 	struct ImageSize {
 		std::uint32_t Width;

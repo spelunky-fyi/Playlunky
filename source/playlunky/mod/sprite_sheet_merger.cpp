@@ -18,37 +18,39 @@
 
 SpriteSheetMerger::SpriteSheetMerger(const PlaylunkySettings& settings)
 	: mRandomCharacterSelectEnabled{ settings.GetBool("settings", "random_character_select", false) }
+	, mGenerateCharacterJournalStickersEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_stickers", false) }
+	, mGenerateCharacterJournalEntriesEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_entries", false) }
 	, m_TargetSheets{
 		MakeItemsSheet(),
 		MakeJournalItemsSheet(),
 		MakeJournalMonstersSheet(),
-		MakeJournalPeopleSheet(mRandomCharacterSelectEnabled),
-		MakeJournalStickerSheet(mRandomCharacterSelectEnabled),
+		MakeJournalPeopleSheet(),
+		MakeJournalStickerSheet(),
 		MakeMountsTargetSheet(),
 		MakePetsTargetSheet(),
-		MakeCharacterTargetSheet("black", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("blue", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("cerulean", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("cinnabar", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("cyan", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("eggchild", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("gold", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("gray", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("green", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("hired", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("iris", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("khaki", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("lemon", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("lime", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("magenta", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("olive", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("orange", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("pink", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("red", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("violet", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("white", mRandomCharacterSelectEnabled),
-		MakeCharacterTargetSheet("yellow", mRandomCharacterSelectEnabled),
-		MakeMenuLeaderTargetSheet(mRandomCharacterSelectEnabled)
+		MakeCharacterTargetSheet("black"),
+		MakeCharacterTargetSheet("blue"),
+		MakeCharacterTargetSheet("cerulean"),
+		MakeCharacterTargetSheet("cinnabar"),
+		MakeCharacterTargetSheet("cyan"),
+		MakeCharacterTargetSheet("eggchild"),
+		MakeCharacterTargetSheet("gold"),
+		MakeCharacterTargetSheet("gray"),
+		MakeCharacterTargetSheet("green"),
+		MakeCharacterTargetSheet("hired"),
+		MakeCharacterTargetSheet("iris"),
+		MakeCharacterTargetSheet("khaki"),
+		MakeCharacterTargetSheet("lemon"),
+		MakeCharacterTargetSheet("lime"),
+		MakeCharacterTargetSheet("magenta"),
+		MakeCharacterTargetSheet("olive"),
+		MakeCharacterTargetSheet("orange"),
+		MakeCharacterTargetSheet("pink"),
+		MakeCharacterTargetSheet("red"),
+		MakeCharacterTargetSheet("violet"),
+		MakeCharacterTargetSheet("white"),
+		MakeCharacterTargetSheet("yellow"),
+		MakeMenuLeaderTargetSheet()
 	}
 {}
 
@@ -298,7 +300,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalMonstersSheet() {
 		.SourceSheets{ std::move(source_sheets) }
 	};
 }
-SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet(bool random_character_select_enabled) {
+SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet() {
 	std::vector<SourceSheet> source_sheets;
 
 	{
@@ -318,16 +320,18 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet(bool ra
 				});
 			source_sheets.push_back(source_sheets.back());
 			source_sheets.back().Size.Height = 2224;
-			source_sheets.push_back(SourceSheet{
-					.Path{ fmt::format("Data/Textures/char_{}.png", color) },
-					.Size{ .Width{ 2048 }, .Height{ 2048 } },
-					.TileMap = std::vector<TileMapping>{
-						TileMapping{
-							.SourceTile{ 0, 0, 128, 128 },
-							.TargetTile{ char_x * 160, char_y * 160, char_x * 160 + 160, char_y * 160 + 160 },
+			if (mGenerateCharacterJournalEntriesEnabled) {
+				source_sheets.push_back(SourceSheet{
+						.Path{ fmt::format("Data/Textures/char_{}.png", color) },
+						.Size{ .Width{ 2048 }, .Height{ 2048 } },
+						.TileMap = std::vector<TileMapping>{
+							TileMapping{
+								.SourceTile{ 0, 0, 128, 128 },
+								.TargetTile{ char_x * 160, char_y * 160, char_x * 160 + 160, char_y * 160 + 160 },
+							}
 						}
-					}
-				});
+					});
+			}
 			char_x++;
 			if (char_x >= 10) {
 				char_x = 0;
@@ -335,7 +339,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet(bool ra
 			}
 		}
 	}
-
+		
 	source_sheets.push_back(SourceSheet{
 			.Path{ "Data/Textures/Entities/char_eggchild_full.png" },
 			.Size{ .Width{ 2048 }, .Height{ 2080 } },
@@ -346,16 +350,18 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet(bool ra
 				}
 			}
 		});
-	source_sheets.push_back(SourceSheet{
-			.Path{ "Data/Textures/char_eggchild.png" },
-			.Size{ .Width{ 2048 }, .Height{ 2048 } },
-			.TileMap = std::vector<TileMapping>{
-				TileMapping{
-					.SourceTile{ 0, 0, 128, 128 },
-					.TargetTile{ 160, 320, 320, 480 },
+	if (mGenerateCharacterJournalEntriesEnabled) {
+		source_sheets.push_back(SourceSheet{
+				.Path{ "Data/Textures/char_eggchild.png" },
+				.Size{ .Width{ 2048 }, .Height{ 2048 } },
+				.TileMap = std::vector<TileMapping>{
+					TileMapping{
+						.SourceTile{ 0, 0, 128, 128 },
+						.TargetTile{ 160, 320, 320, 480 },
+					}
 				}
-			}
-		});
+			});
+	}
 	source_sheets.push_back(SourceSheet{
 			.Path{ "Data/Textures/Entities/char_hired_full.png" },
 			.Size{ .Width{ 2048 }, .Height{ 2080 } },
@@ -366,32 +372,34 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalPeopleSheet(bool ra
 				}
 			}
 		});
-	source_sheets.push_back(SourceSheet{
-			.Path{ "Data/Textures/Entities/char_hired.png" },
-			.Size{ .Width{ 2048 }, .Height{ 2048 } },
-			.TileMap = std::vector<TileMapping>{
-				TileMapping{
-					.SourceTile{ 0, 0, 128, 128 },
-					.TargetTile{ 0, 320, 160, 480 },
+	if (mGenerateCharacterJournalEntriesEnabled) {
+		source_sheets.push_back(SourceSheet{
+				.Path{ "Data/Textures/Entities/char_hired.png" },
+				.Size{ .Width{ 2048 }, .Height{ 2048 } },
+				.TileMap = std::vector<TileMapping>{
+					TileMapping{
+						.SourceTile{ 0, 0, 128, 128 },
+						.TargetTile{ 0, 320, 160, 480 },
+					}
 				}
-			}
-		});
+			});
+	}
 
 	return TargetSheet{
 		.Path{ "Data/Textures/journal_entry_people.png" },
 		.Size{ .Width{ 1600 }, .Height{ 800 } },
 		.SourceSheets{ std::move(source_sheets) },
-		.RandomSelect{ random_character_select_enabled }
+		.RandomSelect{ mRandomCharacterSelectEnabled }
 	};
 }
-SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalStickerSheet(bool random_character_select_enabled) {
+SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalStickerSheet() {
 	std::vector<SourceSheet> source_sheets;
 
 	{
 		std::uint32_t char_x{ 0 };
 		std::uint32_t char_y{ 0 };
 		for (std::string_view color : { "yellow", "magenta", "cyan", "black", "cinnabar", "green", "olive", "white", "cerulean", "blue",
-										"lime", "lemon", "iris", "gold", "red", "pink", "violet", "gray", "khaki", "orange" }) {
+			"lime", "lemon", "iris", "gold", "red", "pink", "violet", "gray", "khaki", "orange" }) {
 			source_sheets.push_back(SourceSheet{
 					.Path{ fmt::format("Data/Textures/Entities/char_{}_full.png", color) },
 					.Size{ .Width{ 2048 }, .Height{ 2160 } },
@@ -404,16 +412,18 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalStickerSheet(bool r
 				});
 			source_sheets.push_back(source_sheets.back());
 			source_sheets.back().Size.Height = 2224;
-			source_sheets.push_back(SourceSheet{
-					.Path{ fmt::format("Data/Textures/char_{}.png", color) },
-					.Size{ .Width{ 2048 }, .Height{ 2048 } },
-					.TileMap = std::vector<TileMapping>{
-						TileMapping{
-							.SourceTile{ 0, 0, 128, 128 },
-							.TargetTile{ char_x * 80, char_y * 80, char_x * 80 + 80, char_y * 80 + 80 },
+			if (mGenerateCharacterJournalStickersEnabled) {
+				source_sheets.push_back(SourceSheet{
+						.Path{ fmt::format("Data/Textures/char_{}.png", color) },
+						.Size{ .Width{ 2048 }, .Height{ 2048 } },
+						.TileMap = std::vector<TileMapping>{
+							TileMapping{
+								.SourceTile{ 0, 0, 128, 128 },
+								.TargetTile{ char_x * 80, char_y * 80, char_x * 80 + 80, char_y * 80 + 80 },
+							}
 						}
-					}
-				});
+					});
+			}
 			char_x++;
 			if (char_x >= 10) {
 				char_x = 0;
@@ -426,7 +436,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalStickerSheet(bool r
 		.Path{ "Data/Textures/journal_stickers.png" },
 		.Size{ .Width{ 800 }, .Height{ 800 } },
 		.SourceSheets{ std::move(source_sheets) },
-		.RandomSelect{ random_character_select_enabled }
+		.RandomSelect{ mRandomCharacterSelectEnabled }
 	};
 }
 SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeMountsTargetSheet() {
@@ -486,7 +496,7 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakePetsTargetSheet() {
 		.SourceSheets{ std::move(source_sheets) }
 	};
 }
-SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeCharacterTargetSheet(std::string_view color, bool random_character_select_enabled) {
+SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeCharacterTargetSheet(std::string_view color) {
 	const bool is_npc = color == "hired" || color == "eggchild";
 	const std::uint32_t old_image_height = is_npc ? 2080 : 2160;
 	const std::uint32_t image_height = is_npc ? 2080 : 2224;
@@ -518,10 +528,10 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeCharacterTargetSheet(std::
 		.Path{ fmt::format("Data/Textures/char_{}.png", color) },
 		.Size{ .Width{ 2048 }, .Height{ 2048 } },
 		.SourceSheets{ std::move(source_sheets) },
-		.RandomSelect{ random_character_select_enabled }
+		.RandomSelect{ mRandomCharacterSelectEnabled }
 	};
 }
-SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeMenuLeaderTargetSheet(bool random_character_select_enabled) {
+SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeMenuLeaderTargetSheet() {
 	std::vector<SourceSheet> source_sheets;
 
 	{
@@ -551,6 +561,6 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeMenuLeaderTargetSheet(bool
 		.Path{ "Data/Textures/menu_leader.png" },
 		.Size{ .Width{ 1280 }, .Height{ 1280 } },
 		.SourceSheets{ std::move(source_sheets) },
-		.RandomSelect{ random_character_select_enabled }
+		.RandomSelect{ mRandomCharacterSelectEnabled }
 	};
 }
