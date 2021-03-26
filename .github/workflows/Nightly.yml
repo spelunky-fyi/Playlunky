@@ -53,10 +53,10 @@ jobs:
           pushd publish
           tar -a -c -f ../playlunky_nightly.zip *
           popd
-          echo "##[set-output name=release_hash;]$(echo ${{ hashFiles('**/playlunky_nightly.zip') }})"
+          echo "##[set-output name=hash;]$(( Get-FileHash playlunky_nightly.zip ).Hash.substring(0, 7))"
 
       - name: Rename Artifact
-        run: Rename-Item playlunky_nightly.zip playlunky_nightly_${{ steps.artifacts.outputs.release_hash }}.zip
+        run: Rename-Item playlunky_nightly.zip playlunky_nightly_${{ steps.artifacts.outputs.hash }}.zip
 
       - name: Create release
         uses: marvinpinto/action-automatic-releases@v1.1.0
@@ -67,4 +67,4 @@ jobs:
           automatic_release_tag: "nightly"
           prerelease: true
           title: "Nightly Build"
-          files: ./playlunky_nightly_${{ steps.artifacts.outputs.release_hash }}.zip
+          files: ./playlunky_nightly_${{ steps.artifacts.outputs.hash }}.zip
