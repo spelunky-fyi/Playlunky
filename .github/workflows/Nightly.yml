@@ -53,7 +53,7 @@ jobs:
           pushd publish
           tar -a -c -f ../playlunky_nightly.zip *
           popd
-          echo "##[set-output name=release_hash;]$(echo ${{ hashFiles('playlunky_nightly.zip') }})"
+          echo "##[set-output name=release_hash;]$(echo ${{ hashFiles('**/playlunky_nightly.zip') }})"
 
       - name: Rename Artifact
         run: Rename-Item playlunky_nightly.zip playlunky_nightly_${{ steps.artifacts.outputs.release_hash }}.zip
