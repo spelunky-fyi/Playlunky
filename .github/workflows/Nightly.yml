@@ -55,7 +55,6 @@ jobs:
           echo "##[set-output name=release_hash;]$(echo ${{ hashFiles('playlunky_nightly.zip') }})"
 
       - name: Rename Artifact
-        id: artifacts
         run: Rename-Item playlunky_nightly.zip playlunky_nightly_${{ steps.artifacts.outputs.release_hash }}.zip
 
       - name: Create release
