@@ -3,7 +3,9 @@ name: Github Actions Nightly
 on:
   schedule:
     - cron: '0 15 * * *' # run at 3 PM UTC every day
-
+  push:
+    paths:
+      - '**/Nightly.yml'
 jobs:
   release:
     name: Windows ${{ matrix.build_type }}
@@ -45,9 +47,16 @@ jobs:
           cmake --install . --config Release
 
       - name: Zip Release
+        id: artifacts
         run: |
-          cd publish
+          pushd publish
           tar -a -c -f ../playlunky_nightly.zip *
+          popd
+          echo "##[set-output name=release_hash;]$(echo ${{ hashFiles('playlunky_nightly.zip'))"
+
+      - name: Rename Artifact
+        id: artifacts
+        run: Rename-Item playlunky_nightly.zip playlunky_nightly_${{ steps.artifacts.outputs.release_hash }}.zip
 
       - name: Create release
         uses: marvinpinto/action-automatic-releases@v1.1.0
@@ -58,4 +67,4 @@ jobs:
           automatic_release_tag: "nightly"
           prerelease: true
           title: "Nightly Build"
-          files: ./playlunky_nightly.zip
+          files: ./playlunky_nightly_${{ steps.artifacts.outputs.release_hash }}.zip
