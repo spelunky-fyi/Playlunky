@@ -48,7 +48,6 @@ jobs:
 
       - name: Zip Release
         id: artifacts
-        shell: bash
         run: |
           pushd publish
           tar -a -c -f ../playlunky_nightly.zip *
