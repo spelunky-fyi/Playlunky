@@ -1,5 +1,6 @@
 #pragma once
 
+#include <any>
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -18,8 +19,8 @@ struct ImageTiling {
 };
 
 struct ImageSubRegion {
-	std::uint32_t x;
-	std::uint32_t y;
+	std::int32_t x;
+	std::int32_t y;
 	std::uint32_t width;
 	std::uint32_t height;
 };
@@ -27,6 +28,11 @@ struct ImageSubRegion {
 struct ImageSize {
 	std::uint32_t x;
 	std::uint32_t y;
+};
+
+enum class ScalingFilter {
+	Linear,
+	Nearest
 };
 
 class Image {
@@ -41,22 +47,30 @@ public:
 	bool LoadInfoFromPng(const std::filesystem::path& file);
 	bool LoadFromPng(const std::filesystem::path& file);
 
+	Image Copy();
+
 	Image GetSubImage(ImageSubRegion region);
 	Image GetSubImage(ImageTiling tiling, ImageSubRegion region);
 
 	void Blit(const Image& source, ImageSubRegion region);
 	void Blit(const Image& source, ImageTiling tiling, ImageSubRegion region);
 
-	void Resize(ImageSize new_size);
+	void Resize(ImageSize new_size, ScalingFilter filter = ScalingFilter::Linear);
+
+	void Crop(ImageSubRegion region);
 
 	bool IsEmpty() const;
 
 	std::uint32_t GetWidth() const;
 	std::uint32_t GetHeight() const;
+	ImageSubRegion GetBoundingRect() const;
 
 	bool IsSourceImage() const;
 	std::span<std::uint8_t> GetData();
 	std::span<const std::uint8_t> GetData() const;
+
+	const std::any GetBackingHandle() const;
+	std::any GetBackingHandle();
 
 private:
 	struct ImageImpl;

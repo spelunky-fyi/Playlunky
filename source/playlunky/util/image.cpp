@@ -83,6 +83,15 @@ bool Image::LoadFromPng(const std::filesystem::path& file) {
 	return true;
 }
 
+Image Image::Copy() {
+	return GetSubImage(ImageSubRegion{ 
+			.x{ 0 },
+			.y{ 0 },
+			.width{ mImpl->Width },
+			.height{ mImpl->Height }
+		});
+}
+
 Image Image::GetSubImage(ImageSubRegion region) {
 	if (mImpl == nullptr) {
 		return {};
@@ -107,12 +116,45 @@ Image Image::GetSubImage(ImageTiling tiling, ImageSubRegion region) {
 	return GetSubImage(region);
 }
 
-void Image::Resize(ImageSize new_size) {
+void Image::Resize(ImageSize new_size, ScalingFilter filter) {
 	cv::Mat resize_image;
-	cv::resize(mImpl->Image, resize_image, cv::Size(new_size.x, new_size.y));
+	cv::InterpolationFlags inter = [filter]() {
+		switch (filter) {
+		default:
+		case ScalingFilter::Linear:
+			return cv::INTER_LINEAR;
+		case ScalingFilter::Nearest:
+			return cv::INTER_NEAREST;
+		}
+	}();
+	cv::resize(mImpl->Image, resize_image, cv::Size(new_size.x, new_size.y), 0.0, 0.0, inter);
 	mImpl->Image = std::move(resize_image);
 	mImpl->Width = new_size.x;
 	mImpl->Height = new_size.y;
+}
+
+void Image::Crop(ImageSubRegion region) {
+	const std::int32_t right = region.x + static_cast<std::int32_t>(region.width);
+	const std::int32_t bottom = region.y + static_cast<std::int32_t>(region.height);
+	if (region.x < 0 || region.y < 0 || right > static_cast<std::int32_t>(mImpl->Width) || bottom > static_cast<std::int32_t>(mImpl->Height)) {
+		static const cv::Scalar transparent(0, 0, 0, 0);
+
+		cv::Mat larger_image;
+		cv::copyMakeBorder(mImpl->Image,
+			larger_image,
+			std::max(-region.y, 0),
+			std::max(bottom - static_cast<std::int32_t>(mImpl->Height), 0),
+			std::max(-region.x, 0),
+			std::max(right - static_cast<std::int32_t>(mImpl->Width), 0),
+			cv::BORDER_CONSTANT,
+			transparent);
+		mImpl->Image = larger_image;
+	}
+	else {
+		mImpl->Image = mImpl->Image(cv::Rect(region.x, region.y, region.width, region.height));
+	}
+	mImpl->Width = region.width;
+	mImpl->Height = region.height;
 }
 
 void Image::Blit(const Image& source, ImageSubRegion region) {
@@ -148,6 +190,17 @@ std::uint32_t Image::GetHeight() const {
 	}
 	return mImpl->Height;
 }
+ImageSubRegion Image::GetBoundingRect() const {
+	std::vector<cv::Mat> channels;
+	cv::split(mImpl->Image, channels);
+	cv::Rect rect = cv::boundingRect(channels[3]);
+	return ImageSubRegion{
+		.x{ rect.x },
+		.y{ rect.y },
+		.width{ static_cast<std::uint32_t>(rect.width) },
+		.height{ static_cast<std::uint32_t>(rect.height) }
+	};
+}
 
 bool Image::IsSourceImage() const {
 	return mImpl != nullptr && !mImpl->Buffer.empty();
@@ -163,4 +216,11 @@ std::span<const std::uint8_t> Image::GetData() const {
 		return {};
 	}
 	return mImpl->Buffer;
+}
+
+const std::any Image::GetBackingHandle() const {
+	return &mImpl->Image;
+}
+std::any Image::GetBackingHandle() {
+	return &mImpl->Image;
 }
