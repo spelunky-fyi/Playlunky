@@ -784,8 +784,8 @@ inline FMOD::FMOD_RESULT ReleaseSound(FMOD::Sound* sound) {
 }
 
 std::vector<DetourEntry> GetFmodDetours(const PlaylunkySettings& settings) {
-	static const bool enable_loose_audio_files = settings.GetBool("settings", "enable_loose_audio_files", true);
-	static const bool cache_decoded_audio_files = settings.GetBool("settings", "cache_decoded_audio_files", true);
+	static const bool enable_loose_audio_files = settings.GetBool("settings", "enable_loose_audio_files", false) || settings.GetBool("audio_settings", "enable_loose_audio_files", true);
+	static const bool cache_decoded_audio_files = settings.GetBool("settings", "cache_decoded_audio_files", false) || settings.GetBool("audio_settings", "cache_decoded_audio_files", false);
 	if (enable_loose_audio_files) {
 		DetourFmodSystemLoadBankMemory::s_CacheDecodedFiles = cache_decoded_audio_files;
 		return {

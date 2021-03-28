@@ -35,7 +35,7 @@ static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" 
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
 ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& settings, VirtualFilesystem& vfs)
-	: mDeveloperMode{ settings.GetBool("settings", "enable_developer_mode", false) } {
+	: mDeveloperMode{ settings.GetBool("settings", "enable_developer_mode", false) || settings.GetBool("script_settings", "enable_developer_mode", false) } {
 	namespace fs = std::filesystem;
 
 	LogInfo("Initializing Mod Manager...");
@@ -237,6 +237,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
 					const auto full_asset_path = mod_folder / rel_asset_path;
 					const auto full_asset_path_string = full_asset_path.string();
+					LogInfo("Seen file '{}'...", full_asset_path_string);
 					if (algo::is_same_path(rel_asset_path.extension(), ".png")) {
 						const bool is_entity_asset = algo::is_same_path(rel_asset_path.parent_path().filename(), "Entities");
 						const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
@@ -294,8 +295,11 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 							}
 						}
 					}
-					else if (enabled && algo::is_same_path(rel_asset_path.filename(), "main.lua")) {
-						if (!mScriptManager.RegisterModWithScript(mod_name, full_asset_path, enabled)) {
+					else if (enabled && !deleted && algo::is_same_path(rel_asset_path.filename(), "main.lua")) {
+						if (mScriptManager.RegisterModWithScript(mod_name, full_asset_path, enabled)) {
+							LogInfo("Mod {} registered as a script mod with entry {}...", mod_name, full_asset_path_string);
+						}
+						else {
 							LogError("Mod {} appears to contain multiple main.lua files... {} will be ignored...", mod_name, full_asset_path_string);
 						}
 					}
