@@ -2,9 +2,12 @@
 
 #include <array>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <string_view>
 #include <vector>
+
+#include "util/image.h"
 
 class VirtualFilesystem;
 
@@ -40,6 +43,7 @@ private:
 	bool mRandomCharacterSelectEnabled;
 	bool mGenerateCharacterJournalStickersEnabled;
 	bool mGenerateCharacterJournalEntriesEnabled;
+	bool mGenerateStickerPixelArtEnabled;
 
 	struct ImageSize {
 		std::uint32_t Width;
@@ -59,6 +63,7 @@ private:
 		std::filesystem::path Path;
 		ImageSize Size;
 		std::vector<TileMapping> TileMap;
+		std::function<Image(Image, ::ImageSize)> Processing;
 	};
 	struct TargetSheet {
 		std::filesystem::path Path;

@@ -1,10 +1,10 @@
 #include "sprite_sheet_merger.h"
 
+#include "generate_sticker_pixel_art.h"
 #include "png_dds_conversion.h"
 #include "virtual_filesystem.h"
 #include "playlunky_settings.h"
 #include "util/algorithms.h"
-#include "util/image.h"
 #include "util/format.h"
 
 #include <cassert>
@@ -17,9 +17,10 @@
 #pragma warning(pop)
 
 SpriteSheetMerger::SpriteSheetMerger(const PlaylunkySettings& settings)
-	: mRandomCharacterSelectEnabled{ settings.GetBool("settings", "random_character_select", false) }
-	, mGenerateCharacterJournalStickersEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_stickers", false) }
-	, mGenerateCharacterJournalEntriesEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_entries", false) }
+	: mRandomCharacterSelectEnabled{ true }
+	, mGenerateCharacterJournalStickersEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_stickers", true) }
+	, mGenerateCharacterJournalEntriesEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_entries", true) }
+	, mGenerateStickerPixelArtEnabled{ settings.GetBool("sprite_settings", "generate_sticker_pixel_art", true) }
 	, m_TargetSheets{
 		MakeItemsSheet(),
 		MakeJournalItemsSheet(),
@@ -142,21 +143,27 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 
 					for (const TileMapping& tile_mapping : source_sheet.TileMap) {
 						const ImageSubRegion source_region = ImageSubRegion{
-							.x{ static_cast<std::uint32_t>(tile_mapping.SourceTile.Left * source_width_scaling) },
-							.y{ static_cast<std::uint32_t>(tile_mapping.SourceTile.Top * source_height_scaling) },
+							.x{ static_cast<std::int32_t>(tile_mapping.SourceTile.Left * source_width_scaling) },
+							.y{ static_cast<std::int32_t>(tile_mapping.SourceTile.Top * source_height_scaling) },
 							.width{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Right - tile_mapping.SourceTile.Left) * source_width_scaling) },
 							.height{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Bottom - tile_mapping.SourceTile.Top) * source_height_scaling) },
 						};
 						const ImageSubRegion target_region = ImageSubRegion{
-							.x{ static_cast<std::uint32_t>(tile_mapping.TargetTile.Left * target_height_scaling) },
-							.y{ static_cast<std::uint32_t>(tile_mapping.TargetTile.Top * source_height_scaling) },
+							.x{ static_cast<std::int32_t>(tile_mapping.TargetTile.Left * target_height_scaling) },
+							.y{ static_cast<std::int32_t>(tile_mapping.TargetTile.Top * source_height_scaling) },
 							.width{ static_cast<std::uint32_t>((tile_mapping.TargetTile.Right - tile_mapping.TargetTile.Left) * target_height_scaling) },
 							.height{ static_cast<std::uint32_t>((tile_mapping.TargetTile.Bottom - tile_mapping.TargetTile.Top) * source_height_scaling) },
 						};
 
 						Image source_tile = source_image.GetSubImage(source_region);
-						if (source_tile.GetWidth() != target_region.width || source_tile.GetHeight() != target_region.height) {
-							source_tile.Resize(::ImageSize{ .x = target_region.width, .y = target_region.height });
+						const auto target_size = ::ImageSize{ .x{ static_cast<std::uint32_t>(target_region.width) }, .y{ static_cast<std::uint32_t>(target_region.height) } };
+
+						if (source_sheet.Processing) {
+							source_tile = source_sheet.Processing(std::move(source_tile), target_size);
+						}
+
+						if (source_tile.GetWidth() != target_size.x || source_tile.GetHeight() != target_size.y) {
+							source_tile.Resize(target_size);
 						}
 
 						try {
@@ -418,10 +425,11 @@ SpriteSheetMerger::TargetSheet SpriteSheetMerger::MakeJournalStickerSheet() {
 						.Size{ .Width{ 2048 }, .Height{ 2048 } },
 						.TileMap = std::vector<TileMapping>{
 							TileMapping{
-								.SourceTile{ 0, 0, 128, 128 },
+								.SourceTile{ 256, 1152, 384, 1280 },
 								.TargetTile{ char_x * 80, char_y * 80, char_x * 80 + 80, char_y * 80 + 80 },
 							}
-						}
+						},
+						.Processing{ mGenerateStickerPixelArtEnabled ? GenerateStickerPixelArt : nullptr }
 					});
 			}
 			char_x++;
