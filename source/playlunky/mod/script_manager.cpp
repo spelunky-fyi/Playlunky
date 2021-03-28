@@ -31,7 +31,7 @@ void ScriptManager::RefreshScripts() {
 }
 void ScriptManager::Update() {
 	for (RegisteredMainScript& mod : mMods) {
-		if (mod.Script) {
+		if (mod.Script != nullptr) {
 			SpelunkyScript_Update(mod.Script);
 			mod.TestScriptResult();
 
@@ -47,8 +47,9 @@ void ScriptManager::Update() {
 	}
 }
 void ScriptManager::Draw() {
-	if (mMods.empty())
+	if (mMods.empty()) {
 		return;
+	}
 
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -91,17 +92,40 @@ void ScriptManager::Draw() {
 		ImGui::SetNextWindowPos({ io.DisplaySize.x * 3 / 4, 0 });
 		ImGui::Begin(
 			"Mod Options",
-			NULL,
+			nullptr,
 			ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration);
 
 		ImGui::TextUnformatted("Mod Options");
 
 		for (RegisteredMainScript& mod : mMods) {
-			if (mod.Script && mod.Enabled) {
+			if ((mod.Script != nullptr) && mod.Enabled) {
+				SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script);
+
+				const std::string by_author = fmt::format("by {}", meta.author);
+				const auto author_cursor_pos =
+					ImGui::GetCursorPosX() + ImGui::GetWindowWidth() - ImGui::CalcTextSize(by_author.c_str()).x
+					- ImGui::GetScrollX() - 2 * ImGui::GetStyle().ItemSpacing.x;
+
 				ImGui::Separator();
-				if (ImGui::Checkbox(mod.ModName.c_str(), &mod.ScriptEnabled)) {
+				if (ImGui::Checkbox(meta.name, &mod.ScriptEnabled)) {
 					SpelunkyScipt_SetEnabled(mod.Script, mod.ScriptEnabled);
 				}
+
+				if (meta.version != nullptr && std::strlen(meta.version) > 0) {
+					ImGui::SameLine();
+					ImGui::TextUnformatted("|");
+					ImGui::SameLine();
+					ImGui::Text("Version %s", meta.version);
+				}
+
+				ImGui::SameLine();
+				ImGui::SetCursorPosX(author_cursor_pos);
+				ImGui::TextUnformatted(by_author.c_str());
+
+				if (meta.description != nullptr && std::strlen(meta.description) > 0) {
+					ImGui::TextUnformatted(meta.description);
+				}
+
 				SpelunkyScript_DrawOptions(mod.Script);
 			}
 		}
@@ -116,14 +140,14 @@ void ScriptManager::Draw() {
 	ImGui::SetNextWindowPos({ 0, 0 });
 	ImGui::Begin(
 		"Clickhandler",
-		NULL,
+		nullptr,
 		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
 		ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
 
 	ImDrawList* draw_list = ImGui::GetBackgroundDrawList();
 	for (RegisteredMainScript& mod : mMods) {
-		if (mod.Script) {
+		if (mod.Script != nullptr) {
 			SpelunkyScript_Draw(mod.Script, draw_list);
 		}
 	}
@@ -132,11 +156,13 @@ void ScriptManager::Draw() {
 }
 
 void ScriptManager::RegisteredMainScript::TestScriptResult() {
-	using namespace std::literals::string_view_literals;
-	if (const char* res = SpelunkyScript_GetResult(Script)) {
-		if (res != "Got metadata"sv && res != "OK"sv && res != LastResult) {
-			LogError("Lua Error:\n\tMod: {}\n\tError: {}", ModName, res);
-			LastResult = res;
+	if (Script != nullptr) {
+		using namespace std::literals::string_view_literals;
+		if (const char* res = SpelunkyScript_GetResult(Script)) {
+			if (res != "Got metadata"sv && res != "OK"sv && res != LastResult) {
+				LogError("Lua Error:\n\tMod: {}\n\tError: {}", ModName, res);
+				LastResult = res;
+			}
 		}
 	}
 }
