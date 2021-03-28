@@ -122,7 +122,7 @@ Image GenerateStickerPixelArt(Image input, ImageSize target_size) {
 	result.Resize(ImageSize{ .x{ 80 }, .y{ 80 } }, ScalingFilter::Nearest);
 	fix_transparent_pixels(result, true);
 
-	// Add Border
+	// Add Border and Drop Shadow
 	{
 		std::any backing_handle = result.GetBackingHandle();
 		if (cv::Mat** cv_image_ptr = std::any_cast<cv::Mat*>(&backing_handle)) {
@@ -140,14 +140,18 @@ Image GenerateStickerPixelArt(Image input, ImageSize target_size) {
 
 			cv::Mat contours_image = cv::Mat::zeros(cv_image->size(), cv_image->type());
 			cv::drawContours(contours_image, contours, -1, cv::Scalar(255, 255, 255, 255), 8, cv::LINE_AA);
-			cv::resize(contours_image, contours_image, cv_image->size());
+
+			cv::Mat drop_shadow_image = cv::Mat::zeros(cv_image->size(), cv_image->type());
+			cv::drawContours(drop_shadow_image, contours, -1, cv::Scalar(0, 0, 0, 65), 8, cv::LINE_AA,
+				cv::noArray(), std::numeric_limits<std::int32_t>::max(), cv::Point(1, 1));
 
 			cv::Mat alpha_mask;
 			cv::merge(std::vector<cv::Mat>{ alpha_channel, alpha_channel, alpha_channel, alpha_channel }, alpha_mask);
 			cv::multiply(cv::Scalar::all(1.0f / 255.0f), alpha_mask, alpha_mask);
 			cv::multiply(cv::Scalar::all(1.0f) - alpha_mask, contours_image, contours_image);
-			
+
 			cv::add(contours_image, *cv_image, *cv_image);
+			cv::add(drop_shadow_image, *cv_image, *cv_image);
 		}
 	}
 
