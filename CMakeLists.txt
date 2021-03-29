@@ -218,12 +218,10 @@ install(TARGETS
 install(FILES
 	res/steam_appid.txt
 	res/readme.txt
-	res/playlunky.ini
 	DESTINATION .)
 if(EXISTS ${SPELUNKY_INSTALL_DIR})
 	install(FILES
 		res/steam_appid.txt
-		res/playlunky.ini
 		DESTINATION ${SPELUNKY_INSTALL_DIR})
 endif()
 
