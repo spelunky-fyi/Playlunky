@@ -12,13 +12,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Script support based on Overlunky
+- Nightly builds that always stay up to date with Overlunky WHIP
 - Support for new character sheets
+- Options to control sticker/journal generation
+- Option to generate sticker pixel art
+- Option to disable loose file warning
+- Generate .ini file instead of shipping it
 
 ### Changed
 - Bumped the supported version of Spelunky
 - Moved mod .db into the global Packs/.db folder
 
 ### Fixed
+- Hopefully made the rendering hooks compatible with Windows 7 (or more generally not Windows 10)
 - Correctly handle deleted mods
 - Correctly regenerate stickers, journal and characters when modifying a plain character sheet
 - Avoid converting texture files that are not read by the game
