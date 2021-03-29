@@ -94,6 +94,7 @@ void ScriptManager::Draw() {
 			"Mod Options",
 			nullptr,
 			ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration);
+		ImGui::PushItemWidth(100.0f);
 
 		ImGui::TextUnformatted("Mod Options");
 
@@ -130,6 +131,7 @@ void ScriptManager::Draw() {
 			}
 		}
 
+		ImGui::PopItemWidth();
 		ImGui::End();
 	}
 	else if (GetShowCursor()) {
