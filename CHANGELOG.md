@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.7.0-beta] - 2021-03-11
+## [0.7.0] - 2021-03-29
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
 
@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Another typo in a log message
 - Problem with the installer expecting to be run from a folder called "Spelunky 2"
 - Some issues with files that use weird case
+- Issue where loose audio would be cached even if the setting was disabled
 
 ## [0.6.2] - 2021-03-11
 
