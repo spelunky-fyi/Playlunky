@@ -38,7 +38,7 @@ void ScriptManager::Update() {
 			const std::size_t num_messages = SpelunkyScript_GetNumMessages(mod.Script);
 			for (std::size_t i = 0; i < num_messages; i++) {
 				SpelunkyScriptMessage message = SpelunkyScript_GetMessage(mod.Script, i);
-				if (message.Message != nullptr && message.TimeMilliSecond > mod.MessageTime) {
+				if (message.Message != nullptr && message.TimeMilliSecond >= mod.MessageTime) {
 					LogInfoScreen("[{}]: {}", mod.ModName, message.Message);
 				}
 			}
