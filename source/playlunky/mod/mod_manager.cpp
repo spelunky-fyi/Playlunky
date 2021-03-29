@@ -43,7 +43,8 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 	LogInfo("Scanning for mods...");
 
 	const bool enable_loose_audio_files = settings.GetBool("settings", "enable_loose_audio_files", true);
-	const bool cache_decoded_audio_files = enable_loose_audio_files && settings.GetBool("settings", "cache_decoded_audio_files", true);
+	const bool cache_decoded_audio_files = enable_loose_audio_files
+		&& (settings.GetBool("settings", "cache_decoded_audio_files", false) || settings.GetBool("audio_settings", "cache_decoded_audio_files", false));
 	bool load_order_updated{ false };
 
 	const fs::path mods_root_path{ mods_root };
