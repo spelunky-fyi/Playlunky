@@ -85,7 +85,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
 			mod_db.WriteDatabase();
 
-			if (has_loose_files) {
+			if (has_loose_files && settings.GetBool("general_settings", "enable_loose_file_warning", true)) {
 				const fs::path absolute_mods_root_path{ fs::absolute(mods_root_path) };
 				LogFatal("The 'Mods/Packs' folder contains loose files, did you mean to create a subfolder to paste those files into?");
 			}
