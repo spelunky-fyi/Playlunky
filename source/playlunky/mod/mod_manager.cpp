@@ -237,7 +237,6 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
 					const auto full_asset_path = mod_folder / rel_asset_path;
 					const auto full_asset_path_string = full_asset_path.string();
-					LogInfo("Seen file '{}'...", full_asset_path_string);
 					if (algo::is_same_path(rel_asset_path.extension(), ".png")) {
 						const bool is_entity_asset = algo::is_same_path(rel_asset_path.parent_path().filename(), "Entities");
 						const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
