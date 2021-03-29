@@ -2,6 +2,7 @@
 
 #include "detour_entry.h"
 #include "detour_helper.h"
+#include "imgui.h"
 #include "sigfun.h"
 #include "sigscan.h"
 #include "util/call_once.h"
@@ -44,7 +45,7 @@ struct DetourWinMain {
 };
 
 // This is the first function called in WinMain() after the global log is initialized
-struct DetourGetSteamHandle {
+struct DetourGetGameApi {
 	inline static SigScan::Function<void* (__stdcall*)()> Trampoline{
 		.Signature = "\x40\x53\x48\x83\xec\x20\x48\x8b\x05\x2a\x2a\x2a\x2a\x48\x85\xc0\x75\x76\x48\x39\x05\x2a\x2a\x2a\x2a"_sig
 	};
@@ -63,6 +64,14 @@ struct DetourGameInitFinalize {
 	};
 	static void* Detour(void* game_ptr, void* other_ptr, void* some_func_ptr) {
 		void* res = Trampoline(game_ptr, other_ptr, some_func_ptr);
+		CallOnce([]() {
+			void* api = DetourGetGameApi::Trampoline();
+			auto decode_imm = [](void* instruction_addr) -> std::size_t { return *(std::uint32_t*)((char*)instruction_addr + 3); };
+			auto swapchain_offset = decode_imm((char*)SigScan::FindPattern("Spel2.exe", "\xba\xf0\xff\xff\xff\x41\xB8\x00\x00\x00\x90"_sig, true) + 17);
+			auto renderer = *(void**)((char*)api + 0x10);
+			[[maybe_unused]] auto api_off = SigScan::GetOffset(api);
+			SetSwapchain(*(void**)((char*)renderer + swapchain_offset));
+		});
 		Playlunky::Get().PostGameInit();
 		return res;
 	}
@@ -71,7 +80,7 @@ struct DetourGameInitFinalize {
 std::vector<struct DetourEntry> GetMainDetours() {
 	return {
 		DetourHelper<DetourWinMain>::GetDetourEntry("WinMain"),
-		DetourHelper<DetourGetSteamHandle>::GetDetourEntry("GetSteamHandle"),
+		DetourHelper<DetourGetGameApi>::GetDetourEntry("GetGameApi"),
 		DetourHelper<DetourGameInitFinalize>::GetDetourEntry("GameInitFinalize")
 	};
 }

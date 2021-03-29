@@ -5,7 +5,6 @@
 #include "debug.h"
 #include "file_io.h"
 #include "fmod_crap.h"
-#include "imgui.h"
 #include "logger.h"
 #include "win_main.h"
 #include "util/format.h"
@@ -62,7 +61,6 @@ std::vector<DetourEntry> CollectDetourEntries(const PlaylunkySettings& settings)
 	append(detour_entries, GetLogDetours());
 	append(detour_entries, GetFileIODetours());
 	append(detour_entries, GetFmodDetours(settings));
-	append(detour_entries, GetImguiDetours());
 	append(detour_entries, GetMainDetours());
 
 	if (IsDebuggerPresent()) {
