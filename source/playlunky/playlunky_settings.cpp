@@ -32,7 +32,7 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
 		} },
 		KnownCategory{ { "audio_settings" }, {
 			KnownSetting{ .Name{ "enable_loose_audio_files" }, .AltCategory{ "settings" }, .DefaultValue{ "on" } },
-			KnownSetting{ .Name{ "cache_decoded_audio_files" }, .AltCategory{ "settings" }, .DefaultValue{ "of" } }
+			KnownSetting{ .Name{ "cache_decoded_audio_files" }, .AltCategory{ "settings" }, .DefaultValue{ "off" } }
 		} },
 		KnownCategory{ { "sprite_settings" }, {
 			KnownSetting{ .Name{ "random_character_select" }, .AltCategory{ "settings" }, .DefaultValue{ "off" } },
