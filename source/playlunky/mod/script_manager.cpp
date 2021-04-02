@@ -84,8 +84,9 @@ void ScriptManager::Draw() {
 	}
 
 	if (mForceShowOptions || SpelunkyState_GetScreen() == SpelunkyScreen::Menu) {
-		if (!GetShowCursor()) {
-			SetShowCursor(true);
+		if (!mShowCursor) {
+			ShowCursor();
+			mShowCursor = true;
 		}
 
 		ImGui::SetNextWindowSize({ io.DisplaySize.x / 4, io.DisplaySize.y });
@@ -134,8 +135,9 @@ void ScriptManager::Draw() {
 		ImGui::PopItemWidth();
 		ImGui::End();
 	}
-	else if (GetShowCursor()) {
-		SetShowCursor(false);
+	else if (mShowCursor) {
+		HideCursor();
+		mShowCursor = false;
 	}
 
 	ImGui::SetNextWindowSize(io.DisplaySize);

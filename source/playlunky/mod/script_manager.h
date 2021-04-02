@@ -32,4 +32,5 @@ private:
 	};
 	std::vector<RegisteredMainScript> mMods;
 	bool mForceShowOptions{ false };
+	bool mShowCursor{ false };
 };
