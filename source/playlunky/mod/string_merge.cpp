@@ -56,18 +56,22 @@ bool StringMerger::MergeStrings(
 
 	if (auto hash_file = std::ifstream{ source_folder / hash_file_path }) {
 		{
+			std::vector<std::uint8_t> forced_string_tables{};
 			std::vector<std::uint8_t> all_string_tables{ 0, 1, 2, 3, 4, 5, 6, 7 };
 
 			for (auto outdated_string_table : mOutdatedStringTables) {
 				if (outdated_string_table.Modded) {
 					algo::erase(all_string_tables, outdated_string_table.Index);
 				}
+				else {
+					forced_string_tables.push_back(outdated_string_table.Index);
+				}
 			}
 
 			for (auto string_table : all_string_tables) {
 				const auto string_table_name = fmt::format("strings{:02}.str", string_table);
 				const auto string_table_destination_file = destination_folder / string_table_name;
-				if (!fs::exists(string_table_destination_file)) {
+				if (algo::contains(forced_string_tables, string_table) || !fs::exists(string_table_destination_file)) {
 					const auto string_table_source_file = vfs.GetFilePath(string_table_name).value_or(source_folder / string_table_name);
 					if (!fs::exists(string_table_source_file)) {
 						return false;
