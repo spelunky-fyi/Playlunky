@@ -6,6 +6,8 @@ on:
   push:
     paths:
       - '**/Nightly.yml'
+  workflow_dispatch:
+
 jobs:
   release:
     name: Windows ${{ matrix.build_type }}
