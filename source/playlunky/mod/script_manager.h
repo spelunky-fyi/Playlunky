@@ -24,6 +24,7 @@ private:
 		std::filesystem::path MainPath;
 		bool Enabled;
 		bool ScriptEnabled;
+		bool Unsafe;
 		std::size_t MessageTime;
 		std::string LastResult;
 		SpelunkyScript* Script{ nullptr };

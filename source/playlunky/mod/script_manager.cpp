@@ -18,8 +18,19 @@ bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::
 void ScriptManager::CommitScripts() {
 	for (RegisteredMainScript& mod : mMods) {
 		const std::string path_string = mod.MainPath.string();
-		mod.Script = CreateScript(path_string.c_str(), mod.ScriptEnabled);
-		mod.TestScriptResult();
+		mod.Script = CreateScript(path_string.c_str(), false);
+		if (mod.Script != nullptr) {
+			mod.TestScriptResult();
+
+			SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script);
+			mod.Unsafe = meta.unsafe;
+			if (meta.unsafe) {
+				mod.ScriptEnabled = false;
+			}
+			else {
+				SpelunkyScipt_SetEnabled(mod.Script, mod.ScriptEnabled);
+			}
+		}
 	}
 }
 void ScriptManager::RefreshScripts() {
@@ -72,8 +83,7 @@ void ScriptManager::Draw() {
 				const float blue = std::sin(frequency * i + 4) * 0.5f + 0.5f;
 
 				ImGui::TextColored(ImVec4(red, green, blue, 1.0f), "Do not use script mods online! Your game will not work! Press Ctrl+F4 and disable your mods! ");
-				for (int j = 0; j < 4; j++)
-				{
+				for (int j = 0; j < 4; j++) {
 					ImGui::SameLine();
 					ImGui::TextColored(ImVec4(red, green, blue, 1.0f), "Do not use script mods online! Your game will not work! Press Ctrl+F4 and disable your mods! ");
 				}
@@ -124,11 +134,20 @@ void ScriptManager::Draw() {
 				ImGui::SetCursorPosX(author_cursor_pos);
 				ImGui::TextUnformatted(by_author.c_str());
 
+				if (mod.Unsafe && !mod.ScriptEnabled) {
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+					ImGui::TextWrapped("Warning: This mod uses unsafe commands, it could delete your files and download viruses. It probably doesn't, but it could. Only enable this mod if you trust the author.");
+					ImGui::PopStyleColor();
+				}
+
 				if (meta.description != nullptr && std::strlen(meta.description) > 0) {
 					ImGui::TextUnformatted(meta.description);
 				}
 
-				SpelunkyScript_DrawOptions(mod.Script);
+				if (mod.ScriptEnabled)
+				{
+					SpelunkyScript_DrawOptions(mod.Script);
+				}
 			}
 		}
 
