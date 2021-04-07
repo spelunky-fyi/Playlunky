@@ -81,6 +81,7 @@ target_link_libraries(playlunky_lib_dependencies INTERFACE
 	ctre::ctre
 	zstd::zstd
 	opencv::opencv
+	nlohmann_json::nlohmann_json
 	imgui
 	libnyquist
 	inih
@@ -97,7 +98,8 @@ file(GLOB_RECURSE shared_headers CONFIGURE_DEPENDS "source/shared/*.h" "source/s
 # Create shared lib
 file(GLOB_RECURSE playlunky64_sources CONFIGURE_DEPENDS "source/playlunky/*.cpp")
 file(GLOB_RECURSE playlunky64_headers CONFIGURE_DEPENDS "source/playlunky/*.h" "source/playlunky/*.inl")
-add_library(playlunky64 SHARED ${playlunky64_sources} ${shared_sources} ${playlunky64_headers} ${shared_headers})
+set(playlunky64_resources "res/playlunky64.rc" "res/resource_playlunky64.h")
+add_library(playlunky64 SHARED ${playlunky64_sources} ${shared_sources} ${playlunky64_headers} ${shared_headers} ${playlunky64_resources})
 target_link_libraries(playlunky64 PRIVATE
 	playlunky_warnings
 	playlunky_definitions

@@ -6,6 +6,7 @@ ctre/3.3.4
 zstd/1.4.8
 zlib/1.2.11
 opencv/4.5.1
+nlohmann_json/3.9.1
 
 [generators]
 cmake_multi
