@@ -47,6 +47,119 @@ static constexpr std::string_view s_MpcTargetPath{ "soundbank/mpc" };
 static constexpr ctll::fixed_string s_MppRule{ ".*\\.mpp" };
 static constexpr std::string_view s_MppTargetPath{ "soundbank/mpp" };
 
+static constexpr std::string_view s_PetsEntityFiles[]{
+	"monty",
+	"percy",
+	"poochi",
+};
+static constexpr std::string_view s_MountsEntityFiles[]{
+	"turkey",
+	"rockdog",
+	"axolotl",
+	"qilin",
+};
+static constexpr std::string_view s_GhostEntityFiles[]{
+	"ghist",
+	"ghost",
+	"ghost_happy",
+	"ghost_sad",
+	"ghost_small_angry",
+	"ghost_small_happy",
+	"ghost_small_sad",
+	"ghost_small_surprised",
+};
+static constexpr std::string_view s_CrittersEntityFiles[]{
+	"anchovy",
+	"butterfly",
+	"crab",
+	"dung_beetle",
+	"firefly",
+	"fish",
+	"locust",
+	"slime",
+	"snail",
+};
+static constexpr std::string_view s_MonstersEntityFiles[]{
+	"alien",
+	"bat",
+	"bee",
+	"cat_mummy",
+	"cave_man",
+	"cobra",
+	"croc_man",
+	"female_jiangshi",
+	"fire_bug",
+	"fire_frog",
+	"fly",
+	"flying_fish",
+	"frog",
+	"golden_monkey",
+	"grub",
+	"hang_spider",
+	"hermit_crab",
+	"horned_lizard",
+	"imp",
+	"jiangshi",
+	"jumpdog",
+	"leprechaun",
+	"magmar",
+	"man_trap",
+	"mole",
+	"monkey",
+	"mosquito",
+	"necromancer",
+	"octopus",
+	"olmite_armored",
+	"olmite_helmet",
+	"olmite_naked",
+	"proto_shopkeeper",
+	"robot",
+	"scorpion",
+	"skeleton",
+	"snake",
+	"sorceress",
+	"spider",
+	"tiki_man",
+	"ufo",
+	"vampire",
+	"vlad",
+	"witch_doctor",
+	"witch_doctor_skull",
+	"yeti",
+};
+static constexpr std::string_view s_BigMonstersEntityFiles[]{
+	"alien_queen",
+	"ammit",
+	"crab_man",
+	"eggplant_minister",
+	"giant_clam",
+	"giant_fish",
+	"giant_fly",
+	"giant_frog",
+	"giant_spider",
+	"lamassu",
+	"lavamander",
+	"madame_tusk",
+	"mummy",
+	"osiris",
+	"queen_bee",
+	"quill_back",
+	"waddler",
+	"yeti_king",
+	"yeti_queen",
+};
+static constexpr std::string_view s_PeopleEntityFiles[]{
+	"bodyguard",
+	"hunduns_servant",
+	"merchant",
+	"old_hunter",
+	"parmesan",
+	"parslet",
+	"parsnip",
+	"shopkeeper",
+	"thief",
+	"yang",
+};
 static constexpr std::string_view s_RestKnownFiles[]{
 	"soundbank.strings.bank",
 	"strings00.str",
@@ -78,7 +191,7 @@ static constexpr std::string_view s_RestKnownFiles[]{
 	"strings08_hashed.str",
 	"shaders.hlsl",
 	"shaders_mod.hlsl",
-	"soundbank.bank"
+	"soundbank.bank",
 };
 
 void FixModFolderStructure(const std::filesystem::path& mod_folder) {
@@ -94,6 +207,7 @@ void FixModFolderStructure(const std::filesystem::path& mod_folder) {
 	for (const auto& path : fs::recursive_directory_iterator(mod_folder)) {
 		if (fs::is_regular_file(path) && !algo::is_sub_path(path, db_folder)) {
 			const auto file_name = path.path().filename().string();
+			const auto file_stem = path.path().stem().string();
 			if (ctre::match<s_FontRule>(file_name)) {
 				path_mappings.push_back({ path, mod_folder / s_FontTargetPath / file_name });
 			}
@@ -103,14 +217,40 @@ void FixModFolderStructure(const std::filesystem::path& mod_folder) {
 			else if (ctre::match<s_LevelRule>(file_name)) {
 				path_mappings.push_back({ path, mod_folder / s_LevelTargetPath / file_name });
 			}
-			else if (ctre::match<s_OldTextureRule>(file_name)) {
-				path_mappings.push_back({ path, mod_folder / s_OldTextureTargetPath / file_name });
-			}
-			else if (ctre::match<s_FullTextureRule>(file_name)) {
-				path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / file_name });
-			}
 			else if (ctre::match<s_TextureRule>(file_name)) {
-				path_mappings.push_back({ path, mod_folder / s_TextureTargetPath / file_name });
+				if (ctre::match<s_OldTextureRule>(file_name)) {
+					path_mappings.push_back({ path, mod_folder / s_OldTextureTargetPath / file_name });
+				}
+				else if (ctre::match<s_FullTextureRule>(file_name)) {
+					path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / file_name });
+				}
+				else if (algo::contains(s_PetsEntityFiles, file_stem)) {
+					path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Pets" / file_name });
+				}
+				else if (algo::contains(s_MountsEntityFiles, file_stem)) {
+					path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Mounts" / file_name });
+				}
+				else if (algo::contains(s_GhostEntityFiles, file_stem)) {
+					path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Ghost" / file_name });
+				}
+				else if (algo::contains(s_MonstersEntityFiles, file_stem)) {
+					path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Monsters" / file_name });
+				}
+				else if (algo::contains(s_CrittersEntityFiles, file_stem)) {
+					path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Critters" / file_name });
+				}
+				else if (algo::contains(s_MonstersEntityFiles, file_stem)) {
+					path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Monsters" / file_name });
+				}
+				else if (algo::contains(s_BigMonstersEntityFiles, file_stem)) {
+					path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "BigMonsters" / file_name });
+				}
+				else if (algo::contains(s_PeopleEntityFiles, file_stem)) {
+					path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "People" / file_name });
+				}
+				else {
+					path_mappings.push_back({ path, mod_folder / s_TextureTargetPath / file_name });
+				}
 			}
 			else if (ctre::match<s_WavRule>(file_name)) {
 				path_mappings.push_back({ path, mod_folder / s_WavTargetPath / file_name });
