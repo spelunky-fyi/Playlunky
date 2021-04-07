@@ -18,7 +18,9 @@ public:
 	SpriteSheetMerger(SpriteSheetMerger&&) = delete;
 	SpriteSheetMerger& operator=(const SpriteSheetMerger&) = delete;
 	SpriteSheetMerger& operator=(SpriteSheetMerger&&) = delete;
-	~SpriteSheetMerger() = default;
+	~SpriteSheetMerger();
+
+	void GatherSheetData();
 
 	void RegisterSheet(const std::filesystem::path& full_sheet, bool outdated, bool deleted);
 
@@ -30,15 +32,15 @@ private:
 	struct TargetSheet;
 	bool NeedsRegen(const TargetSheet& target_sheet, const std::filesystem::path& destination_folder) const;
 
-	TargetSheet MakeItemsSheet();
-	TargetSheet MakeJournalItemsSheet();
-	TargetSheet MakeJournalMonstersSheet();
-	TargetSheet MakeJournalPeopleSheet();
-	TargetSheet MakeJournalStickerSheet();
-	TargetSheet MakeMountsTargetSheet();
-	TargetSheet MakePetsTargetSheet();
-	TargetSheet MakeCharacterTargetSheet(std::string_view color);
-	TargetSheet MakeMenuLeaderTargetSheet();
+	void MakeItemsSheet();
+	void MakeJournalItemsSheet();
+	void MakeJournalMonstersSheet();
+	void MakeJournalPeopleSheet();
+	void MakeJournalStickerSheet();
+	void MakeMountsTargetSheet();
+	void MakePetsTargetSheet();
+	void MakeCharacterTargetSheet(std::string_view color);
+	void MakeMenuLeaderTargetSheet();
 
 	bool mRandomCharacterSelectEnabled;
 	bool mGenerateCharacterJournalStickersEnabled;

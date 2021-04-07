@@ -208,6 +208,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 		}();
 
 		SpriteSheetMerger sprite_sheet_merger{ settings };
+		sprite_sheet_merger.GatherSheetData();
 		StringMerger string_merger;
 		bool has_outdated_shaders{ false };
 
