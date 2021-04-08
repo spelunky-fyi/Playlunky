@@ -130,8 +130,25 @@ int WinMain(
 		si.hStdError = out_write;
 		si.dwFlags |= STARTF_USESTDHANDLES;
 
+		const auto child_env = []() {
+			std::string child_env = "SteamAppId=418530";
+
+			const auto this_env = GetEnvironmentStrings();
+			auto lpszVariable = this_env;
+			while (*lpszVariable)
+			{
+				child_env += '\0';
+				child_env += lpszVariable;
+				lpszVariable += strlen(lpszVariable) + 1;
+			}
+			FreeEnvironmentStrings(this_env);
+
+			child_env += '\0';
+			return child_env;
+		}();
+
 		PROCESS_INFORMATION pi{};
-		if (DetourCreateProcessWithDlls(NULL, exe_path, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE, NULL, cwd_path, &si, &pi, sizeof(dll_paths) / sizeof(const char*), dll_paths, NULL)) {
+		if (DetourCreateProcessWithDlls(NULL, exe_path, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE, (LPVOID)child_env.c_str(), cwd_path, &si, &pi, sizeof(dll_paths) / sizeof(const char*), dll_paths, NULL)) {
 			fmt::print("Spawned process: {}, PID: {}\n", exe_path, pi.dwProcessId);
 
 			s_Process = pi.hProcess;
