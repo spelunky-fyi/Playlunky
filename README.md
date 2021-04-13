@@ -27,8 +27,8 @@ This is a launcher for Spelunky 2 that injects a dll for extended mod management
 For more details on each feature check the [Wiki](https://github.com/spelunky-fyi/Playlunky/wiki).
 
 ### Development Features
-* Anti-anti-debug injection
-* Logging to console
+* Anti-anti-debug injection via ScyllaHide
+* Logging to console via `--console`
 
 ## Credits
 A huge thanks to the [spelunky-fyi](https://github.com/spelunky-fyi) team for their input, suggestions, support and for making all their hard work open source. Special thanks to `gmosjack`, `Dregu` and `iojonmbnmb` that made it possible for this tool to exist.
