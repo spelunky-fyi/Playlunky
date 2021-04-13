@@ -9,7 +9,7 @@ class SpelunkyScript;
 
 class ScriptManager {
 public:
-	bool RegisterModWithScript(std::string_view mod_name, const std::filesystem::path& main_path, bool enabled);
+	bool RegisterModWithScript(std::string_view mod_name, const std::filesystem::path& main_path, std::int64_t priority, bool enabled);
 
 	void CommitScripts();
 	void RefreshScripts();
@@ -22,6 +22,7 @@ private:
 	struct RegisteredMainScript{
 		std::string ModName;
 		std::filesystem::path MainPath;
+		std::int64_t Priority;
 		bool Enabled;
 		bool ScriptEnabled;
 		bool Unsafe;

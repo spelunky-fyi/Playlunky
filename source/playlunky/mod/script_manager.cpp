@@ -7,11 +7,18 @@
 
 #include <imgui.h>
 
-bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::filesystem::path& main_path, bool enabled) {
+bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::filesystem::path& main_path, std::int64_t priority, bool enabled) {
 	if (algo::contains(mMods, &RegisteredMainScript::ModName, mod_name)) {
 		return false;
 	}
-	mMods.push_back(RegisteredMainScript{ .ModName{ std::string{ mod_name } }, .MainPath{ main_path }, .Enabled{ enabled }, .ScriptEnabled{ enabled } });
+	auto it = std::upper_bound(mMods.begin(), mMods.end(), priority, [](std::int64_t prio, const RegisteredMainScript& mod) { return mod.Priority > prio; });
+	mMods.insert(it, RegisteredMainScript{
+			.ModName{ std::string{ mod_name } },
+			.MainPath{ main_path },
+			.Priority{ priority},
+			.Enabled{ enabled },
+			.ScriptEnabled{ enabled }
+		});
 	return true;
 }
 

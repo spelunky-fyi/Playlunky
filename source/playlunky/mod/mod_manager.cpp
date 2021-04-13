@@ -313,7 +313,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 						}
 					}
 					else if (enabled && !deleted && algo::is_same_path(rel_asset_path.filename(), "main.lua")) {
-						if (mScriptManager.RegisterModWithScript(mod_name, full_asset_path, enabled)) {
+						if (mScriptManager.RegisterModWithScript(mod_name, full_asset_path, prio, enabled)) {
 							LogInfo("Mod {} registered as a script mod with entry {}...", mod_name, full_asset_path_string);
 						}
 						else {
