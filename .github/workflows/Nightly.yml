@@ -18,14 +18,15 @@ jobs:
       - uses: actions/setup-python@v2
       - uses: lukka/get-cmake@latest
 
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+
       - name: Pull latest Overlunky
         run: |
           pushd submodules/overlunky
           git pull origin main
+          git submodule update --init --recursive
           popd
-
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
 
       - name: Prepare
         run: |
