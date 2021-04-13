@@ -62,16 +62,25 @@ void ImguiInit(ImGuiContext* imgui_context) {
 }
 
 void ImguiDraw() {
-	ImGui::SetNextWindowSize({ -1, 30 });
-	ImGui::SetNextWindowPos({ 0, ImGui::GetIO().DisplaySize.y - 30 });
-	ImGui::Begin(
-		"Version Overlay",
-		nullptr,
-		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
-		ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
-		ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
-	ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, .2f), "Playlunky " PLAYLUNKY_VERSION);
-	ImGui::End();
+	{
+		const std::uint8_t overlay_alpha = []() -> std::uint8_t {
+			if (static_cast<int>(SpelunkyState_GetScreen()) <= static_cast<int>(SpelunkyScreen::Menu)) {
+				return 77;
+			}
+			return 2;
+		}();
+
+		ImGui::SetNextWindowSize({ -1, 30 });
+		ImGui::SetNextWindowPos({ 0, ImGui::GetIO().DisplaySize.y - 30 });
+		ImGui::Begin(
+			"Version Overlay",
+			nullptr,
+			ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+			ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
+			ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
+		ImGui::TextColored(ImColor(0xffffff | (overlay_alpha << 24)), "Playlunky " PLAYLUNKY_VERSION);
+		ImGui::End();
+	}
 
 	if (!g_Messages.empty()) {
 		ImGui::SetNextWindowSize({ -1, -1 });
@@ -83,7 +92,7 @@ void ImguiDraw() {
 			ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
 			ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
 		for (auto& [message, color, timer] : g_Messages) {
-			timer -= 1.0f / 60.0f; // Stupid hax
+			timer -= 1.0f / 60.0f;
 			const float alpha = std::min(1.0f, timer);
 			const ImVec4 faded_color{ color.x, color.y, color.z, color.w * alpha };
 			ImGui::TextColored(faded_color, message.c_str());
