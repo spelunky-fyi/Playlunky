@@ -26,7 +26,7 @@ SpriteSheetMerger::SpriteSheetMerger(const PlaylunkySettings& settings)
 {}
 SpriteSheetMerger::~SpriteSheetMerger() = default;
 
-void SpriteSheetMerger::GatherSheetData() {
+void SpriteSheetMerger::GatherSheetData(bool force_regen_char_journal, bool force_regen_char_stickers) {
 	m_EntityDataExtractor = std::make_unique<EntityDataExtractor>();
 	m_EntityDataExtractor->PreloadEntityMappings();
 
@@ -34,8 +34,8 @@ void SpriteSheetMerger::GatherSheetData() {
 	MakeJournalItemsSheet();
 	MakeJournalMonstersSheet();
 	MakeJournalMonstersBigSheet();
-	MakeJournalPeopleSheet();
-	MakeJournalStickerSheet();
+	MakeJournalPeopleSheet(force_regen_char_journal);
+	MakeJournalStickerSheet(force_regen_char_stickers);
 	MakeMountsTargetSheet();
 	MakePetsTargetSheet();
 	MakeMonstersTargetSheet();
@@ -92,6 +92,10 @@ bool SpriteSheetMerger::NeedsRegeneration(const std::filesystem::path& destinati
 
 bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::filesystem::path& destination_folder) const {
 	namespace fs = std::filesystem;
+
+	if (target_sheet.ForceRegen) {
+		return true;
+	}
 
 	const bool does_exist = fs::exists(fs::path{ destination_folder / target_sheet.Path }.replace_extension(".DDS"));
 	const bool random_select = target_sheet.RandomSelect;

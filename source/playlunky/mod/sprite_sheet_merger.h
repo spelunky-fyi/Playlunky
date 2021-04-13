@@ -22,7 +22,7 @@ public:
 	SpriteSheetMerger& operator=(SpriteSheetMerger&&) = delete;
 	~SpriteSheetMerger();
 
-	void GatherSheetData();
+	void GatherSheetData(bool force_regen_char_journal, bool force_regen_char_stickers);
 
 	void RegisterSheet(const std::filesystem::path& full_sheet, bool outdated, bool deleted);
 
@@ -40,8 +40,8 @@ private:
 	void MakeJournalItemsSheet();
 	void MakeJournalMonstersSheet();
 	void MakeJournalMonstersBigSheet();
-	void MakeJournalPeopleSheet();
-	void MakeJournalStickerSheet();
+	void MakeJournalPeopleSheet(bool force_regen);
+	void MakeJournalStickerSheet(bool force_regen);
 	void MakeMountsTargetSheet();
 	void MakePetsTargetSheet();
 	void MakeMonstersTargetSheet();
@@ -59,6 +59,7 @@ private:
 		SheetSize Size;
 		std::vector<SourceSheet> SourceSheets;
 		bool RandomSelect;
+		bool ForceRegen;
 	};
 	std::vector<TargetSheet> m_TargetSheets;
 

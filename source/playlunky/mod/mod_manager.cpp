@@ -83,15 +83,29 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 		const auto db_folder = mods_root_path / ".db";
 
 		bool speedrun_mode_changed{ false };
+		bool journal_gen_settings_change{ false };
+		bool sticker_gen_settings_change{ false };
+
 		{
 			bool has_loose_files{ false };
 
 			ModDatabase mod_db{ db_folder, mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
 
+			const bool journal_gen = settings.GetBool("sprite_settings", "generate_character_journal_entries", true);
+			const bool sticker_gen = settings.GetBool("sprite_settings", "generate_character_journal_stickers", true);
+			const bool sticker_pixel_gen = settings.GetBool("sprite_settings", "generate_sticker_pixel_art", true);
+
+			journal_gen_settings_change = mod_db.GetAdditionalSetting("generate_character_journal_entries", true) != journal_gen;
+			sticker_gen_settings_change = mod_db.GetAdditionalSetting("generate_character_journal_stickers", true) != sticker_gen;
+			sticker_gen_settings_change = sticker_gen_settings_change || (mod_db.GetAdditionalSetting("generate_sticker_pixel_art", true) != sticker_pixel_gen);
+
 			speedrun_mode_changed = mod_db.GetAdditionalSetting("speedrun_mode", false) != speedrun_mode;
 
 			mod_db.SetEnabled(true);
 			mod_db.SetAdditionalSetting("speedrun_mode", speedrun_mode);
+			mod_db.SetAdditionalSetting("generate_character_journal_entries", journal_gen);
+			mod_db.SetAdditionalSetting("generate_character_journal_stickers", sticker_gen);
+			mod_db.SetAdditionalSetting("generate_sticker_pixel_art", sticker_pixel_gen);
 
 			mod_db.UpdateDatabase();
 			mod_db.ForEachFile([&mods_root_path, &has_loose_files, &load_order_updated](const fs::path& rel_file_path, bool outdated, bool deleted, [[maybe_unused]] std::optional<bool> new_enabled_state) {
@@ -259,7 +273,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 		}();
 
 		SpriteSheetMerger sprite_sheet_merger{ settings };
-		sprite_sheet_merger.GatherSheetData();
+		sprite_sheet_merger.GatherSheetData(journal_gen_settings_change, sticker_gen_settings_change);
 		StringMerger string_merger;
 		bool has_outdated_shaders{ false };
 

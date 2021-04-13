@@ -248,7 +248,7 @@ void SpriteSheetMerger::MakeJournalMonstersBigSheet() {
 		.RandomSelect{ false }
 	});
 }
-void SpriteSheetMerger::MakeJournalPeopleSheet() {
+void SpriteSheetMerger::MakeJournalPeopleSheet(bool force_regen) {
 	std::vector<SourceSheet> source_sheets;
 
 	{
@@ -387,10 +387,11 @@ void SpriteSheetMerger::MakeJournalPeopleSheet() {
 		.Path{ "Data/Textures/journal_entry_people.png" },
 		.Size{.Width{ 1600 }, .Height{ 800 } },
 		.SourceSheets{ std::move(source_sheets) },
-		.RandomSelect{ mRandomCharacterSelectEnabled }
-		});
+		.RandomSelect{ mRandomCharacterSelectEnabled },
+		.ForceRegen{ force_regen }
+	});
 }
-void SpriteSheetMerger::MakeJournalStickerSheet() {
+void SpriteSheetMerger::MakeJournalStickerSheet(bool force_regen) {
 	std::vector<SourceSheet> source_sheets;
 
 	{
@@ -487,8 +488,9 @@ void SpriteSheetMerger::MakeJournalStickerSheet() {
 		.Path{ "Data/Textures/journal_stickers.png" },
 		.Size{.Width{ 800 }, .Height{ 800 } },
 		.SourceSheets{ std::move(source_sheets) },
-		.RandomSelect{ mRandomCharacterSelectEnabled }
-		});
+		.RandomSelect{ mRandomCharacterSelectEnabled },
+		.ForceRegen{ force_regen }
+	});
 }
 void SpriteSheetMerger::MakeMountsTargetSheet() {
 	std::vector<std::pair<std::string_view, std::uint32_t>> name_to_idx{
@@ -524,7 +526,7 @@ void SpriteSheetMerger::MakeMountsTargetSheet() {
 		.Path{ "Data/Textures/mounts.png" },
 		.Size{.Width{ 2048 }, .Height{ 2048 } },
 		.SourceSheets{ std::move(source_sheets) }
-		});
+	});
 }
 void SpriteSheetMerger::MakePetsTargetSheet() {
 	std::vector<std::pair<std::string_view, std::uint32_t>> name_to_idx{
@@ -554,7 +556,7 @@ void SpriteSheetMerger::MakePetsTargetSheet() {
 		.Path{ "Data/Textures/monsters_pets.png" },
 		.Size{.Width{ 1536 }, .Height{ 1536 } },
 		.SourceSheets{ std::move(source_sheets) }
-		});
+	});
 }
 void SpriteSheetMerger::MakeMonstersTargetSheet() {
 	struct AdditionalMapping {
@@ -778,7 +780,7 @@ void SpriteSheetMerger::MakeMonstersTargetSheet() {
 			.Size{ sheet.TargetSize },
 			.SourceSheets{ std::move(source_sheets) },
 			.RandomSelect{ false }
-			});
+		});
 	}
 }
 void SpriteSheetMerger::MakeBigMonstersTargetSheet() {
@@ -912,11 +914,11 @@ void SpriteSheetMerger::MakeBigMonstersTargetSheet() {
 			}
 		}
 		m_TargetSheets.push_back(TargetSheet{
-				.Path{ sheet.TargetFile },
-				.Size{ sheet.TargetSize },
-				.SourceSheets{ std::move(source_sheets) },
-				.RandomSelect{ false }
-			});
+			.Path{ sheet.TargetFile },
+			.Size{ sheet.TargetSize },
+			.SourceSheets{ std::move(source_sheets) },
+			.RandomSelect{ false }
+		});
 	}
 }
 void SpriteSheetMerger::MakeCharacterTargetSheet(std::string_view color) {
