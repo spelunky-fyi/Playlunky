@@ -49,6 +49,7 @@ find_package(libzip REQUIRED)
 find_package(ctre REQUIRED)
 find_package(zstd REQUIRED)
 find_package(opencv REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 
 # --------------------------------------------------
