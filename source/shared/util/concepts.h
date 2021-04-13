@@ -1,9 +1,6 @@
 #pragma once
 
-#include <filesystem>
 #include <type_traits>
-#include <string_view>
-#include <utility>
 
 namespace algo {
 	template<class T, class U>
