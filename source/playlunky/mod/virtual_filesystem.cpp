@@ -98,6 +98,11 @@ void VirtualFilesystem::MountFolder(std::string_view path, std::int64_t priority
 			.MountImpl = std::make_unique<VfsFolderMount>(path)
 		});
 }
+
+void VirtualFilesystem::RestrictFiles(std::span<const std::string_view> files) {
+	m_RestrictedFiles = files;
+}
+
 void VirtualFilesystem::BindPathes(std::vector<std::string_view> pathes) {
 	if (std::vector<std::string_view>* bound_pathes = GetBoundPathes(pathes)) {
 		for (std::string_view path : pathes) {
@@ -112,6 +117,14 @@ void VirtualFilesystem::BindPathes(std::vector<std::string_view> pathes) {
 }
 
 VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void* (*allocator)(std::size_t)) const {
+	if (mMounts.empty()) {
+		return nullptr;
+	}
+
+	if (!m_RestrictedFiles.empty() && !algo::contains(m_RestrictedFiles, path)) {
+		return nullptr;
+	}
+
 	// Should not need to use bound pathes here because those should all be handled during preprocessing
 	// Bound pathes should usually contain one 'actual' game asset and the rest addon assets
 	for (const VfsMount& mount : mMounts) {
@@ -124,8 +137,13 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
 }
 
 std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::filesystem::path& path) const {
-	if (mMounts.empty())
+	if (mMounts.empty()) {
 		return std::nullopt;
+	}
+
+	if (!m_RestrictedFiles.empty() && !algo::contains(m_RestrictedFiles, path)) {
+		return std::nullopt;
+	}
 
 	if (const BoundPathes* bound_pathes = GetBoundPathes(path.string())) {
 		std::int64_t current_file_prio{ std::numeric_limits<std::int64_t>::max() };

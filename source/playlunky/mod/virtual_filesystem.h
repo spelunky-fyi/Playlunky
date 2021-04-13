@@ -4,6 +4,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <span>
 #include <string_view>
 #include <variant>
 #include <vector>
@@ -19,6 +20,9 @@ public:
 	VirtualFilesystem& operator=(VirtualFilesystem&&) = delete;
 
 	void MountFolder(std::string_view path, std::int64_t priority);
+
+	// Allow loading only files specified in this list
+	void RestrictFiles(std::span<const std::string_view> files);
 
 	// Binding pathes makes sure that only one of the bound files can be loaded
 	void BindPathes(std::vector<std::string_view> pathes);
@@ -55,6 +59,8 @@ private:
 	};
 	mutable std::mutex m_RandomCacheMutex;
 	mutable std::vector<CachedRandomFile> m_RandomCache;
+
+	std::span<const std::string_view> m_RestrictedFiles;
 
 	std::vector<BoundPathes> m_BoundPathes;
 };

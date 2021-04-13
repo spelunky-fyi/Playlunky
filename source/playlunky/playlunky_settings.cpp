@@ -25,14 +25,15 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
 	};
 	std::array known_categories{
 		KnownCategory{ { "general_settings" }, {
-			KnownSetting{ .Name{ "enable_loose_file_warning" }, .AltCategory{ "settings" }, .DefaultValue{ "on" } }
+			KnownSetting{ .Name{ "enable_loose_file_warning" }, .AltCategory{ "settings" }, .DefaultValue{ "on" } },
+			KnownSetting{ .Name{ "speedrun_mode" }, .DefaultValue{ "off" } },
 		} },
 		KnownCategory{ { "script_settings" }, {
-			KnownSetting{ .Name{ "enable_developer_mode" }, .AltCategory{ "settings" }, .DefaultValue{ "off" } }
+			KnownSetting{ .Name{ "enable_developer_mode" }, .AltCategory{ "settings" }, .DefaultValue{ "off" } },
 		} },
 		KnownCategory{ { "audio_settings" }, {
 			KnownSetting{ .Name{ "enable_loose_audio_files" }, .AltCategory{ "settings" }, .DefaultValue{ "on" } },
-			KnownSetting{ .Name{ "cache_decoded_audio_files" }, .AltCategory{ "settings" }, .DefaultValue{ "off" } }
+			KnownSetting{ .Name{ "cache_decoded_audio_files" }, .AltCategory{ "settings" }, .DefaultValue{ "off" } },
 		} },
 		KnownCategory{ { "sprite_settings" }, {
 			KnownSetting{ .Name{ "random_character_select" }, .AltCategory{ "settings" }, .DefaultValue{ "off" } },

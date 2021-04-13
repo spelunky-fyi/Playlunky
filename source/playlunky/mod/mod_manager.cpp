@@ -34,6 +34,29 @@ static constexpr ctll::fixed_string s_CharacterRule{ ".+char_(.*)\\.png" };
 static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
+static constexpr std::string_view s_SpeedrunFiles[]{
+	"Data/Textures/char_orange.DDS", "Data/Textures/char_orange.png", "Data/Textures/Entities/char_orange_full.png",
+	"Data/Textures/char_pink.DDS", "Data/Textures/char_pink.png", "Data/Textures/Entities/char_pink_full.png",
+	"Data/Textures/char_red.DDS", "Data/Textures/char_red.png", "Data/Textures/Entities/char_red_full.png",
+	"Data/Textures/char_violet.DDS", "Data/Textures/char_violet.png", "Data/Textures/Entities/char_violet_full.png",
+	"Data/Textures/char_white.DDS", "Data/Textures/char_white.png", "Data/Textures/Entities/char_white_full.png",
+	"Data/Textures/char_yellow.DDS", "Data/Textures/char_yellow.png", "Data/Textures/Entities/char_yellow_full.png",
+	"Data/Textures/char_black.DDS", "Data/Textures/char_black.png", "Data/Textures/Entities/char_black_full.png",
+	"Data/Textures/char_blue.DDS", "Data/Textures/char_blue.png", "Data/Textures/Entities/char_blue_full.png",
+	"Data/Textures/char_cerulean.DDS", "Data/Textures/char_cerulean.png", "Data/Textures/Entities/char_cerulean_full.png",
+	"Data/Textures/char_cinnabar.DDS", "Data/Textures/char_cinnabar.png", "Data/Textures/Entities/char_cinnabar_full.png",
+	"Data/Textures/char_cyan.DDS", "Data/Textures/char_cyan.png", "Data/Textures/Entities/char_cyan_full.png",
+	"Data/Textures/char_gold.DDS", "Data/Textures/char_gold.png", "Data/Textures/Entities/char_gold_full.png",
+	"Data/Textures/char_gray.DDS", "Data/Textures/char_gray.png", "Data/Textures/Entities/char_gray_full.png",
+	"Data/Textures/char_green.DDS", "Data/Textures/char_green.png", "Data/Textures/Entities/char_green_full.png",
+	"Data/Textures/char_iris.DDS", "Data/Textures/char_iris.png", "Data/Textures/Entities/char_iris_full.png",
+	"Data/Textures/char_khaki.DDS", "Data/Textures/char_khaki.png", "Data/Textures/Entities/char_khaki_full.png",
+	"Data/Textures/char_lemon.DDS", "Data/Textures/char_lemon.png", "Data/Textures/Entities/char_lemon_full.png",
+	"Data/Textures/char_lime.DDS", "Data/Textures/char_lime.png", "Data/Textures/Entities/char_lime_full.png",
+	"Data/Textures/char_magenta.DDS", "Data/Textures/char_magenta.png", "Data/Textures/Entities/char_magenta_full.png",
+	"Data/Textures/char_olive.DDS", "Data/Textures/char_olive.png", "Data/Textures/Entities/char_olive_full.png",
+};
+
 ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& settings, VirtualFilesystem& vfs)
 	: mDeveloperMode{ settings.GetBool("settings", "enable_developer_mode", false) || settings.GetBool("script_settings", "enable_developer_mode", false) } {
 	namespace fs = std::filesystem;
@@ -42,21 +65,34 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
 	LogInfo("Scanning for mods...");
 
-	const bool enable_loose_audio_files = settings.GetBool("settings", "enable_loose_audio_files", false) || settings.GetBool("audio_settings", "enable_loose_audio_files", true);
+	const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
+	if (speedrun_mode) {
+		vfs.RestrictFiles({ std::begin(s_SpeedrunFiles), std::end(s_SpeedrunFiles) });
+	}
+
+	const bool enable_loose_audio_files = !speedrun_mode
+		&& (settings.GetBool("settings", "enable_loose_audio_files", false)
+			|| settings.GetBool("audio_settings", "enable_loose_audio_files", true));
 	const bool cache_decoded_audio_files = enable_loose_audio_files
-		&& (settings.GetBool("settings", "cache_decoded_audio_files", false) || settings.GetBool("audio_settings", "cache_decoded_audio_files", false));
+		&& (settings.GetBool("settings", "cache_decoded_audio_files", false)
+			|| settings.GetBool("audio_settings", "cache_decoded_audio_files", false));
 	bool load_order_updated{ false };
 
 	const fs::path mods_root_path{ mods_root };
 	if (fs::exists(mods_root_path) && fs::is_directory(mods_root_path)) {
 		const auto db_folder = mods_root_path / ".db";
 
+		bool speedrun_mode_changed{ false };
 		{
 			bool has_loose_files{ false };
 
 			ModDatabase mod_db{ db_folder, mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
 
+			speedrun_mode_changed = mod_db.GetAdditionalSetting("speedrun_mode", false) != speedrun_mode;
+
 			mod_db.SetEnabled(true);
+			mod_db.SetAdditionalSetting("speedrun_mode", speedrun_mode);
+
 			mod_db.UpdateDatabase();
 			mod_db.ForEachFile([&mods_root_path, &has_loose_files, &load_order_updated](const fs::path& rel_file_path, bool outdated, bool deleted, [[maybe_unused]] std::optional<bool> new_enabled_state) {
 				if (outdated) {
@@ -254,6 +290,12 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
 					const auto full_asset_path = mod_folder / rel_asset_path;
 					const auto full_asset_path_string = full_asset_path.string();
+
+					if (speedrun_mode_changed) {
+						outdated = true;
+						deleted = true;
+					}
+
 					if (algo::is_same_path(rel_asset_path.extension(), ".png")) {
 						const bool is_entity_asset = algo::contains_if(rel_asset_path,
 							[](const fs::path& element) { return algo::is_same_path(element, "Entities"); });
@@ -312,7 +354,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 							}
 						}
 					}
-					else if (enabled && !deleted && algo::is_same_path(rel_asset_path.filename(), "main.lua")) {
+					else if (!speedrun_mode && enabled && !deleted && algo::is_same_path(rel_asset_path.filename(), "main.lua")) {
 						if (mScriptManager.RegisterModWithScript(mod_name, full_asset_path, prio, enabled)) {
 							LogInfo("Mod {} registered as a script mod with entry {}...", mod_name, full_asset_path_string);
 						}
@@ -415,7 +457,6 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 		{
 			// Rewrite mod database so we don't trigger changes on files written during mod load (e.g. load_order.txt)
 			ModDatabase mod_db{ db_folder, mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
-			mod_db.SetEnabled(true);
 			mod_db.UpdateDatabase();
 			mod_db.WriteDatabase();
 		}

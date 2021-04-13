@@ -4,6 +4,8 @@
 #include "detour_helper.h"
 #include "sigscan.h"
 #include "log.h"
+#include "playlunky.h"
+#include "playlunky_settings.h"
 #include "mod/virtual_filesystem.h"
 #include "util/call_once.h"
 
@@ -62,7 +64,8 @@ void ImguiInit(ImGuiContext* imgui_context) {
 }
 
 void ImguiDraw() {
-	{
+	static const bool speedrun_mode = Playlunky::Get().GetSettings().GetBool("general_settings", "speedrun_mode", false);
+	if (!speedrun_mode) {
 		const std::uint8_t overlay_alpha = []() -> std::uint8_t {
 			if (static_cast<int>(SpelunkyState_GetScreen()) <= static_cast<int>(SpelunkyScreen::Menu)) {
 				return 77;

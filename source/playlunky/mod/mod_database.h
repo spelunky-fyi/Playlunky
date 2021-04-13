@@ -17,7 +17,10 @@ public:
 
 	void SetEnabled(bool enabled) { mIsEnabled = enabled; }
 	void UpdateDatabase();
-	void WriteDatabase();
+	void WriteDatabase() const;
+
+	bool GetAdditionalSetting(std::string_view name, bool default_value) const;
+	void SetAdditionalSetting(std::string_view name, bool value);
 
 	template<class FunT>
 	requires std::is_invocable_v<FunT, std::filesystem::path, bool, bool, std::optional<bool>>
@@ -71,9 +74,14 @@ private:
 			return Existed() && !Exists();
 		}
 	};
-
 	std::vector<ItemDescriptor> mFiles;
 	std::vector<ItemDescriptor> mFolders;
+	
+	struct AdditionalSetting {
+		std::string Name;
+		bool Value;
+	};
+	std::vector<AdditionalSetting> mSettings;
 
 	bool mWasEnabled{ false };
 	bool mIsEnabled{ true };

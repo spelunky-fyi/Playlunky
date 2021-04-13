@@ -12,7 +12,8 @@
 //		0xBADAB000 -- v0.5.6
 //		0xABCDEF16 -- v0.7.0
 //		0xABACAB00 -- v0.7.1
-static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xABACAB00 };
+//		0xBEDD1BED -- v0.7.2
+static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xBEDD1BED };
 
 ModDatabase::ModDatabase(std::filesystem::path database_folder, std::filesystem::path mod_folder, ModDatabaseFlags flags)
 	: mDatabaseFolder(std::move(database_folder))
@@ -44,6 +45,7 @@ ModDatabase::ModDatabase(std::filesystem::path database_folder, std::filesystem:
 			}
 
 			db_file.read(reinterpret_cast<char*>(&mWasEnabled), sizeof(mWasEnabled));
+			mIsEnabled = mWasEnabled;
 
 			{
 				std::size_t num_files;
@@ -82,6 +84,26 @@ ModDatabase::ModDatabase(std::filesystem::path database_folder, std::filesystem:
 
 					folder.Path = path;
 					folder.LastKnownWrite = last_know_write;
+				}
+			}
+
+			{
+				std::size_t num_settings;
+				db_file.read(reinterpret_cast<char*>(&num_settings), sizeof(num_settings));
+
+				mSettings.resize(num_settings);
+				for (AdditionalSetting& setting : mSettings) {
+					std::size_t name_size;
+					db_file.read(reinterpret_cast<char*>(&name_size), sizeof(name_size));
+
+					std::string name(name_size, '\0');
+					db_file.read(name.data(), name_size);
+
+					bool value;
+					db_file.read(reinterpret_cast<char*>(&value), sizeof(value));
+
+					setting.Name = std::move(name);
+					setting.Value = value;
 				}
 			}
 		}
@@ -166,7 +188,7 @@ void ModDatabase::UpdateDatabase() {
 		}
 	}
 }
-void ModDatabase::WriteDatabase() {
+void ModDatabase::WriteDatabase() const {
 	namespace fs = std::filesystem;
 
 	if (!fs::exists(mModFolder)) {
@@ -196,7 +218,7 @@ void ModDatabase::WriteDatabase() {
 			const std::size_t num_files = algo::count_if(mFiles, [](const auto& file) { return file.Exists(); });
 			db_file.write(reinterpret_cast<const char*>(&num_files), sizeof(num_files));
 
-			for (ItemDescriptor& file : mFiles) {
+			for (const ItemDescriptor& file : mFiles) {
 				if (file.Exists()) {
 					const std::string path_string = file.Path.string();
 					const std::size_t path_size = path_string.size();
@@ -217,7 +239,7 @@ void ModDatabase::WriteDatabase() {
 			const std::size_t num_folders = algo::count_if(mFolders, [](const auto& folder) { return folder.Exists(); });
 			db_file.write(reinterpret_cast<const char*>(&num_folders), sizeof(num_folders));
 
-			for (ItemDescriptor& folder : mFolders) {
+			for (const ItemDescriptor& folder : mFolders) {
 				if (folder.Exists()) {
 					const std::string path_string = folder.Path.string();
 					const std::size_t path_size = path_string.size();
@@ -233,5 +255,29 @@ void ModDatabase::WriteDatabase() {
 			const std::size_t num_folders = 0;
 			db_file.write(reinterpret_cast<const char*>(&num_folders), sizeof(num_folders));
 		}
+
+		const std::size_t num_settings = mSettings.size();
+		db_file.write(reinterpret_cast<const char*>(&num_settings), sizeof(num_settings));
+		for (const AdditionalSetting& setting : mSettings) {
+			const std::size_t name_size = setting.Name.size();
+			db_file.write(reinterpret_cast<const char*>(&name_size), sizeof(name_size));
+			db_file.write(setting.Name.data(), setting.Name.size());
+
+			db_file.write(reinterpret_cast<const char*>(&setting.Value), sizeof(setting.Value));
+		}
 	}
+}
+
+bool ModDatabase::GetAdditionalSetting(std::string_view name, bool default_value) const {
+	if (const AdditionalSetting* setting = algo::find(mSettings, &AdditionalSetting::Name, name)) {
+		return setting->Value;
+	}
+	return default_value;
+}
+void ModDatabase::SetAdditionalSetting(std::string_view name, bool value) {
+	if (AdditionalSetting* setting = algo::find(mSettings, &AdditionalSetting::Name, name)) {
+		setting->Value = value;
+		return;
+	}
+	mSettings.push_back(AdditionalSetting{ .Name{ std::string{ name } }, .Value{ value } });
 }
