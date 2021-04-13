@@ -7,9 +7,11 @@
 #include <string_view>
 #include <vector>
 
+#include "sprite_sheet_merger_types.h"
 #include "util/image.h"
 
 class VirtualFilesystem;
+class EntityDataExtractor;
 
 class SpriteSheetMerger {
 public:
@@ -29,16 +31,21 @@ public:
 	bool GenerateRequiredSheets(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, VirtualFilesystem& vfs);
 
 private:
+	friend class EntityDataExtractor;
+
 	struct TargetSheet;
 	bool NeedsRegen(const TargetSheet& target_sheet, const std::filesystem::path& destination_folder) const;
 
 	void MakeItemsSheet();
 	void MakeJournalItemsSheet();
 	void MakeJournalMonstersSheet();
+	void MakeJournalMonstersBigSheet();
 	void MakeJournalPeopleSheet();
 	void MakeJournalStickerSheet();
 	void MakeMountsTargetSheet();
 	void MakePetsTargetSheet();
+	void MakeMonstersTargetSheet();
+	void MakeBigMonstersTargetSheet();
 	void MakeCharacterTargetSheet(std::string_view color);
 	void MakeMenuLeaderTargetSheet();
 
@@ -47,29 +54,9 @@ private:
 	bool mGenerateCharacterJournalEntriesEnabled;
 	bool mGenerateStickerPixelArtEnabled;
 
-	struct ImageSize {
-		std::uint32_t Width;
-		std::uint32_t Height;
-	};
-	struct Tile {
-		std::uint32_t Left;
-		std::uint32_t Top;
-		std::uint32_t Right;
-		std::uint32_t Bottom;
-	};
-	struct TileMapping {
-		Tile SourceTile;
-		Tile TargetTile;
-	};
-	struct SourceSheet {
-		std::filesystem::path Path;
-		ImageSize Size;
-		std::vector<TileMapping> TileMap;
-		std::function<Image(Image, ::ImageSize)> Processing;
-	};
 	struct TargetSheet {
 		std::filesystem::path Path;
-		ImageSize Size;
+		SheetSize Size;
 		std::vector<SourceSheet> SourceSheets;
 		bool RandomSelect;
 	};
@@ -81,4 +68,6 @@ private:
 		bool Deleted;
 	};
 	std::vector<RegisteredSourceSheet> m_RegisteredSourceSheets;
+
+	std::unique_ptr<EntityDataExtractor> m_EntityDataExtractor;
 };

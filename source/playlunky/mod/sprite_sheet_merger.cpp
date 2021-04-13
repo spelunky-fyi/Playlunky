@@ -1,6 +1,8 @@
 #include "sprite_sheet_merger.h"
 
+#include "entity_data_extraction.h"
 #include "generate_sticker_pixel_art.h"
+#include "log.h"
 #include "png_dds_conversion.h"
 #include "virtual_filesystem.h"
 #include "playlunky_settings.h"
@@ -25,13 +27,19 @@ SpriteSheetMerger::SpriteSheetMerger(const PlaylunkySettings& settings)
 SpriteSheetMerger::~SpriteSheetMerger() = default;
 
 void SpriteSheetMerger::GatherSheetData() {
+	m_EntityDataExtractor = std::make_unique<EntityDataExtractor>();
+	m_EntityDataExtractor->PreloadEntityMappings();
+
 	MakeItemsSheet();
 	MakeJournalItemsSheet();
 	MakeJournalMonstersSheet();
+	MakeJournalMonstersBigSheet();
 	MakeJournalPeopleSheet();
 	MakeJournalStickerSheet();
 	MakeMountsTargetSheet();
 	MakePetsTargetSheet();
+	MakeMonstersTargetSheet();
+	MakeBigMonstersTargetSheet();
 	MakeCharacterTargetSheet("black");
 	MakeCharacterTargetSheet("blue");
 	MakeCharacterTargetSheet("cerulean");
@@ -55,6 +63,8 @@ void SpriteSheetMerger::GatherSheetData() {
 	MakeCharacterTargetSheet("white");
 	MakeCharacterTargetSheet("yellow");
 	MakeMenuLeaderTargetSheet();
+
+	m_EntityDataExtractor = nullptr;
 }
 
 void SpriteSheetMerger::RegisterSheet(const std::filesystem::path& full_sheet, bool outdated, bool deleted) {
@@ -156,6 +166,19 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 							.width{ static_cast<std::uint32_t>((tile_mapping.TargetTile.Right - tile_mapping.TargetTile.Left) * target_height_scaling) },
 							.height{ static_cast<std::uint32_t>((tile_mapping.TargetTile.Bottom - tile_mapping.TargetTile.Top) * source_height_scaling) },
 						};
+
+						if (!source_image.ContainsSubRegion(source_region)) {
+							LogError("Source image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {})... Tile expected from target image {}...", source_file_path.value().string(),
+								source_region.x, source_region.y, source_region.width, source_region.height,
+								source_image.GetWidth(), source_image.GetHeight(), target_file_path.string());
+							continue;
+						}
+						if (!target_image.ContainsSubRegion(target_region)) {
+							LogError("Target image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {})... Tile expected from source image {}...", target_file_path.string(),
+								target_region.x, target_region.y, target_region.width, target_region.height,
+								target_image.GetWidth(), target_image.GetHeight(), source_file_path.value().string());
+							continue;
+						}
 
 						Image source_tile = source_image.GetSubImage(source_region);
 						const auto target_size = ::ImageSize{ .x{ static_cast<std::uint32_t>(target_region.width) }, .y{ static_cast<std::uint32_t>(target_region.height) } };

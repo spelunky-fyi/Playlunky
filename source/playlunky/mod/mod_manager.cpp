@@ -118,11 +118,26 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 				fs::path{ "Data/Textures/char_white.DDS" },
 				fs::path{ "Data/Textures/char_yellow.DDS" },
 				fs::path{ "Data/Textures/items.DDS" },
-				fs::path{ "Data/Textures/monsters_pets.DDS" },
 				fs::path{ "Data/Textures/mounts.DDS" },
+				fs::path{ "Data/Textures/monsters_pets.DDS" },
+				fs::path{ "Data/Textures/monstersbasic01.DDS" },
+				fs::path{ "Data/Textures/monstersbasic02.DDS" },
+				fs::path{ "Data/Textures/monstersbasic03.DDS" },
+				fs::path{ "Data/Textures/monsters01.DDS" },
+				fs::path{ "Data/Textures/monsters02.DDS" },
+				fs::path{ "Data/Textures/monsters03.DDS" },
+				fs::path{ "Data/Textures/monstersbig01.DDS" },
+				fs::path{ "Data/Textures/monstersbig02.DDS" },
+				fs::path{ "Data/Textures/monstersbig03.DDS" },
+				fs::path{ "Data/Textures/monstersbig04.DDS" },
+				fs::path{ "Data/Textures/monstersbig05.DDS" },
+				fs::path{ "Data/Textures/monstersbig06.DDS" },
+				fs::path{ "Data/Textures/monsters_ghost.DDS" },
+				fs::path{ "Data/Textures/monsters_osiris.DDS" },
 				fs::path{ "Data/Textures/journal_stickers.DDS" },
 				fs::path{ "Data/Textures/journal_entry_items.DDS" },
 				fs::path{ "Data/Textures/journal_entry_mons.DDS" },
+				fs::path{ "Data/Textures/journal_entry_mons_big.DDS" },
 				fs::path{ "Data/Textures/journal_entry_people.DDS" },
 				fs::path{ "Data/Textures/menu_leader.DDS" },
 				fs::path{ "shaders.hlsl" },
@@ -240,7 +255,8 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 					const auto full_asset_path = mod_folder / rel_asset_path;
 					const auto full_asset_path_string = full_asset_path.string();
 					if (algo::is_same_path(rel_asset_path.extension(), ".png")) {
-						const bool is_entity_asset = algo::is_same_path(rel_asset_path.parent_path().filename(), "Entities");
+						const bool is_entity_asset = algo::contains_if(rel_asset_path,
+							[](const fs::path& element) { return algo::is_same_path(element, "Entities"); });
 						const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
 						if (is_entity_asset || is_character_asset) {
 							sprite_sheet_merger.RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);

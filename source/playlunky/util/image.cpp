@@ -92,6 +92,15 @@ Image Image::Copy() {
 		});
 }
 
+bool Image::ContainsSubRegion(ImageSubRegion region) const {
+	const std::int32_t right = region.x + static_cast<std::int32_t>(region.width);
+	const std::int32_t bottom = region.y + static_cast<std::int32_t>(region.height);
+	return region.x >= 0
+		&& region.y >= 0
+		&& right <= static_cast<std::int32_t>(mImpl->Width)
+		&& bottom <= static_cast<std::int32_t>(mImpl->Height);
+}
+
 Image Image::GetSubImage(ImageSubRegion region) {
 	if (mImpl == nullptr) {
 		return {};

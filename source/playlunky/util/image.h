@@ -49,6 +49,8 @@ public:
 
 	Image Copy();
 
+	bool ContainsSubRegion(ImageSubRegion region) const;
+
 	Image GetSubImage(ImageSubRegion region);
 	Image GetSubImage(ImageTiling tiling, ImageSubRegion region);
 
