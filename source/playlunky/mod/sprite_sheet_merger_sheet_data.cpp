@@ -509,8 +509,8 @@ void SpriteSheetMerger::MakeMountsTargetSheet() {
 				.Size{.Width{ image_width }, .Height{ image_height } },
 				.TileMap = std::vector<TileMapping>{
 					TileMapping{
-						.SourceTile{ 0, 0, 1536, 512 },
-						.TargetTile{ 0, 512 * idx, 1536, 512 * idx + 512 },
+						.SourceTile{ 0, 0, 2048, 512 },
+						.TargetTile{ 0, 512 * idx, 2048, 512 * idx + 512 },
 					}
 				}
 			});
