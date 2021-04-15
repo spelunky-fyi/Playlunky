@@ -71,6 +71,13 @@ namespace algo {
 			return element.*member == val;
 		});
 	}
+	template<class ContainerT, class T, class U, class V>
+	requires range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>
+	bool contains(ContainerT&& container, U (T::* member)() const, V&& val) {
+		return contains_if(std::forward<ContainerT>(container), [member, val = std::forward<V>(val)](auto& element) {
+			return (element.*member)() == val;
+		});
+	}
 	template<class ContainerT, class ValueT>
 	requires range<ContainerT> && is_comparable<range_element_t<ContainerT>, ValueT>
 	bool contains(ContainerT&& container, ValueT&& value) {
@@ -94,6 +101,7 @@ namespace algo {
 		return static_cast<std::size_t>(std::count_if(begin_it, end_it, std::forward<FunT>(fun)));
 	}
 
+	std::string path_string(const std::filesystem::path& path);
 	bool is_same_path(const std::filesystem::path& lhs, const std::filesystem::path& rhs);
 	bool is_sub_path(const std::filesystem::path& path, const std::filesystem::path& base);
 	bool is_end_of_path(const std::filesystem::path& path, const std::filesystem::path& base);

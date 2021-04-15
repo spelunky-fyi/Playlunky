@@ -3,12 +3,15 @@
 #include <cctype>
 
 namespace algo {
+	std::string path_string(const std::filesystem::path& path) {
+		std::string str = path.string();
+		std::replace(str.begin(), str.end(), '\\', '/');
+		return str;
+	}
 	bool is_same_path(const std::filesystem::path& lhs, const std::filesystem::path& rhs)
 	{
-		auto lhs_str = lhs.string();
-		std::replace(lhs_str.begin(), lhs_str.end(), '\\', '/');
-		auto rhs_str = rhs.string();
-		std::replace(rhs_str.begin(), rhs_str.end(), '\\', '/');
+		const auto lhs_str = path_string(lhs);
+		const auto rhs_str = path_string(rhs);
 		return case_insensitive_equal(lhs_str, rhs_str);
 	}
 	bool is_sub_path(const std::filesystem::path& path, const std::filesystem::path& base) {

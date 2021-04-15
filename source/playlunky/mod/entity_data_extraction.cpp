@@ -34,13 +34,11 @@ struct TextureData {
 	std::uint32_t OffsetHeight;
 };
 
-void from_json(const nlohmann::json& j, AnimationData& anim)
-{
+void from_json(const nlohmann::json& j, AnimationData& anim) {
 	anim.FirstTileIndex = j["texture"];
 	anim.NumTiles = j["count"];
 }
-void from_json(const nlohmann::json& j, EntityData& ent)
-{
+void from_json(const nlohmann::json& j, EntityData& ent) {
 	ent.Id = j["id"];
 	std::unordered_map<std::string, AnimationData> animations;
 	j["animations"].get_to(animations);
@@ -55,8 +53,7 @@ void from_json(const nlohmann::json& j, EntityData& ent)
 		ent.TileY = j["tile_y"];
 	}
 }
-void from_json(const nlohmann::json& j, TextureData& tex)
-{
+void from_json(const nlohmann::json& j, TextureData& tex) {
 	tex.Path = j["path"];
 	tex.Width = j["width"];
 	tex.Height = j["height"];

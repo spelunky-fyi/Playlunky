@@ -22,7 +22,13 @@ struct TileMapping {
 };
 struct SourceSheet {
 	std::filesystem::path Path;
+	std::optional<std::filesystem::path> RootPath;
+	std::int64_t Priority{ std::numeric_limits<std::int64_t>::max() };
 	SheetSize Size;
 	std::vector<TileMapping> TileMap;
 	std::function<Image(Image, ImageSize)> Processing;
 };
+
+using CustomImageMap = std::vector<TileMapping>;
+using CustomImage = std::unordered_map<std::string, CustomImageMap>;
+using CustomImages = std::unordered_map<std::string, CustomImage>;

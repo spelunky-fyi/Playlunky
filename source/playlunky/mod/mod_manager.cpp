@@ -5,6 +5,7 @@
 #include "extract_game_assets.h"
 #include "fix_mod_structure.h"
 #include "mod_database.h"
+#include "mod_info.h"
 #include "png_dds_conversion.h"
 #include "shader_merge.h"
 #include "sprite_sheet_merger.h"
@@ -278,7 +279,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 		bool has_outdated_shaders{ false };
 
 		for (const fs::path& mod_folder : mod_folders) {
-			std::string mod_name = mod_folder.filename().string(); // Not const so we can move from it later
+			const std::string mod_name = mod_folder.filename().string();
 			const auto mod_db_folder = db_folder / "Mods" / mod_name;
 
 			const auto [prio, enabled] = [&mod_name_to_prio, &mod_name, &mod_folder]() mutable {
@@ -295,15 +296,25 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 				return std::pair{ prio, enabled };
 			}();
 
+			ModInfo mod_info{ mod_name };
+
 			{
 				ModDatabase mod_db{ mod_db_folder, mod_folder, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Recurse) };
 				mod_db.SetEnabled(enabled);
 				mod_db.UpdateDatabase();
+				mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool, bool, std::optional<bool>) {
+					if (!mod_info.HasExtendedInfo() && algo::is_same_path(rel_asset_path.filename(), "mod_info.json")) {
+						const auto full_asset_path = mod_folder / rel_asset_path;
+						const auto full_asset_path_string = full_asset_path.string();
+						mod_info.ReadExtendedInfoFromJson(full_asset_path_string);
+						sprite_sheet_merger.RegisterCustomImages(mod_folder, db_original_folder, prio, mod_info.GetCustomImages());
+					}
+				});
 				mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool outdated, bool deleted, std::optional<bool> new_enabled_state) {
-					const auto rel_asset_path_string = rel_asset_path.string();
+					const auto rel_asset_path_string = algo::path_string(rel_asset_path);
 
 					const auto full_asset_path = mod_folder / rel_asset_path;
-					const auto full_asset_path_string = full_asset_path.string();
+					const auto full_asset_path_string = algo::path_string(full_asset_path);
 
 					if (speedrun_mode_changed) {
 						outdated = true;
@@ -314,7 +325,8 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 						const bool is_entity_asset = algo::contains_if(rel_asset_path,
 							[](const fs::path& element) { return algo::is_same_path(element, "Entities"); });
 						const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
-						if (is_entity_asset || is_character_asset) {
+						const bool is_custom_image_source = mod_info.IsCustomImageSource(rel_asset_path_string);
+						if (is_entity_asset || is_character_asset || is_custom_image_source) {
 							sprite_sheet_merger.RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);
 							return;
 						}
@@ -386,7 +398,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 					vfs.MountFolder(mod_db_folder.string(), prio);
 				}
 
-				mMods.push_back(std::move(mod_name));
+				mMods.push_back(std::move(mod_info));
 			}
 		}
 
@@ -458,7 +470,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
 			if (auto load_order_file = std::ofstream{ mods_root_path / "load_order.txt", std::ios::trunc }) {
 				for (auto& [prio, mod_name_and_state] : mod_prio_to_name) {
-					if (algo::contains(mMods, mod_name_and_state.Name)) {
+					if (algo::contains(mMods, &ModInfo::GetName, mod_name_and_state.Name)) {
 						if (!mod_name_and_state.Enabled) {
 							load_order_file << "--";
 						}
@@ -485,6 +497,8 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 		LogInfo("No mods were initialized...");
 	}
 }
+ModManager::~ModManager() = default;
+
 
 void ModManager::PostGameInit() {
 	InitSoundManager([](const char* file_path) {

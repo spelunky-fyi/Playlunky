@@ -1,6 +1,7 @@
 #include "sprite_sheet_merger.h"
 
 #include "entity_data_extraction.h"
+#include "extract_game_assets.h"
 #include "generate_sticker_pixel_art.h"
 #include "log.h"
 #include "png_dds_conversion.h"
@@ -75,10 +76,65 @@ void SpriteSheetMerger::RegisterSheet(const std::filesystem::path& full_sheet, b
 		return;
 	}
 	m_RegisteredSourceSheets.push_back(RegisteredSourceSheet{
-			.Path = full_sheet,
-			.Outdated = outdated,
-			.Deleted = deleted
-		});
+		.Path = full_sheet,
+		.Outdated = outdated,
+		.Deleted = deleted
+	});
+}
+void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_path, const std::filesystem::path& original_data_folder,
+	std::int64_t priority, const CustomImages& custom_images) {
+	namespace fs = std::filesystem;
+
+	for (const auto& [relative_path, custom_image] : custom_images) {
+		const auto absolute_path = base_path / relative_path;
+		if (!fs::exists(absolute_path)) {
+			LogError("Custom image mapping from file {} is registered for mod {}, but the file does not exist in the mod...", relative_path, base_path.filename().string());
+			continue;
+		}
+
+		Image source_image;
+		source_image.LoadInfoFromPng(absolute_path);
+
+		for (const auto& [target_sheet, custom_image_map] : custom_image) {
+			if (TargetSheet* existing_target_sheet = algo::find(m_TargetSheets, &TargetSheet::Path, target_sheet)) {
+				auto it = std::upper_bound(existing_target_sheet->SourceSheets.begin(), existing_target_sheet->SourceSheets.end(), priority,
+					[](std::int64_t prio, const SourceSheet& sheet) { return sheet.Priority < prio; });
+				existing_target_sheet->SourceSheets.insert(it, SourceSheet{
+					.Path{ relative_path },
+					.RootPath{ base_path },
+					.Size{.Width{ source_image.GetWidth() }, .Height{ source_image.GetHeight() } },
+					.TileMap{ custom_image_map }
+				});
+			}
+			else {
+				fs::path target_sheet_path = fs::path{ target_sheet }.replace_extension(".DDS");
+				if (ExtractGameAssets(std::array{ target_sheet_path }, original_data_folder)) {
+					const auto target_file_path = original_data_folder / target_sheet;
+					Image target_image;
+					target_image.LoadInfoFromPng(target_file_path);
+					
+					const auto source_sheets = std::vector<SourceSheet>{
+						SourceSheet{
+							.Path{ relative_path },
+							.RootPath{ base_path },
+							.Priority{ priority },
+							.Size{ .Width{ source_image.GetWidth() }, .Height{ source_image.GetHeight() } },
+							.TileMap{ custom_image_map }
+						}
+					};
+
+					m_TargetSheets.push_back(TargetSheet{
+						.Path{ target_sheet },
+						.Size{ .Width{ target_image.GetWidth() }, .Height{ target_image.GetHeight() } },
+						.SourceSheets{ std::move(source_sheets) }
+					});
+				}
+				else {
+					LogError("Failed extracting game asset {} required by mod {}...", target_sheet, base_path.filename().string());
+				}
+			}
+		}
+	}
 }
 
 bool SpriteSheetMerger::NeedsRegeneration(const std::filesystem::path& destination_folder) const {
@@ -100,8 +156,7 @@ bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::f
 	const bool does_exist = fs::exists(fs::path{ destination_folder / target_sheet.Path }.replace_extension(".DDS"));
 	const bool random_select = target_sheet.RandomSelect;
 	for (const SourceSheet& source_sheet : target_sheet.SourceSheets) {
-		if (const RegisteredSourceSheet* registered_sheet = algo::find_if(m_RegisteredSourceSheets,
-			[&source_sheet](const RegisteredSourceSheet& sheet) { return sheet.Path == source_sheet.Path; })) {
+		if (const RegisteredSourceSheet* registered_sheet = algo::find(m_RegisteredSourceSheets, &RegisteredSourceSheet::Path, source_sheet.Path)) {
 			if (!does_exist
 				|| random_select
 				|| registered_sheet->Outdated
@@ -128,8 +183,11 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 			const float target_height_scaling = static_cast<float>(target_image.GetHeight()) / target_sheet.Size.Height;
 
 			for (const SourceSheet& source_sheet : target_sheet.SourceSheets) {
-				const auto source_file_path = [&vfs, &source_sheet, random_select = target_sheet.RandomSelect]() {
-					if (!random_select) {
+				const auto source_file_path = [&vfs, &source_sheet, random_select = target_sheet.RandomSelect]() -> std::optional<fs::path> {
+					if (source_sheet.RootPath) {
+						return source_sheet.RootPath.value() / source_sheet.Path;
+					}
+					else if (!random_select) {
 						return vfs.GetFilePath(source_sheet.Path);
 					}
 					else {

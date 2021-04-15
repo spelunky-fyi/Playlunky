@@ -9,7 +9,7 @@
 class ModManager {
 public:
 	ModManager(std::string_view mods_root, const class PlaylunkySettings& settings, class VirtualFilesystem& vfs);
-	~ModManager() = default;
+	~ModManager();
 
 	ModManager() = delete;
 	ModManager(const ModManager&) = delete;
@@ -24,7 +24,7 @@ public:
 	void Draw();
 
 private:
-	std::vector<std::string> mMods;
+	std::vector<class ModInfo> mMods;
 	ScriptManager mScriptManager;
 	bool mDeveloperMode;
 };

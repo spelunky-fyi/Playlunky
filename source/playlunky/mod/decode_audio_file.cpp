@@ -10,11 +10,11 @@
 
 DecodedAudioBuffer DecodeAudioFile(const std::filesystem::path& file_path)
 {
-#ifdef _DEBUG
-	if (file_path.extension() == ".ogg") {
-		return {};
-	}
-#endif
+//#ifdef _DEBUG
+//	if (file_path.extension() == ".ogg") {
+//		return {};
+//	}
+//#endif
 
 	nqr::AudioData decoded_data;
 	nqr::NyquistIO loader;
