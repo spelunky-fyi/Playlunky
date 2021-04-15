@@ -1,6 +1,6 @@
 # Playlunky
 <p align="center">
-  <img src="https://img.shields.io/badge/Spelunky 2-1.20.3c-orange">
+  <img src="https://img.shields.io/badge/Spelunky 2-1.20.4d-orange">
   <a href="https://isocpp.org/">
       <img src="https://img.shields.io/badge/language-C%2B%2B20-blue.svg">
   </a>
@@ -15,13 +15,25 @@
   </a>
 </p>
 
-This is a launcher for Spelunky 2 that injects a dll for extended mod management. It currently supports string, shader and sprite mods, with some extended features for more fine grained modding. See the wiki for details.
+This is a launcher for Spelunky 2 that injects a dll for extended mod management. It currently supports string, shader, sprite and string mods, with some extended features for more fine grained modding. See the [Wiki](https://github.com/spelunky-fyi/Playlunky/wiki) for details.
+
+## Features
+* Loose loading of resources
+* Mod Management
+  * Sprite mods
+  * Shader mods
+  * String mods
+  * Script mods
+For more details on each feature check the [Wiki](https://github.com/spelunky-fyi/Playlunky/wiki).
+
+### Development Features
+* Anti-anti-debug injection via ScyllaHide
+* Logging to console via `--console`
 
 ## Credits
 A huge thanks to the [spelunky-fyi](https://github.com/spelunky-fyi) team for their input, suggestions, support and for making all their hard work open source. Special thanks to `gmosjack`, `Dregu` and `iojonmbnmb` that made it possible for this tool to exist.
 
 ## Build
-
 Only Windows build is supported:
 ```sh
 git clone git@github.com:spelunky-fyi/Playlunky.git
@@ -47,29 +59,3 @@ If you have installed Spelunky 2 then the install folder should be found during 
 #### Anti-Debugging Prevention
 This section can be ignored for Spelunky 2 versions 1.20.0j or older.
 If the game employs any anti-debugging strategies it is supported to inject ScyllaHide into the game process. To do this download [ScyllaHide from Github](https://github.com/x64dbg/ScyllaHide/tags) and extract it into a ScyllaHide subfolder right next to the game. The `playlunky64.dll` will do the rest.
-
-## Usage
-Copy all build artifacts into your Spelunky 2 folder, from there you can launch `playlunky_launcher.exe` to launch the game with the dll injected.
-
-## Features
-* Loose loading of resources    
-    * The game still loads files packed in the exe
-    * Prioritizes loose files over files packed in the exe
-* Anti-anti-debug injection
-    * If ScyllaHide exists next to the exe it will inject that to circumvent any anti-debugging measures that might exist in the exe (there appear to be none in this version, but there were in pervious versions)
-    * Only tries to inject ScyllaHide if a debugger is attached to the exe on boot
-* Logging to console
-    * Creates a console window if started with `--console` that grabs all of the games logging output for easier debugging 
-* Mod Management
-    * Loads mods from the `Mods/Packs` folder, where each folder is one mod
-    * Users can specify priority of mods using the `Mods/Packs/load_order.txt` file (useful in case multiple mods replace the same asset)
-    * Settings are specified in playlunky.ini
-        * Random Character Select: Everytime the game is launched for each character a random sheet will be loaded out of all installed and enabled mods. For example if you installed 5 mods that all change Roffy you will get a random version of Roffy every time you launch the game. Note that this only changes the visuals, not any strings and also does not currently work for full entity mods of characters.
-    * On first load:
-        * zip files get extracted into their own mod folders
-        * the files in the mod folder are reorganized to align with the games original structure
-        * entity sprite sheets (as provided by Modlunky in the form of `Entities/*_full.png`) are merged into their respective sheets for the game
-        * all other png files are automatically converted to dds, so mods can be distributed as usual (mods store a small database to catch when they get updated)
-        * shader mods in the form of `shaders_mod.hlsl` get merged into `shaders.hlsl`
-        * string mods in the form of `strings##_mod.str` (where ## is any of the valid numbers) get merged into `strings##.str`
-        * additionally stickers and journal entries are generated from character mods
