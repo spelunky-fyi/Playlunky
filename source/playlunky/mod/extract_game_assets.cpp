@@ -45,7 +45,7 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
         return true;
     }
 
-    LogInfo("Extracting required game assets from Spel2.exe...");
+    LogInfo("Extracting required game assets from Spel2.exe, this might take a few minutes...");
 
 	if (void* data = SigScan::GetDataSection()) {
         struct Asset {
