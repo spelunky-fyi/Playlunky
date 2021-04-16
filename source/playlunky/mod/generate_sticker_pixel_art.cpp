@@ -22,6 +22,11 @@ Image GenerateStickerPixelArt(Image input, ImageSize target_size) {
 	};
 
 	Image result = std::move(input);
+	
+	// Return empty image
+	if (result.IsEmpty()) {
+		return result;
+	}
 
 	// Do KMeans
 	{
