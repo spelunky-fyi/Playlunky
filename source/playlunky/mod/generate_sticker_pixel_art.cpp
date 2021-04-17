@@ -45,7 +45,7 @@ Image GenerateStickerPixelArt(Image input, ImageSize target_size) {
 			color_only.convertTo(k_means_src, CV_32F);
 			k_means_src = k_means_src.reshape(1, static_cast<std::int32_t>(k_means_src.total()));
 
-			const std::int32_t k = 8;
+			constexpr std::int32_t k = 4;
 			cv::Mat best_labels, centers, clustered;
 			cv::kmeans(k_means_src, k, best_labels,
 				cv::TermCriteria(cv::TermCriteria::Type::EPS | cv::TermCriteria::Type::MAX_ITER, 10, 1.0),
