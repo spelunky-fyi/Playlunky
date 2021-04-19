@@ -148,7 +148,7 @@ void ScriptManager::Draw() {
 				}
 
 				if (meta.description != nullptr && std::strlen(meta.description) > 0) {
-					ImGui::TextUnformatted(meta.description);
+					ImGui::TextWrapped("%s", meta.description);
 				}
 
 				if (mod.ScriptEnabled)
