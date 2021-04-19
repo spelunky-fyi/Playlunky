@@ -43,7 +43,10 @@ void ScriptManager::CommitScripts() {
 void ScriptManager::RefreshScripts() {
 	for (RegisteredMainScript& mod : mMods) {
 		const std::string path_string = mod.MainPath.string();
-		SpelunkyScipt_ReloadScript(mod.Script, path_string.c_str());
+		if (mod.Script != nullptr) {
+			FreeScript(mod.Script);
+		}
+		mod.Script = CreateScript(path_string.c_str(), mod.ScriptEnabled);
 		mod.LastResult.clear();
 	}
 }
