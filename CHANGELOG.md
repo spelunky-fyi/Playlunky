@@ -6,6 +6,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2021-04-19
+
+### Changed
+- Stronger posterization on sticker pixel art gen
+- Scripts now execute according to load order
+- Mod folder fixup moves only known texture and audio files
+- Make the watermark almost invisible during gameplay
+- Made the log output when extracting game assets a bit clearer
+
+### Fixed
+- Invalidate cache when sprite settings change
+- Bug when loading old mounts entity sheets
+- Crash with partially incomplete character sheets
+- Wrap script descriptions instead of cutting them off
+- Correctly reinitialize scripts when reloading them
+
+### Added
+- All the new entity sheets
+- Custom sprite sheet mapping
+- Warning for unsafe scripts
+- Speedrun mode that loads only character mods and has no watermark during gameplay
+
+### Removed
+- The need for steam_appid.txt when running Playlunky
+
 ## [0.7.1] - 2021-04-02
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.4d-orange">
