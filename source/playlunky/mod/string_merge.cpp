@@ -5,6 +5,8 @@
 #include "util/algorithms.h"
 #include "util/format.h"
 
+#include <spel2.h>
+
 #include <charconv>
 #include <fstream>
 #include <unordered_map>
@@ -80,6 +82,7 @@ bool StringMerger::MergeStrings(
 						fs::create_directories(destination_folder);
 					}
 					fs::copy_file(string_table_source_file, string_table_destination_file, fs::copy_options::overwrite_existing);
+					SetWriteLoadOptimization(true);
 				}
 			}
 		}
@@ -95,6 +98,10 @@ bool StringMerger::MergeStrings(
 				{
 					const auto string_table_mod_name = fmt::format("strings{:02}_mod.str", outdated_string_table.Index);
 					const auto string_table_source_files = vfs.GetAllFilePaths(string_table_mod_name);
+
+					if (!string_table_source_files.empty()) {
+						SetWriteLoadOptimization(true);
+					}
 
 					for (const auto& string_table_source_file : string_table_source_files) {
 						if (auto source_file = std::ifstream{ string_table_source_file }) {

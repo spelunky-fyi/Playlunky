@@ -66,6 +66,8 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
 	LogInfo("Scanning for mods...");
 
+	SetWriteLoadOptimization(false);
+
 	const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
 	if (speedrun_mode) {
 		vfs.RestrictFiles({ std::begin(s_SpeedrunFiles), std::end(s_SpeedrunFiles) });

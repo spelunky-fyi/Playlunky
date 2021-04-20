@@ -6,6 +6,8 @@
 #include "util/image.h"
 #include "util/regex.h"
 
+#include "spel2.h"
+
 #include <fstream>
 #include <unordered_map>
 

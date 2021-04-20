@@ -13,29 +13,34 @@ bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::
 	}
 	auto it = std::upper_bound(mMods.begin(), mMods.end(), priority, [](std::int64_t prio, const RegisteredMainScript& mod) { return mod.Priority > prio; });
 	mMods.insert(it, RegisteredMainScript{
-			.ModName{ std::string{ mod_name } },
-			.MainPath{ main_path },
-			.Priority{ priority},
-			.Enabled{ enabled },
-			.ScriptEnabled{ enabled }
-		});
+		.ModName{ std::string{ mod_name } },
+		.MainPath{ main_path },
+		.Priority{ priority},
+		.Enabled{ enabled },
+		.ScriptEnabled{ enabled }
+	});
+	if (enabled) {
+		SetWriteLoadOptimization(true);
+	}
 	return true;
 }
 
 void ScriptManager::CommitScripts() {
 	for (RegisteredMainScript& mod : mMods) {
-		const std::string path_string = mod.MainPath.string();
-		mod.Script = CreateScript(path_string.c_str(), false);
-		if (mod.Script != nullptr) {
-			mod.TestScriptResult();
+		if (mod.Enabled) {
+			const std::string path_string = mod.MainPath.string();
+			mod.Script = CreateScript(path_string.c_str(), false);
+			if (mod.Script != nullptr) {
+				mod.TestScriptResult();
 
-			SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script);
-			mod.Unsafe = meta.unsafe;
-			if (meta.unsafe) {
-				mod.ScriptEnabled = false;
-			}
-			else {
-				SpelunkyScipt_SetEnabled(mod.Script, mod.ScriptEnabled);
+				SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script);
+				mod.Unsafe = meta.unsafe;
+				if (meta.unsafe) {
+					mod.ScriptEnabled = false;
+				}
+				else {
+					SpelunkyScipt_SetEnabled(mod.Script, mod.ScriptEnabled);
+				}
 			}
 		}
 	}
