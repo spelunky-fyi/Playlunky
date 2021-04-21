@@ -13,6 +13,7 @@
 #include "string_merge.h"
 #include "unzip_mod.h"
 #include "virtual_filesystem.h"
+#include "playlunky.h"
 #include "playlunky_settings.h"
 
 #include "log.h"
@@ -323,11 +324,21 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 						deleted = true;
 					}
 
-					if (algo::is_same_path(rel_asset_path.extension(), ".png")) {
+					if (algo::is_same_path(rel_asset_path.extension(), ".lvl")) {
+						Playlunky::Get().RegisterModType(ModType::Level);
+					}
+					else if (algo::is_same_path(rel_asset_path.extension(), ".dds")) {
+						const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
+						Playlunky::Get().RegisterModType(is_character_asset ? ModType::CharacterSprite : ModType::Sprite);
+					}
+					else if (algo::is_same_path(rel_asset_path.extension(), ".png")) {
 						const bool is_entity_asset = algo::contains_if(rel_asset_path,
 							[](const fs::path& element) { return algo::is_same_path(element, "Entities"); });
 						const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
 						const bool is_custom_image_source = mod_info.IsCustomImageSource(rel_asset_path_string);
+
+						Playlunky::Get().RegisterModType(is_character_asset ? ModType::CharacterSprite : ModType::Sprite);
+
 						if (is_entity_asset || is_character_asset || is_custom_image_source) {
 							sprite_sheet_merger.RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);
 							return;
@@ -487,6 +498,10 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 			ModDatabase mod_db{ db_folder, mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
 			mod_db.UpdateDatabase();
 			mod_db.WriteDatabase();
+		}
+
+		if (Playlunky::Get().IsModTypeLoaded(ModType::Script | ModType::Level)) {
+			SetWriteLoadOptimization(true);
 		}
 
 		LogInfo("All mods initialized...");

@@ -7,9 +7,8 @@
 #include "mod/cache_audio_file.h"
 #include "mod/virtual_filesystem.h"
 #include "util/on_scope_exit.h"
+#include "playlunky.h"
 #include "playlunky_settings.h"
-
-#include <spel2.h>
 
 #include <cassert>
 #include <cstdint>
@@ -437,7 +436,7 @@ struct DetourFmodSystemLoadBankMemory {
 					if (s_CacheDecodedFiles) {
 						const auto modded_sample = s_FmodVfs->GetFilePath(fmt::format("raw_audio/{}.raw", sample.Name));
 						if (modded_sample.has_value() && std::filesystem::exists(modded_sample.value())) {
-							SetWriteLoadOptimization(true);
+							Playlunky::Get().RegisterModType(ModType::Sound);
 							sample.Buffer = LoadCachedAudioFile(modded_sample.value());
 						}
 					}
@@ -468,7 +467,7 @@ struct DetourFmodSystemLoadBankMemory {
 							return file_path;
 						}(sample.Name); 
 						if (modded_sample.has_value() && std::filesystem::exists(modded_sample.value())) {
-							SetWriteLoadOptimization(true);
+							Playlunky::Get().RegisterModType(ModType::Sound);
 							sample.Buffer = DecodeAudioFile(modded_sample.value());
 						}
 					}

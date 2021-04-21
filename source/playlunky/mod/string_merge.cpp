@@ -2,10 +2,9 @@
 
 #include "log.h"
 #include "virtual_filesystem.h"
+#include "playlunky.h"
 #include "util/algorithms.h"
 #include "util/format.h"
-
-#include <spel2.h>
 
 #include <charconv>
 #include <fstream>
@@ -82,7 +81,7 @@ bool StringMerger::MergeStrings(
 						fs::create_directories(destination_folder);
 					}
 					fs::copy_file(string_table_source_file, string_table_destination_file, fs::copy_options::overwrite_existing);
-					SetWriteLoadOptimization(true);
+					Playlunky::Get().RegisterModType(ModType::String);
 				}
 			}
 		}
@@ -100,7 +99,7 @@ bool StringMerger::MergeStrings(
 					const auto string_table_source_files = vfs.GetAllFilePaths(string_table_mod_name);
 
 					if (!string_table_source_files.empty()) {
-						SetWriteLoadOptimization(true);
+						Playlunky::Get().RegisterModType(ModType::String);
 					}
 
 					for (const auto& string_table_source_file : string_table_source_files) {

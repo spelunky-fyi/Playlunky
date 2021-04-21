@@ -1,6 +1,7 @@
 #include "script_manager.h"
 
 #include "log.h"
+#include "playlunky.h"
 #include "util/algorithms.h"
 
 #include <spel2.h>
@@ -20,7 +21,7 @@ bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::
 		.ScriptEnabled{ enabled }
 	});
 	if (enabled) {
-		SetWriteLoadOptimization(true);
+		Playlunky::Get().RegisterModType(ModType::Script);
 	}
 	return true;
 }
