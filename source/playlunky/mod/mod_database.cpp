@@ -3,6 +3,7 @@
 #include "util/algorithms.h"
 
 #include <fstream>
+#include <Windows.h>
 
 // Previously used magic numbers:
 //		0xF00DBAAD -- v0.3.0
@@ -13,7 +14,8 @@
 //		0xABCDEF16 -- v0.7.0
 //		0xABACAB00 -- v0.7.1
 //		0xBEDD1BED -- v0.7.2
-static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xBEDD1BED };
+//		0xDEE25CA2 -- v0.7.3
+static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xDEE25CA2 };
 
 ModDatabase::ModDatabase(std::filesystem::path database_folder, std::filesystem::path mod_folder, ModDatabaseFlags flags)
 	: mDatabaseFolder(std::move(database_folder))
@@ -113,8 +115,29 @@ ModDatabase::~ModDatabase() = default;
 
 void ModDatabase::UpdateDatabase() {
 	namespace fs = std::filesystem;
-
 	if (fs::exists(mModFolder) && fs::is_directory(mModFolder)) {
+		static auto get_last_write_time = [](const fs::path& file_path) {
+			HANDLE file = CreateFile(file_path.string().c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+			if (file != INVALID_HANDLE_VALUE) {
+				FILETIME last_write_time;
+				if (GetFileTime(file, NULL, NULL, &last_write_time)) {
+					SYSTEMTIME system_time;
+					if (FileTimeToSystemTime(&last_write_time, &system_time)) {
+						std::tm tm;
+						tm.tm_sec = system_time.wSecond;
+						tm.tm_min = system_time.wMinute;
+						tm.tm_hour = system_time.wHour;
+						tm.tm_mday = system_time.wDay;
+						tm.tm_mon = system_time.wMonth - 1;
+						tm.tm_year = system_time.wYear - 1900;
+						tm.tm_isdst = -1;
+						return std::mktime(&tm);
+					}
+				}
+			}
+			return time_t{ 0 };
+		};
+
 		auto do_iteration = [this](const fs::path& path) {
 			if (algo::is_sub_path(path, mDatabaseFolder)) {
 				return false;
@@ -125,8 +148,7 @@ void ModDatabase::UpdateDatabase() {
 
 					using fs_clock = fs::file_time_type::clock;
 					using std::chrono::system_clock;
-					const auto system_clock_time = time_point_cast<system_clock::duration>(fs::last_write_time(path) - fs_clock::now() + system_clock::now());
-					const auto last_write_time = system_clock::to_time_t(system_clock_time);
+					const auto last_write_time = get_last_write_time(path);
 
 					if (ItemDescriptor* existing_file = algo::find(mFiles, &ItemDescriptor::Path, rel_file_path)) {
 						existing_file->LastWrite = last_write_time;
@@ -142,9 +164,9 @@ void ModDatabase::UpdateDatabase() {
 					const auto rel_folder_path = fs::relative(path, mModFolder);
 
 					auto get_last_folder_write_time = [](const fs::path& folder_path) {
-						auto oldest_write_time = fs::last_write_time(folder_path);
+						auto oldest_write_time = get_last_write_time(folder_path);
 						for (auto& file_path : fs::recursive_directory_iterator(folder_path)) {
-							const auto file_write_time = fs::last_write_time(file_path);
+							const auto file_write_time = get_last_write_time(file_path);
 							oldest_write_time = std::min(oldest_write_time, file_write_time);
 						}
 						return oldest_write_time;
@@ -152,8 +174,7 @@ void ModDatabase::UpdateDatabase() {
 
 					using fs_clock = fs::file_time_type::clock;
 					using std::chrono::system_clock;
-					const auto system_clock_time = time_point_cast<system_clock::duration>(get_last_folder_write_time(path) - fs_clock::now() + system_clock::now());
-					const auto last_write_time = system_clock::to_time_t(system_clock_time);
+					const auto last_write_time = get_last_folder_write_time(path);
 
 					if (ItemDescriptor* existing_file = algo::find(mFolders, &ItemDescriptor::Path, rel_folder_path)) {
 						existing_file->LastWrite = last_write_time;

@@ -3,6 +3,8 @@
 #include <filesystem>
 #include <optional>
 
+#include "log.h"
+
 using ModDatabaseFlagsInt = std::int8_t;
 enum ModDatabaseFlags : ModDatabaseFlagsInt {
 	ModDatabaseFlags_Files = 1 << 0,
@@ -16,6 +18,7 @@ public:
 	~ModDatabase();
 
 	void SetEnabled(bool enabled) { mIsEnabled = enabled; }
+
 	void UpdateDatabase();
 	void WriteDatabase() const;
 
