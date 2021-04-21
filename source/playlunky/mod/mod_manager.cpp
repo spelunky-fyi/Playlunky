@@ -304,105 +304,108 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 			{
 				ModDatabase mod_db{ mod_db_folder, mod_folder, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Recurse) };
 				mod_db.SetEnabled(enabled);
-				mod_db.UpdateDatabase();
-				mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool, bool, std::optional<bool>) {
-					if (!mod_info.HasExtendedInfo() && algo::is_same_path(rel_asset_path.filename(), "mod_info.json")) {
+
+				if (mod_db.IsEnabled() || mod_db.WasEnabled()) {
+					mod_db.UpdateDatabase();
+					mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool, bool, std::optional<bool>) {
+						if (!mod_info.HasExtendedInfo() && algo::is_same_path(rel_asset_path.filename(), "mod_info.json")) {
+							const auto full_asset_path = mod_folder / rel_asset_path;
+							const auto full_asset_path_string = full_asset_path.string();
+							mod_info.ReadExtendedInfoFromJson(full_asset_path_string);
+							sprite_sheet_merger.RegisterCustomImages(mod_folder, db_original_folder, prio, mod_info.GetCustomImages());
+						}
+					});
+					mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool outdated, bool deleted, std::optional<bool> new_enabled_state) {
+						const auto rel_asset_path_string = algo::path_string(rel_asset_path);
+
 						const auto full_asset_path = mod_folder / rel_asset_path;
-						const auto full_asset_path_string = full_asset_path.string();
-						mod_info.ReadExtendedInfoFromJson(full_asset_path_string);
-						sprite_sheet_merger.RegisterCustomImages(mod_folder, db_original_folder, prio, mod_info.GetCustomImages());
-					}
-				});
-				mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool outdated, bool deleted, std::optional<bool> new_enabled_state) {
-					const auto rel_asset_path_string = algo::path_string(rel_asset_path);
+						const auto full_asset_path_string = algo::path_string(full_asset_path);
 
-					const auto full_asset_path = mod_folder / rel_asset_path;
-					const auto full_asset_path_string = algo::path_string(full_asset_path);
-
-					if (speedrun_mode_changed) {
-						outdated = true;
-						deleted = true;
-					}
-
-					if (algo::is_same_path(rel_asset_path.extension(), ".lvl")) {
-						Playlunky::Get().RegisterModType(ModType::Level);
-					}
-					else if (algo::is_same_path(rel_asset_path.extension(), ".dds")) {
-						const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
-						Playlunky::Get().RegisterModType(is_character_asset ? ModType::CharacterSprite : ModType::Sprite);
-					}
-					else if (algo::is_same_path(rel_asset_path.extension(), ".png")) {
-						const bool is_entity_asset = algo::contains_if(rel_asset_path,
-							[](const fs::path& element) { return algo::is_same_path(element, "Entities"); });
-						const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
-						const bool is_custom_image_source = mod_info.IsCustomImageSource(rel_asset_path_string);
-
-						Playlunky::Get().RegisterModType(is_character_asset ? ModType::CharacterSprite : ModType::Sprite);
-
-						if (is_entity_asset || is_character_asset || is_custom_image_source) {
-							sprite_sheet_merger.RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);
-							return;
+						if (speedrun_mode_changed) {
+							outdated = true;
+							deleted = true;
 						}
 
-						if (outdated || deleted) {
-							const auto db_destination = (mod_db_folder / rel_asset_path).replace_extension(".dds");
+						if (algo::is_same_path(rel_asset_path.extension(), ".lvl")) {
+							Playlunky::Get().RegisterModType(ModType::Level);
+						}
+						else if (algo::is_same_path(rel_asset_path.extension(), ".dds")) {
+							const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
+							Playlunky::Get().RegisterModType(is_character_asset ? ModType::CharacterSprite : ModType::Sprite);
+						}
+						else if (algo::is_same_path(rel_asset_path.extension(), ".png")) {
+							const bool is_entity_asset = algo::contains_if(rel_asset_path,
+								[](const fs::path& element) { return algo::is_same_path(element, "Entities"); });
+							const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
+							const bool is_custom_image_source = mod_info.IsCustomImageSource(rel_asset_path_string);
 
+							Playlunky::Get().RegisterModType(is_character_asset ? ModType::CharacterSprite : ModType::Sprite);
+
+							if (is_entity_asset || is_character_asset || is_custom_image_source) {
+								sprite_sheet_merger.RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);
+								return;
+							}
+
+							if (outdated || deleted) {
+								const auto db_destination = (mod_db_folder / rel_asset_path).replace_extension(".dds");
+
+								if (deleted) {
+									if (fs::remove(db_destination)) {
+										LogInfo("Successfully deleted file '{}' that was removed from a mod...", full_asset_path.string());
+									}
+								}
+								else if (ConvertPngToDds(full_asset_path, db_destination))
+								{
+									LogInfo("Successfully converted file '{}' to be readable by the game...", full_asset_path.string());
+								}
+								else {
+									LogError("Failed converting file '{}' to be readable by the game...", full_asset_path.string());
+								}
+							}
+						}
+						else if (algo::is_same_path(rel_asset_path.extension(), ".str")) {
+							if (outdated || deleted || new_enabled_state.has_value()) {
+								if (auto string_match = ctre::match<s_StringFileRule>(rel_asset_path_string)) {
+									const auto table = string_match.get<1>().to_view();
+									if (!string_merger.RegisterOutdatedStringTable(table)) {
+										LogInfo("String file {} is not a valid string file...", full_asset_path_string);
+									}
+								}
+								else if (auto string_mod_match = ctre::match<s_StringModFileRule>(rel_asset_path_string)) {
+									const auto table = string_mod_match.get<1>().to_view();
+									if (!string_merger.RegisterOutdatedStringTable(table) || !string_merger.RegisterModdedStringTable(table)) {
+										LogInfo("String mod {} is not a valid string mod...", full_asset_path_string);
+									}
+								}
+							}
+						}
+						else if (algo::is_same_path(rel_asset_path, "shaders_mod.hlsl")) {
+							has_outdated_shaders = has_outdated_shaders || outdated || deleted || new_enabled_state.has_value();
+						}
+						else if (cache_decoded_audio_files && IsSupportedAudioFile(rel_asset_path)) {
 							if (deleted) {
-								if (fs::remove(db_destination)) {
-									LogInfo("Successfully deleted file '{}' that was removed from a mod...", full_asset_path.string());
+								DeleteCachedAudioFile(full_asset_path, mod_db_folder);
+							}
+							else if (!HasCachedAudioFile(full_asset_path, mod_db_folder)) {
+								if (CacheAudioFile(full_asset_path, mod_db_folder, outdated)) {
+									LogInfo("Successfully cached audio file '{}'...", full_asset_path.string());
+								}
+								else {
+									LogError("Failed caching audio file '{}'...", full_asset_path.string());
 								}
 							}
-							else if (ConvertPngToDds(full_asset_path, db_destination))
-							{
-								LogInfo("Successfully converted file '{}' to be readable by the game...", full_asset_path.string());
+						}
+						else if (!speedrun_mode && enabled && !deleted && algo::is_same_path(rel_asset_path.filename(), "main.lua")) {
+							if (mScriptManager.RegisterModWithScript(mod_name, full_asset_path, prio, enabled)) {
+								LogInfo("Mod {} registered as a script mod with entry {}...", mod_name, full_asset_path_string);
 							}
 							else {
-								LogError("Failed converting file '{}' to be readable by the game...", full_asset_path.string());
+								LogError("Mod {} appears to contain multiple main.lua files... {} will be ignored...", mod_name, full_asset_path_string);
 							}
 						}
-					}
-					else if (algo::is_same_path(rel_asset_path.extension(), ".str")) {
-						if (outdated || deleted || new_enabled_state.has_value()) {
-							if (auto string_match = ctre::match<s_StringFileRule>(rel_asset_path_string)) {
-								const auto table = string_match.get<1>().to_view();
-								if (!string_merger.RegisterOutdatedStringTable(table)) {
-									LogInfo("String file {} is not a valid string file...", full_asset_path_string);
-								}
-							}
-							else if (auto string_mod_match = ctre::match<s_StringModFileRule>(rel_asset_path_string)) {
-								const auto table = string_mod_match.get<1>().to_view();
-								if (!string_merger.RegisterOutdatedStringTable(table) || !string_merger.RegisterModdedStringTable(table)) {
-									LogInfo("String mod {} is not a valid string mod...", full_asset_path_string);
-								}
-							}
-						}
-					}
-					else if (algo::is_same_path(rel_asset_path, "shaders_mod.hlsl")) {
-						has_outdated_shaders = has_outdated_shaders || outdated || deleted || new_enabled_state.has_value();
-					}
-					else if (cache_decoded_audio_files && IsSupportedAudioFile(rel_asset_path)) {
-						if (deleted) {
-							DeleteCachedAudioFile(full_asset_path, mod_db_folder);
-						}
-						else if (!HasCachedAudioFile(full_asset_path, mod_db_folder)) {
-							if (CacheAudioFile(full_asset_path, mod_db_folder, outdated)) {
-								LogInfo("Successfully cached audio file '{}'...", full_asset_path.string());
-							}
-							else {
-								LogError("Failed caching audio file '{}'...", full_asset_path.string());
-							}
-						}
-					}
-					else if (!speedrun_mode && enabled && !deleted && algo::is_same_path(rel_asset_path.filename(), "main.lua")) {
-						if (mScriptManager.RegisterModWithScript(mod_name, full_asset_path, prio, enabled)) {
-							LogInfo("Mod {} registered as a script mod with entry {}...", mod_name, full_asset_path_string);
-						}
-						else {
-							LogError("Mod {} appears to contain multiple main.lua files... {} will be ignored...", mod_name, full_asset_path_string);
-						}
-					}
-				});
-				mod_db.WriteDatabase();
+					});
+					mod_db.WriteDatabase();
+				}
 			}
 
 			if (fs::exists(mod_folder)) {

@@ -18,6 +18,8 @@ public:
 	~ModDatabase();
 
 	void SetEnabled(bool enabled) { mIsEnabled = enabled; }
+	bool IsEnabled() const { return mIsEnabled; }
+	bool WasEnabled() const { return mWasEnabled; }
 
 	void UpdateDatabase();
 	void WriteDatabase() const;
