@@ -448,6 +448,14 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 		vfs.BindPathes({ "Data/Textures/char_magenta.png", "Data/Textures/Entities/char_magenta_full.png" });
 		vfs.BindPathes({ "Data/Textures/char_olive.png", "Data/Textures/Entities/char_olive_full.png" });
 
+		vfs.BindPathes({ "Data/Textures/Entities/monty_full.png", "Data/Textures/Entities/Pets/monty.png" });
+		vfs.BindPathes({ "Data/Textures/Entities/percy_full.png", "Data/Textures/Entities/Pets/percy.png" });
+		vfs.BindPathes({ "Data/Textures/Entities/poochi_full.png", "Data/Textures/Entities/Pets/poochi.png" });
+		vfs.BindPathes({ "Data/Textures/Entities/turkey_full.png", "Data/Textures/Entities/Mounts/turkey.png" });
+		vfs.BindPathes({ "Data/Textures/Entities/rockdog_full.png", "Data/Textures/Entities/Mounts/rockdog.png" });
+		vfs.BindPathes({ "Data/Textures/Entities/axolotl_full.png", "Data/Textures/Entities/Mounts/axolotl.png" });
+		vfs.BindPathes({ "Data/Textures/Entities/qilin_full.png", "Data/Textures/Entities/Mounts/qilin.png" });
+
 		LogInfo("Merging entity sheets... This includes the automatic generating of stickers...");
 		if (sprite_sheet_merger.NeedsRegeneration(db_folder)) {
 			if (sprite_sheet_merger.GenerateRequiredSheets(db_original_folder, db_folder, vfs)) {
