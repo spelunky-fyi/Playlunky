@@ -17,12 +17,14 @@
 
 #include <spel2.h>
 
+#include <deque>
+
 struct ErrorMessage {
 	std::string Message;
 	ImVec4 Color;
 	float Timer;
 };
-inline static std::vector<ErrorMessage> g_Messages;
+inline static std::deque<ErrorMessage> g_Messages;
 
 void ImguiInit(ImGuiContext* imgui_context) {
 	ImGui::SetCurrentContext(imgui_context);
@@ -107,10 +109,16 @@ void ImguiDraw() {
 
 void PrintError(std::string message, float time) {
 	g_Messages.push_back(ErrorMessage{ .Message{ std::move(message) }, .Color{ 1.0f, 0.1f, 0.2f, 1.0f }, .Timer{ time } });
+	if (g_Messages.size() > 25) {
+		g_Messages.pop_front();
+	}
 }
 
 void PrintInfo(std::string message, float time) {
 	g_Messages.push_back(ErrorMessage{ .Message{ std::move(message) }, .Color{ 1.0f, 1.0f, 1.0f, 1.0f }, .Timer{ time } });
+	if (g_Messages.size() > 25) {
+		g_Messages.pop_front();
+	}
 }
 
 void DrawImguiOverlay() {
