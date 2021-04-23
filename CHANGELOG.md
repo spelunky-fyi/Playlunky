@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2021-04-23
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.4d-orange">
+
+### Changed
+- Got some unreleased Overlunky features, don't rely on them
+- Slightly improved startup times with disabled mods
+- Limit the number of messages that can be pushed from Lua
+
+### Fixed
+- Issue with modified date on files being read wrong, causing cache to sometimes invalidate without reason
+- Load order issues when using both old and new pets/mounts entity sheets at once
+- Crash when playing the daily challenge
+
 ## [0.7.2] - 2021-04-19
 
 ### Changed
