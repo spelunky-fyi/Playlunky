@@ -1,6 +1,7 @@
 #include "mod_database.h"
 
 #include "util/algorithms.h"
+#include "util/on_scope_exit.h"
 
 #include <fstream>
 #include <Windows.h>
@@ -119,6 +120,8 @@ void ModDatabase::UpdateDatabase() {
 		static auto get_last_write_time = [](const fs::path& file_path) {
 			HANDLE file = CreateFile(file_path.string().c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
 			if (file != INVALID_HANDLE_VALUE) {
+				OnScopeExit close_handle{ [file]() { CloseHandle(file); } };
+
 				FILETIME last_write_time;
 				if (GetFileTime(file, NULL, NULL, &last_write_time)) {
 					SYSTEMTIME system_time;
