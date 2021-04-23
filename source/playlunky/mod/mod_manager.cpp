@@ -69,6 +69,8 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
 	SetWriteLoadOptimization(false);
 
+	const bool disable_asset_caching = settings.GetBool("general_settings", "disable_asset_caching", false);
+
 	const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
 	if (speedrun_mode) {
 		vfs.RestrictFiles({ std::begin(s_SpeedrunFiles), std::end(s_SpeedrunFiles) });
@@ -320,6 +322,10 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
 						const auto full_asset_path = mod_folder / rel_asset_path;
 						const auto full_asset_path_string = algo::path_string(full_asset_path);
+
+						if (disable_asset_caching) {
+							outdated = !deleted;
+						}
 
 						if (speedrun_mode_changed) {
 							outdated = true;

@@ -35,13 +35,14 @@ void ScriptManager::CommitScripts() {
 				mod.TestScriptResult();
 
 				SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script);
-				mod.Unsafe = meta.unsafe;
-				if (meta.unsafe) {
-					mod.ScriptEnabled = false;
-				}
-				else {
+				mod.Unsafe = false;
+				//mod.Unsafe = meta.unsafe;
+				//if (meta.unsafe) {
+				//	mod.ScriptEnabled = false;
+				//}
+				//else {
 					SpelunkyScipt_SetEnabled(mod.Script, mod.ScriptEnabled);
-				}
+				//}
 			}
 		}
 	}
