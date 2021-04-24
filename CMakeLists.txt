@@ -63,6 +63,7 @@ endif()
 
 add_library(playlunky_definitions INTERFACE)
 target_compile_definitions(playlunky_definitions INTERFACE
+	_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 	_WIN32_MEAN_AND_LEAN
 	NOMINMAX
 	"PLAYLUNKY_VERSION=\"${PLAYLUNKY_GIT_VERSION}\"")

@@ -120,17 +120,13 @@ bool StringMerger::MergeStrings(
 											return false;
 										}
 
-										if (!algo::contains_if(modded_strings,
-											[full_hash_string](const ModdedString& modded_string) {
-											return modded_string.Hash == full_hash_string;
-										})) {
-
-											const std::size_t string_start = 2 + hash_string.size();
-											std::string_view string = std::string_view{ modded_string }.substr(modded_string.find_first_not_of(' ', string_start + 1));
+										if (!algo::contains(modded_strings, &ModdedString::Hash, full_hash_string)) {
+											const std::size_t string_start = 3 + hash_string.size();
+											std::string_view string = std::string_view{ modded_string }.substr(modded_string.find_first_not_of(' ', string_start));
 											modded_strings.push_back(ModdedString{
 												.Hash{ std::string{ full_hash_string } },
 												.String{ std::string{ string } }
-												});
+											});
 										}
 									}
 									else {

@@ -13,6 +13,7 @@
 #include "string_merge.h"
 #include "unzip_mod.h"
 #include "virtual_filesystem.h"
+#include "patch_character_names.h"
 #include "playlunky.h"
 #include "playlunky_settings.h"
 
@@ -485,6 +486,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 				LogError("Failed generating a full string file from installed string mods...");
 			}
 		}
+		PatchCharacterNames(vfs);
 
 		vfs.MountFolder(db_folder.string(), -1);
 
