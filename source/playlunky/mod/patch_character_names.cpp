@@ -49,31 +49,31 @@ std::span<StringTable> GetStringTables() {
 	};
 
 	std::span<StringTable> string_tables{ (StringTable*)decode_pc(write_ana_strings), 20 };
-	constexpr std::array known_tables{
-		StringTable{.FullName{ u"Ana Spelunky" }, .ShortName{ u"Ana" } },
-		StringTable{.FullName{ u"Margaret Tunnel" }, .ShortName{ u"Margaret" } },
-		StringTable{.FullName{ u"Colin Northward" }, .ShortName{ u"Colin" } },
-		StringTable{.FullName{ u"Roffy D. Sloth" }, .ShortName{ u"Roffy" } },
-		StringTable{.FullName{ u"Alto Singh" }, .ShortName{ u"Alto" } },
-		StringTable{.FullName{ u"Liz Mutton" }, .ShortName{ u"Liz" } },
-		StringTable{.FullName{ u"Nekka The Eagle" }, .ShortName{ u"Nekka" } },
-		StringTable{.FullName{ u"LISE Project" }, .ShortName{ u"LISE" } },
-		StringTable{.FullName{ u"Coco Von Diamonds" }, .ShortName{ u"Coco" } },
-		StringTable{.FullName{ u"Manfred Tunnel" }, .ShortName{ u"Manfred" } },
-		StringTable{.FullName{ u"Little Jay" }, .ShortName{ u"Jay" } },
-		StringTable{.FullName{ u"Tina Flan" }, .ShortName{ u"Tina" } },
-		StringTable{.FullName{ u"Valerie Crump" }, .ShortName{ u"Valerie" } },
-		StringTable{.FullName{ u"Au" }, .ShortName{ u"Au" } },
-		StringTable{.FullName{ u"Demi Von Diamonds" }, .ShortName{ u"Demi" } },
-		StringTable{.FullName{ u"Pilot" }, .ShortName{ u"Pilot" } },
-		StringTable{.FullName{ u"Princess Airyn" }, .ShortName{ u"Airyn" } },
-		StringTable{.FullName{ u"Dirk Yamaoka" }, .ShortName{ u"Dirk" } },
-		StringTable{.FullName{ u"Guy Spelunky" }, .ShortName{ u"Guy" } },
-		StringTable{.FullName{ u"Classic Guy" }, .ShortName{ u"Classic Guy" } },
+	[[maybe_unused]] constexpr std::array known_tables{
+		StringTable{ .FullName{ u"Ana Spelunky" }, .ShortName{ u"Ana" } },
+		StringTable{ .FullName{ u"Margaret Tunnel" }, .ShortName{ u"Margaret" } },
+		StringTable{ .FullName{ u"Colin Northward" }, .ShortName{ u"Colin" } },
+		StringTable{ .FullName{ u"Roffy D. Sloth" }, .ShortName{ u"Roffy" } },
+		StringTable{ .FullName{ u"Alto Singh" }, .ShortName{ u"Alto" } },
+		StringTable{ .FullName{ u"Liz Mutton" }, .ShortName{ u"Liz" } },
+		StringTable{ .FullName{ u"Nekka The Eagle" }, .ShortName{ u"Nekka" } },
+		StringTable{ .FullName{ u"LISE Project" }, .ShortName{ u"LISE" } },
+		StringTable{ .FullName{ u"Coco Von Diamonds" }, .ShortName{ u"Coco" } },
+		StringTable{ .FullName{ u"Manfred Tunnel" }, .ShortName{ u"Manfred" } },
+		StringTable{ .FullName{ u"Little Jay" }, .ShortName{ u"Jay" } },
+		StringTable{ .FullName{ u"Tina Flan" }, .ShortName{ u"Tina" } },
+		StringTable{ .FullName{ u"Valerie Crump" }, .ShortName{ u"Valerie" } },
+		StringTable{ .FullName{ u"Au" }, .ShortName{ u"Au" } },
+		StringTable{ .FullName{ u"Demi Von Diamonds" }, .ShortName{ u"Demi" } },
+		StringTable{ .FullName{ u"Pilot" }, .ShortName{ u"Pilot" } },
+		StringTable{ .FullName{ u"Princess Airyn" }, .ShortName{ u"Airyn" } },
+		StringTable{ .FullName{ u"Dirk Yamaoka" }, .ShortName{ u"Dirk" } },
+		StringTable{ .FullName{ u"Guy Spelunky" }, .ShortName{ u"Guy" } },
+		StringTable{ .FullName{ u"Classic Guy" }, .ShortName{ u"Classic Guy" } },
 	};
 	for (size_t i = 0; i < 20; i++) {
-		StringTable& string_table = string_tables[i];
-		const StringTable& known_table = known_tables[i];
+		[[maybe_unused]]StringTable& string_table = string_tables[i];
+		[[maybe_unused]] const StringTable& known_table = known_tables[i];
 		assert(memcmp(string_table.FullName, known_table.FullName, sizeof(StringTable::FullName)) == 0);
 		assert(memcmp(string_table.ShortName, known_table.ShortName, sizeof(StringTable::ShortName)) == 0);
 	}
