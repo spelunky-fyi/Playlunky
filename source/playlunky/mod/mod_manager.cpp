@@ -552,6 +552,15 @@ void ModManager::PostGameInit() {
 	RegisterOnInputFunc(FunctionPointer<std::remove_pointer_t<OnInputFunc>, struct ModManagerOnInput>(&ModManager::OnInput, this));
 	RegisterPreDrawFunc(FunctionPointer<std::remove_pointer_t<PreDrawFunc>, struct ModManagerUpdate>(&ModManager::Update, this));
 	RegisterImguiDrawFunc(FunctionPointer<std::remove_pointer_t<ImguiDrawFunc>, struct ModManagerDraw>(&ModManager::Draw, this));
+
+	RegisterMakeSavePathFunc([](
+		const char* script_path, size_t script_path_size,
+		const char* /*script_name*/, size_t /*script_name_size*/,
+		char* out_buffer, size_t out_buffer_size) -> bool {
+		auto fmt_res = fmt::format_to_n(out_buffer, out_buffer_size - 1, "{}/save.dat", std::string_view{ script_path, script_path_size });
+		out_buffer[fmt_res.size] = '\0';
+		return true;
+	});
 }
 
 bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t /*l_param*/) {
