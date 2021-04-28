@@ -6,7 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.7.1] - 2021-04-23
+## [0.7.4] - 2021-04-28
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.4d-orange">
+
+### Changed
+- Bumped Overlunky latest
+
+### Added
+- Support for character name changes in Character Select
+
+## [0.7.3] - 2021-04-23
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.4d-orange">
 
