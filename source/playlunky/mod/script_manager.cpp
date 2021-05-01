@@ -35,14 +35,13 @@ void ScriptManager::CommitScripts() {
 				mod.TestScriptResult();
 
 				SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script);
-				mod.Unsafe = false;
-				//mod.Unsafe = meta.unsafe;
-				//if (meta.unsafe) {
-				//	mod.ScriptEnabled = false;
-				//}
-				//else {
+				mod.Unsafe = meta.unsafe;
+				if (meta.unsafe) {
+					mod.ScriptEnabled = false;
+				}
+				else {
 					SpelunkyScipt_SetEnabled(mod.Script, mod.ScriptEnabled);
-				//}
+				}
 			}
 		}
 	}
@@ -64,13 +63,15 @@ void ScriptManager::Update() {
 			mod.TestScriptResult();
 
 			const std::size_t num_messages = SpelunkyScript_GetNumMessages(mod.Script);
+			std::size_t message_time = mod.MessageTime;
 			for (std::size_t i = 0; i < num_messages; i++) {
 				SpelunkyScriptMessage message = SpelunkyScript_GetMessage(mod.Script, i);
 				if (message.Message != nullptr && message.TimeMilliSecond >= mod.MessageTime) {
+					message_time = std::max(message_time, message.TimeMilliSecond);
 					LogInfoScreen("[{}]: {}", mod.ModName, message.Message);
 				}
 			}
-			mod.MessageTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+			mod.MessageTime = message_time;
 		}
 	}
 }
