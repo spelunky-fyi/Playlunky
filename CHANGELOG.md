@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.6] - 2021-05-06
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.4d-orange">
+
+### Added
+- Experimental extended sound API
+
 ## [0.7.5] - 2021-05-01
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.4d-orange">
