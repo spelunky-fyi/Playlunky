@@ -224,9 +224,9 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 						};
 						const ImageSubRegion target_region = ImageSubRegion{
 							.x{ static_cast<std::int32_t>(tile_mapping.TargetTile.Left * target_height_scaling) },
-							.y{ static_cast<std::int32_t>(tile_mapping.TargetTile.Top * source_height_scaling) },
+							.y{ static_cast<std::int32_t>(tile_mapping.TargetTile.Top * target_height_scaling) },
 							.width{ static_cast<std::uint32_t>((tile_mapping.TargetTile.Right - tile_mapping.TargetTile.Left) * target_height_scaling) },
-							.height{ static_cast<std::uint32_t>((tile_mapping.TargetTile.Bottom - tile_mapping.TargetTile.Top) * source_height_scaling) },
+							.height{ static_cast<std::uint32_t>((tile_mapping.TargetTile.Bottom - tile_mapping.TargetTile.Top) * target_height_scaling) },
 						};
 
 						if (!source_image.ContainsSubRegion(source_region)) {
