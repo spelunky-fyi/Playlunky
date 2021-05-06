@@ -72,6 +72,10 @@ option(BUILD_EXAMPLE "Build example application" OFF)
 add_subdirectory_with_folder("3rd_party" libnyquist)
 
 # --------------------------------------------------
+# zip-adaptor
+add_subdirectory_with_folder("3rd_party" "zip-adaptor")
+
+# --------------------------------------------------
 # overlunky -- later to be spelunky-api
 option(BUILD_OVERLUNKY CACHE OFF)
 option(BUILD_INFO_DUMP CACHE OFF)

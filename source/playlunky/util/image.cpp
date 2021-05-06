@@ -218,13 +218,13 @@ std::span<std::uint8_t> Image::GetData() {
 	if (mImpl == nullptr) {
 		return {};
 	}
-	return mImpl->Buffer;
+	return span::bit_cast<std::uint8_t>(std::span{ mImpl->Image.data, static_cast<std::size_t>(mImpl->Image.dataend - mImpl->Image.datastart) });
 }
 std::span<const std::uint8_t> Image::GetData() const {
 	if (mImpl == nullptr) {
 		return {};
 	}
-	return mImpl->Buffer;
+	return span::bit_cast<const std::uint8_t>(std::span{ mImpl->Image.data, static_cast<std::size_t>(mImpl->Image.dataend - mImpl->Image.datastart) });
 }
 
 const std::any Image::GetBackingHandle() const {

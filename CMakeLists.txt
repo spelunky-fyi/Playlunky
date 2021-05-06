@@ -86,6 +86,7 @@ target_link_libraries(playlunky_lib_dependencies INTERFACE
 	nlohmann_json::nlohmann_json
 	imgui
 	libnyquist
+	zip_adaptor
 	inih
 	spel2)
 

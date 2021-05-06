@@ -11,6 +11,7 @@
 #include "util/format.h"
 
 #include <cassert>
+#include <zip_adaptor.h>
 
 #pragma warning(push)
 #pragma warning(disable : 5054)
@@ -178,12 +179,23 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 			Image target_image;
 			target_image.LoadFromPng(target_file_path);
 
-			// TODO: Scaling based on largest target image?
-			const float target_width_scaling = static_cast<float>(target_image.GetWidth()) / target_sheet.Size.Width;
-			const float target_height_scaling = static_cast<float>(target_image.GetHeight()) / target_sheet.Size.Height;
+			static auto validate_source_aspect_ratio = [](const SourceSheet& source_sheet, const Image& source_image) {
+				// Skip images with wrong aspect ratio
+				const std::uint64_t aspect_ratio_offset =
+					std::abs(
+						static_cast<int64_t>(source_sheet.Size.Width) * source_image.GetHeight()
+						- static_cast<int64_t>(source_image.GetWidth()) * source_sheet.Size.Height
+					);
+				// We accept images that are 10 pixels off in width
+				static constexpr std::uint64_t s_AcceptedPixelError{ 10 };
+				return aspect_ratio_offset <= source_sheet.Size.Height * s_AcceptedPixelError;
+			};
 
+			float upscaling = 1.0f;
+
+			std::vector<std::optional<fs::path>> target_sheet_paths;
 			for (const SourceSheet& source_sheet : target_sheet.SourceSheets) {
-				const auto source_file_path = [&vfs, &source_sheet, random_select = target_sheet.RandomSelect]() -> std::optional<fs::path> {
+				auto source_file_path = [&vfs, &source_sheet, random_select = target_sheet.RandomSelect]() -> std::optional<fs::path> {
 					if (source_sheet.RootPath) {
 						return source_sheet.RootPath.value() / source_sheet.Path;
 					}
@@ -194,26 +206,44 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 						return vfs.GetRandomFilePath(source_sheet.Path);
 					}
 				}();
-				if (source_file_path) {
+
+				if (source_file_path)
+				{
 					Image source_image;
 					source_image.LoadInfoFromPng(source_file_path.value());
 
-					// Skip images with wrong aspect ratio
-					const std::uint64_t aspect_ratio_offset = 
-						std::abs(
-							static_cast<int64_t>(source_sheet.Size.Width) * source_image.GetHeight()
-							- static_cast<int64_t>(source_image.GetWidth()) * source_sheet.Size.Height
-						);
-					// We accept images that are 10 pixels off in width
-					static constexpr std::uint64_t s_AcceptedPixelError{ 10 };
-					if (aspect_ratio_offset > source_sheet.Size.Height * s_AcceptedPixelError) {
-						continue;
+					if (!validate_source_aspect_ratio(source_sheet, source_image)) {
+						source_file_path.reset();
 					}
+					else {
+						const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / source_sheet.Size.Width;
+						const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / source_sheet.Size.Height;
+						upscaling = std::max(std::max(upscaling, source_width_scaling), source_height_scaling);
+					}
+				}
+
+				target_sheet_paths.push_back(std::move(source_file_path));
+			}
+
+			const float original_target_width_scaling = static_cast<float>(target_image.GetWidth()) / target_sheet.Size.Width;
+			const float original_target_height_scaling = static_cast<float>(target_image.GetHeight()) / target_sheet.Size.Height;
+			const float adjusted_upscaling = upscaling / std::min(original_target_width_scaling, original_target_height_scaling);
+
+			target_image.Resize(ImageSize{
+				.x{ static_cast<std::uint32_t>(adjusted_upscaling * target_sheet.Size.Width) },
+				.y{ static_cast<std::uint32_t>(adjusted_upscaling * target_sheet.Size.Height) }
+			});
+
+			const float target_width_scaling = static_cast<float>(target_image.GetWidth()) / target_sheet.Size.Width;
+			const float target_height_scaling = static_cast<float>(target_image.GetHeight()) / target_sheet.Size.Height;
+
+			for (const auto [source_sheet, source_file_path] : zip::zip(target_sheet.SourceSheets, target_sheet_paths)) {
+				if (source_file_path) {
+					Image source_image;
+					source_image.LoadFromPng(source_file_path.value());
 
 					const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / source_sheet.Size.Width;
 					const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / source_sheet.Size.Height;
-
-					source_image.LoadFromPng(source_file_path.value());
 
 					for (const TileMapping& tile_mapping : source_sheet.TileMap) {
 						const ImageSubRegion source_region = ImageSubRegion{

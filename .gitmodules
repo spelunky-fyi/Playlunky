@@ -10,3 +10,6 @@
 [submodule "submodules/overlunky"]
 	path = submodules/overlunky
 	url = https://github.com/spelunky-fyi/overlunky.git
+[submodule "submodules/zip-adaptor"]
+	path = submodules/zip-adaptor
+	url = https://github.com/Malacath-92/zip-adaptor.git
