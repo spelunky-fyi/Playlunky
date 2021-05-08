@@ -15,29 +15,27 @@
 #include <unordered_map>
 #include <span>
 
-//struct StringTable {
-//	char16_t FullName[0x18];
-//	char16_t ShortName[0xc];
-//	char16_t Other[0x12];
-//};
-struct StringTable {
-	char16_t FullName[0x18];
-	char16_t ShortName[0xc];
+struct Color {
+	float r;
+	float g;
+	float b;
+	float a;
+};
+struct CharacterDefinition {
 	float _float_0;
 	float _float_1;
 	float _float_2;
 	float _float_3;
 	float _float_4;
-	float _float_5;
-	float _float_7;
-	float _float_8;
-	float _float_9;
+	Color Color;
+	char16_t FullName[0x18];
+	char16_t ShortName[0xc];
 };
-static constexpr auto sizeof_StringTable = sizeof(StringTable);
-static constexpr auto expect_StringTable = 0x36 * sizeof(char16_t);
-static_assert(sizeof_StringTable == expect_StringTable);
+static constexpr auto sizeof_CharacterDefinition = sizeof(CharacterDefinition);
+static constexpr auto expect_CharacterDefinition = 0x36 * sizeof(char16_t);
+static_assert(sizeof_CharacterDefinition == expect_CharacterDefinition);
 
-std::span<StringTable> GetStringTables() {
+std::span<CharacterDefinition> GetCharacterDefinitions() {
 	const auto static_init_strings = SigScan::FindPattern("Spel2.exe", "\x48\x8b\xc4\x48\x81\xec\xe8\x00\x00\x00\x0f\x29\x70\xe8\x0f\x29\x78\xd8\x44\x0f\x29\x40\xc8\x44\x0f\x29\x48\xb8\x44\x0f\x29\x50\xa8"_sig, true);
 	const auto load_ana_strings = SigScan::FindPattern("\xf3\x44\x0f\x10\xc8"_sig, static_init_strings, (void*)((const char*)static_init_strings + 0x1000));
 	// load_ana_strings = (char*)load_ana_strings + 12;
@@ -48,37 +46,40 @@ std::span<StringTable> GetStringTables() {
 		return (char*)instruction_addr + rel + 7;
 	};
 
-	std::span<StringTable> string_tables{ (StringTable*)decode_pc(write_ana_strings), 20 };
+	auto ana_strings = decode_pc(write_ana_strings);
+	auto string_table_first_element = ana_strings + sizeof(CharacterDefinition::FullName) + sizeof(CharacterDefinition::ShortName);
+	auto string_table_start = string_table_first_element - sizeof(CharacterDefinition);
+	std::span<CharacterDefinition> character_table{ (CharacterDefinition*)(string_table_start), 20 };
 	[[maybe_unused]] constexpr std::array known_tables{
-		StringTable{ .FullName{ u"Ana Spelunky" }, .ShortName{ u"Ana" } },
-		StringTable{ .FullName{ u"Margaret Tunnel" }, .ShortName{ u"Margaret" } },
-		StringTable{ .FullName{ u"Colin Northward" }, .ShortName{ u"Colin" } },
-		StringTable{ .FullName{ u"Roffy D. Sloth" }, .ShortName{ u"Roffy" } },
-		StringTable{ .FullName{ u"Alto Singh" }, .ShortName{ u"Alto" } },
-		StringTable{ .FullName{ u"Liz Mutton" }, .ShortName{ u"Liz" } },
-		StringTable{ .FullName{ u"Nekka The Eagle" }, .ShortName{ u"Nekka" } },
-		StringTable{ .FullName{ u"LISE Project" }, .ShortName{ u"LISE" } },
-		StringTable{ .FullName{ u"Coco Von Diamonds" }, .ShortName{ u"Coco" } },
-		StringTable{ .FullName{ u"Manfred Tunnel" }, .ShortName{ u"Manfred" } },
-		StringTable{ .FullName{ u"Little Jay" }, .ShortName{ u"Jay" } },
-		StringTable{ .FullName{ u"Tina Flan" }, .ShortName{ u"Tina" } },
-		StringTable{ .FullName{ u"Valerie Crump" }, .ShortName{ u"Valerie" } },
-		StringTable{ .FullName{ u"Au" }, .ShortName{ u"Au" } },
-		StringTable{ .FullName{ u"Demi Von Diamonds" }, .ShortName{ u"Demi" } },
-		StringTable{ .FullName{ u"Pilot" }, .ShortName{ u"Pilot" } },
-		StringTable{ .FullName{ u"Princess Airyn" }, .ShortName{ u"Airyn" } },
-		StringTable{ .FullName{ u"Dirk Yamaoka" }, .ShortName{ u"Dirk" } },
-		StringTable{ .FullName{ u"Guy Spelunky" }, .ShortName{ u"Guy" } },
-		StringTable{ .FullName{ u"Classic Guy" }, .ShortName{ u"Classic Guy" } },
+		CharacterDefinition{ .FullName{ u"Ana Spelunky" }, .ShortName{ u"Ana" } },
+		CharacterDefinition{ .FullName{ u"Margaret Tunnel" }, .ShortName{ u"Margaret" } },
+		CharacterDefinition{ .FullName{ u"Colin Northward" }, .ShortName{ u"Colin" } },
+		CharacterDefinition{ .FullName{ u"Roffy D. Sloth" }, .ShortName{ u"Roffy" } },
+		CharacterDefinition{ .FullName{ u"Alto Singh" }, .ShortName{ u"Alto" } },
+		CharacterDefinition{ .FullName{ u"Liz Mutton" }, .ShortName{ u"Liz" } },
+		CharacterDefinition{ .FullName{ u"Nekka The Eagle" }, .ShortName{ u"Nekka" } },
+		CharacterDefinition{ .FullName{ u"LISE Project" }, .ShortName{ u"LISE" } },
+		CharacterDefinition{ .FullName{ u"Coco Von Diamonds" }, .ShortName{ u"Coco" } },
+		CharacterDefinition{ .FullName{ u"Manfred Tunnel" }, .ShortName{ u"Manfred" } },
+		CharacterDefinition{ .FullName{ u"Little Jay" }, .ShortName{ u"Jay" } },
+		CharacterDefinition{ .FullName{ u"Tina Flan" }, .ShortName{ u"Tina" } },
+		CharacterDefinition{ .FullName{ u"Valerie Crump" }, .ShortName{ u"Valerie" } },
+		CharacterDefinition{ .FullName{ u"Au" }, .ShortName{ u"Au" } },
+		CharacterDefinition{ .FullName{ u"Demi Von Diamonds" }, .ShortName{ u"Demi" } },
+		CharacterDefinition{ .FullName{ u"Pilot" }, .ShortName{ u"Pilot" } },
+		CharacterDefinition{ .FullName{ u"Princess Airyn" }, .ShortName{ u"Airyn" } },
+		CharacterDefinition{ .FullName{ u"Dirk Yamaoka" }, .ShortName{ u"Dirk" } },
+		CharacterDefinition{ .FullName{ u"Guy Spelunky" }, .ShortName{ u"Guy" } },
+		CharacterDefinition{ .FullName{ u"Classic Guy" }, .ShortName{ u"Classic Guy" } },
 	};
 	for (size_t i = 0; i < 20; i++) {
-		[[maybe_unused]]StringTable& string_table = string_tables[i];
-		[[maybe_unused]] const StringTable& known_table = known_tables[i];
-		assert(memcmp(string_table.FullName, known_table.FullName, sizeof(StringTable::FullName)) == 0);
-		assert(memcmp(string_table.ShortName, known_table.ShortName, sizeof(StringTable::ShortName)) == 0);
+		[[maybe_unused]]CharacterDefinition& string_table = character_table[i];
+		[[maybe_unused]] const CharacterDefinition& known_table = known_tables[i];
+		assert(memcmp(string_table.FullName, known_table.FullName, sizeof(CharacterDefinition::FullName)) == 0);
+		assert(memcmp(string_table.ShortName, known_table.ShortName, sizeof(CharacterDefinition::ShortName)) == 0);
 	}
 
-	return string_tables;
+	return character_table;
 }
 
 template<typename T>
@@ -95,8 +96,8 @@ std::basic_string<T, std::char_traits<T>, std::allocator<T>> fromUTF8(const std:
 	return convertor.from_bytes(source);
 }
 
-void PatchCharacterNames(VirtualFilesystem& vfs) {
-	std::span<StringTable> string_tables = GetStringTables();
+void PatchCharacterDefinitions(VirtualFilesystem& vfs) {
+	std::span<CharacterDefinition> character_table = GetCharacterDefinitions();
 
 	constexpr std::string_view characters[]{
 		"yellow",
@@ -123,10 +124,9 @@ void PatchCharacterNames(VirtualFilesystem& vfs) {
 	for (size_t i = 0; i < sizeof(characters) / sizeof(std::string_view); i++) {
 		auto char_name = characters[i];
 
-		auto file_name = fmt::format("char_{}.name", char_name);
-		if (auto file_path = vfs.GetFilePath(file_name)) {
-			auto strings_source_file = std::ifstream{ file_path.value() };
-			if (!strings_source_file.eof()) {
+		auto name_file_name = fmt::format("char_{}.name", char_name);
+		if (auto file_path = vfs.GetFilePath(name_file_name)) {
+			if (auto strings_source_file = std::ifstream{ file_path.value() }) {
 				std::string full_name_narrow;
 				std::string short_name_narrow;
 
@@ -160,26 +160,47 @@ void PatchCharacterNames(VirtualFilesystem& vfs) {
 					}
 				}
 
-				StringTable& string_table = string_tables[i];
+				CharacterDefinition& character_def = character_table[i];
 
 				{
 					std::u16string full_name = fromUTF8<char16_t>(full_name_narrow);
-					const auto max_size = sizeof(StringTable::FullName) / sizeof(char16_t);
+					const auto max_size = sizeof(CharacterDefinition::FullName) / sizeof(char16_t);
 					if (full_name.size() > max_size) {
 						LogError("Character name {} is too long, max supported size is {}", char_name, max_size);
 					}
-					memset(string_table.FullName, 0, max_size * sizeof(char16_t));
-					memcpy(string_table.FullName, full_name.c_str(), std::min(full_name.size(), max_size) * sizeof(char16_t));
+					memset(character_def.FullName, 0, max_size * sizeof(char16_t));
+					memcpy(character_def.FullName, full_name.c_str(), std::min(full_name.size(), max_size) * sizeof(char16_t));
 				}
 
 				{
 					std::u16string short_name = fromUTF8<char16_t>(short_name_narrow);
-					const auto max_size = sizeof(StringTable::ShortName) / sizeof(char16_t);
+					const auto max_size = sizeof(CharacterDefinition::ShortName) / sizeof(char16_t);
 					if (short_name.size() > max_size) {
 						LogError("Character name {} is too long, max supported size is {}", char_name, max_size);
 					}
-					memset(string_table.ShortName, 0, max_size * sizeof(char16_t));
-					memcpy(string_table.ShortName, short_name.c_str(), std::min(short_name.size(), max_size) * sizeof(char16_t));
+					memset(character_def.ShortName, 0, max_size * sizeof(char16_t));
+					memcpy(character_def.ShortName, short_name.c_str(), std::min(short_name.size(), max_size) * sizeof(char16_t));
+				}
+			}
+		}
+
+		auto color_file_name = fmt::format("char_{}.color", char_name);
+		if (auto file_path = vfs.GetFilePath(color_file_name)) {
+			if (auto character_source_file = std::ifstream{ file_path.value() }) {
+				CharacterDefinition& character_def = character_table[i];
+				try {
+					float r, g, b;
+					character_source_file >> r >> g >> b;
+					character_def.Color.r = r;
+					character_def.Color.g = g;
+					character_def.Color.b = b;
+				}
+				catch (...) {
+					LogError("Character color file '{}' has bad formatting, expected `float float float`", file_path.value().string());
+				}
+
+				if (!character_source_file.eof()) {
+					character_source_file >> character_def.Color.a;
 				}
 			}
 		}

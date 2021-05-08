@@ -2,4 +2,4 @@
 
 class VirtualFilesystem;
 
-void PatchCharacterNames(VirtualFilesystem& vfs);
+void PatchCharacterDefinitions(VirtualFilesystem& vfs);
