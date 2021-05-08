@@ -13,7 +13,7 @@
 #include "string_merge.h"
 #include "unzip_mod.h"
 #include "virtual_filesystem.h"
-#include "patch_character_names.h"
+#include "patch_character_definitions.h"
 #include "playlunky.h"
 #include "playlunky_settings.h"
 

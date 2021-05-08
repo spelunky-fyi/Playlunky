@@ -1,4 +1,4 @@
-#include "patch_character_names.h"
+#include "patch_character_definitions.h"
 
 #include "log.h"
 #include "virtual_filesystem.h"
