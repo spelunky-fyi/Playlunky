@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.7] - 2021-05-08
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.4d-orange">
+
+### Added
+- Support for character heart color mods
+- Support for pet entity sheets v2
+
+### Changed
+- Upscale output sprite sheets based on input entity sheets
+
+### Fixed
+- Fixed a bug with upscaled entity sheets
+
 ## [0.7.6] - 2021-05-06
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.4d-orange">
