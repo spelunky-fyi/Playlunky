@@ -1,5 +1,6 @@
 #include "image.h"
 
+#include "util/format.h"
 #include "util/span_util.h"
 
 #include <array>
@@ -8,6 +9,7 @@
 #pragma warning(push)
 #pragma warning(disable : 5054)
 #include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
 #pragma warning(pop)
 
 #include <lodepng.h>
@@ -82,14 +84,55 @@ bool Image::LoadFromPng(const std::filesystem::path& file) {
 
 	return true;
 }
+bool Image::LoadFromPng(const std::span<std::uint8_t>& data)
+{
+	if (mImpl == nullptr)
+	{
+		mImpl = std::make_unique<ImageImpl>();
+	}
+
+	{
+		const std::uint32_t error = lodepng::decode(mImpl->Buffer, mImpl->Width, mImpl->Height, data.data(), data.size(), LCT_RGBA, 8);
+		if (error != 0) {
+			return false;
+		}
+	}
+
+	{
+		struct ColorRGBA8 {
+			std::uint8_t R;
+			std::uint8_t G;
+			std::uint8_t B;
+			std::uint8_t A;
+		};
+		auto image = span::bit_cast<ColorRGBA8>(mImpl->Buffer);
+		for (ColorRGBA8& pixel : image) {
+			if (pixel.A == 0) {
+				pixel = ColorRGBA8{};
+			}
+		}
+	}
+
+	mImpl->Image = cv::Mat{ static_cast<int>(mImpl->Height), static_cast<int>(mImpl->Width), CV_8UC4, reinterpret_cast<int*>(mImpl->Buffer.data()) };
+
+	return true;
+}
 
 Image Image::Copy() {
 	return GetSubImage(ImageSubRegion{ 
-			.x{ 0 },
-			.y{ 0 },
-			.width{ mImpl->Width },
-			.height{ mImpl->Height }
-		});
+		.x{ 0 },
+		.y{ 0 },
+		.width{ mImpl->Width },
+		.height{ mImpl->Height }
+	});
+}
+Image Image::Clone() const {
+	Image clone;
+	clone.mImpl = std::make_unique<ImageImpl>();
+	clone.mImpl->Width = mImpl->Width;
+	clone.mImpl->Height = mImpl->Height;
+	clone.mImpl->Image = mImpl->Image.clone();
+	return clone;
 }
 
 bool Image::ContainsSubRegion(ImageSubRegion region) const {
@@ -162,8 +205,8 @@ void Image::Crop(ImageSubRegion region) {
 	else {
 		mImpl->Image = mImpl->Image(cv::Rect(region.x, region.y, region.width, region.height));
 	}
-	mImpl->Width = region.width;
-	mImpl->Height = region.height;
+	mImpl->Width = mImpl->Image.cols;
+	mImpl->Height = mImpl->Image.rows;
 }
 
 void Image::Blit(const Image& source, ImageSubRegion region) {
@@ -232,4 +275,14 @@ const std::any Image::GetBackingHandle() const {
 }
 std::any Image::GetBackingHandle() {
 	return &mImpl->Image;
+}
+
+void Image::DebugShow() const {
+	try {
+		cv::imshow("some", mImpl->Image);
+		cv::waitKey();
+	}
+	catch (cv::Exception& e) {
+		fmt::print("{}", e.what());
+	}
 }

@@ -46,8 +46,10 @@ public:
 
 	bool LoadInfoFromPng(const std::filesystem::path& file);
 	bool LoadFromPng(const std::filesystem::path& file);
+	bool LoadFromPng(const std::span<std::uint8_t>& data);
 
 	Image Copy();
+	Image Clone() const;
 
 	bool ContainsSubRegion(ImageSubRegion region) const;
 
@@ -73,6 +75,8 @@ public:
 
 	const std::any GetBackingHandle() const;
 	std::any GetBackingHandle();
+
+	void DebugShow() const;
 
 private:
 	struct ImageImpl;
