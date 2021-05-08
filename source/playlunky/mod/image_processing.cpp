@@ -181,11 +181,15 @@ Image GenerateStickerPixelArt(Image input, ImageSize target_size) {
 };
 
 Image MakeCombinedMenuPetHeads(std::vector<std::pair<Image, std::filesystem::path>> pet_heads, ImageSize target_size) {
+	for (auto& [img, path] : pet_heads) {
+		path = path.stem();
+	}
+
 	{
 		using namespace std::string_view_literals;
 		std::optional<Image> original_heads;
 		for (auto& [pet_name, idx] : { std::pair{ "monty"sv, 0u }, std::pair{ "percy"sv, 1u }, std::pair{ "poochi"sv, 2u } }) {
-			if (!algo::contains_if(pet_heads, [pet_name](const auto& pair) { return pair.second.string().find(pet_name); })) {
+			if (!algo::contains_if(pet_heads, [pet_name](const auto& pair) { return pair.second.string().find(pet_name) != std::string::npos; })) {
 				if (!original_heads.has_value()) {
 					auto acquire_png_resource = [](LPSTR resource) {
 						HMODULE this_module = GetModuleHandle("playlunky64.dll");
@@ -206,7 +210,7 @@ Image MakeCombinedMenuPetHeads(std::vector<std::pair<Image, std::filesystem::pat
 				}
 
 				pet_heads.push_back(std::pair{
-					original_heads->GetSubImage(ImageTiling{ 128, 128 }, ImageSubRegion{ static_cast<std::int32_t>(idx), 0, idx + 1, 1 }),
+					original_heads->GetSubImage(ImageTiling{ 128, 128 }, ImageSubRegion{ static_cast<std::int32_t>(idx), 0, 1, 1 }).Clone(),
 					std::filesystem::path{ pet_name }
 				});
 			}
@@ -305,8 +309,6 @@ Image MakeCombinedMenuPetHeads(std::vector<std::pair<Image, std::filesystem::pat
 			}
 		}
 	}
-
-	monty.DebugShow();
 
 	monty.Resize(target_size);
 	return std::move(monty);

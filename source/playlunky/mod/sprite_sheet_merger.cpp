@@ -326,28 +326,30 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 						}
 					}();
 
-					Image source_image;
-					source_image.LoadFromPng(source_file_path.value());
+					if (source_file_path) {
+						Image source_image;
+						source_image.LoadFromPng(source_file_path.value());
 
-					const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / size.Width;
-					const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / size.Height;
+						const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / size.Width;
+						const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / size.Height;
 
-					const ImageSubRegion source_region = ImageSubRegion{
-						.x{ static_cast<std::int32_t>(tile_mapping.SourceTile.Left * source_width_scaling) },
-						.y{ static_cast<std::int32_t>(tile_mapping.SourceTile.Top * source_height_scaling) },
-						.width{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Right - tile_mapping.SourceTile.Left) * source_width_scaling) },
-						.height{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Bottom - tile_mapping.SourceTile.Top) * source_height_scaling) },
-					};
+						const ImageSubRegion source_region = ImageSubRegion{
+							.x{ static_cast<std::int32_t>(tile_mapping.SourceTile.Left * source_width_scaling) },
+							.y{ static_cast<std::int32_t>(tile_mapping.SourceTile.Top * source_height_scaling) },
+							.width{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Right - tile_mapping.SourceTile.Left) * source_width_scaling) },
+							.height{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Bottom - tile_mapping.SourceTile.Top) * source_height_scaling) },
+						};
 
-					if (!source_image.ContainsSubRegion(source_region)) {
-						LogError("Source image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {})... Tile expected from target image {}...", source_file_path.value().string(),
-							source_region.x, source_region.y, source_region.width, source_region.height,
-							source_image.GetWidth(), source_image.GetHeight(), target_file_path.string());
-						continue;
+						if (!source_image.ContainsSubRegion(source_region)) {
+							LogError("Source image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {})... Tile expected from target image {}...", source_file_path.value().string(),
+								source_region.x, source_region.y, source_region.width, source_region.height,
+								source_image.GetWidth(), source_image.GetHeight(), target_file_path.string());
+							continue;
+						}
+
+						Image source_tile = source_image.GetSubImage(source_region);
+						tiles.push_back({ source_tile.Clone(), std::move(source_file_path).value() });
 					}
-
-					Image source_tile = source_image.GetSubImage(source_region);
-					tiles.push_back({ source_tile.Clone(), std::move(source_file_path).value() });
 				}
 
 				if (!target_image.ContainsSubRegion(target_region)) {
