@@ -111,10 +111,14 @@ void EntityDataExtractor::PreloadEntityMappings() {
 	};
 	std::array entity_mapping_info{
 		EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/alien_queen.png", { "ENT_TYPE_MONS_ALIENQUEEN", "ENT_TYPE_FX_ALIENQUEEN_EYE", "ENT_TYPE_FX_ALIENQUEEN_EYEBALL" }, 320 + 160 },
-		
+
 		EntityMappingInfo{ "Data/Textures/Entities/Pets/monty.png", { "ENT_TYPE_MONS_PET_DOG" }, 160 },
 		EntityMappingInfo{ "Data/Textures/Entities/Pets/percy.png", { "ENT_TYPE_MONS_PET_CAT" }, 160 },
 		EntityMappingInfo{ "Data/Textures/Entities/Pets/poochi.png", { "ENT_TYPE_MONS_PET_HAMSTER" }, 160 },
+
+		EntityMappingInfo{ "Data/Textures/Entities/Pets/monty_v2.png", { "ENT_TYPE_MONS_PET_DOG" }, 160 + 64 + 128 },
+		EntityMappingInfo{ "Data/Textures/Entities/Pets/percy_v2.png", { "ENT_TYPE_MONS_PET_CAT" }, 160 + 64 + 128 },
+		EntityMappingInfo{ "Data/Textures/Entities/Pets/poochi_v2.png", { "ENT_TYPE_MONS_PET_HAMSTER" }, 160 + 64 + 128 },
 
 		EntityMappingInfo{ "Data/Textures/Entities/Mounts/turkey.png", { "ENT_TYPE_MOUNT_TURKEY" }, 160 + 160 + 128, 128 },
 		EntityMappingInfo{ "Data/Textures/Entities/Mounts/rockdog.png", { "ENT_TYPE_MOUNT_ROCKDOG" }, 160 },

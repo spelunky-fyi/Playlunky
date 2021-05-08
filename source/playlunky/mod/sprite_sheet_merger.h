@@ -50,6 +50,7 @@ private:
 	void MakeBigMonstersTargetSheet();
 	void MakeCharacterTargetSheet(std::string_view color);
 	void MakeMenuLeaderTargetSheet();
+	void MakeMenuBasicTargetSheet();
 
 	bool mRandomCharacterSelectEnabled;
 	bool mGenerateCharacterJournalStickersEnabled;
@@ -60,6 +61,7 @@ private:
 		std::filesystem::path Path;
 		SheetSize Size;
 		std::vector<SourceSheet> SourceSheets;
+		std::vector<MultiSourceTile> MultiSourceTiles;
 		bool RandomSelect;
 		bool ForceRegen;
 	};

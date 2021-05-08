@@ -87,9 +87,6 @@ void FixModFolderStructure(const std::filesystem::path& mod_folder) {
 				else if (algo::contains(s_GhostEntityFiles, file_stem)) {
 					path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Ghost" / file_name });
 				}
-				else if (algo::contains(s_MonstersEntityFiles, file_stem)) {
-					path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Monsters" / file_name });
-				}
 				else if (algo::contains(s_CrittersEntityFiles, file_stem)) {
 					path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Critters" / file_name });
 				}

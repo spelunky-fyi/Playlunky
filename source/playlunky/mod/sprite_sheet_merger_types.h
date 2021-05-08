@@ -28,6 +28,12 @@ struct SourceSheet {
 	std::vector<TileMapping> TileMap;
 	std::function<Image(Image, ImageSize)> Processing;
 };
+struct MultiSourceTile {
+	std::vector<std::filesystem::path> Paths;
+	std::vector<SheetSize> Sizes;
+	std::vector<TileMapping> TileMap;
+	std::function<Image(std::vector<std::pair<Image, std::filesystem::path>>, ImageSize)> Processing;
+};
 
 using CustomImageMap = std::vector<TileMapping>;
 using CustomImage = std::unordered_map<std::string, CustomImageMap>;

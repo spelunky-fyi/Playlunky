@@ -7,6 +7,9 @@ inline constexpr std::string_view s_PetsEntityFiles[]{
 	"monty",
 	"percy",
 	"poochi",
+	"monty_v2",
+	"percy_v2",
+	"poochi_v2",
 };
 inline constexpr std::string_view s_MountsEntityFiles[]{
 	"turkey",

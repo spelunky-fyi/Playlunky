@@ -196,6 +196,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 				fs::path{ "Data/Textures/journal_entry_mons.DDS" },
 				fs::path{ "Data/Textures/journal_entry_mons_big.DDS" },
 				fs::path{ "Data/Textures/journal_entry_people.DDS" },
+				fs::path{ "Data/Textures/menu_basic.DDS" },
 				fs::path{ "Data/Textures/menu_leader.DDS" },
 				fs::path{ "shaders.hlsl" },
 				fs::path{ "strings00.str" },
@@ -449,9 +450,9 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 		vfs.BindPathes({ "Data/Textures/char_magenta.png", "Data/Textures/Entities/char_magenta_full.png" });
 		vfs.BindPathes({ "Data/Textures/char_olive.png", "Data/Textures/Entities/char_olive_full.png" });
 
-		vfs.BindPathes({ "Data/Textures/Entities/monty_full.png", "Data/Textures/Entities/Pets/monty.png" });
-		vfs.BindPathes({ "Data/Textures/Entities/percy_full.png", "Data/Textures/Entities/Pets/percy.png" });
-		vfs.BindPathes({ "Data/Textures/Entities/poochi_full.png", "Data/Textures/Entities/Pets/poochi.png" });
+		vfs.BindPathes({ "Data/Textures/Entities/monty_full.png", "Data/Textures/Entities/Pets/monty.png", "Data/Textures/Entities/Pets/monty_v2.png" });
+		vfs.BindPathes({ "Data/Textures/Entities/percy_full.png", "Data/Textures/Entities/Pets/percy.png", "Data/Textures/Entities/Pets/percy_v2.png" });
+		vfs.BindPathes({ "Data/Textures/Entities/poochi_full.png", "Data/Textures/Entities/Pets/poochi.png", "Data/Textures/Entities/Pets/poochi_v2.png" });
 		vfs.BindPathes({ "Data/Textures/Entities/turkey_full.png", "Data/Textures/Entities/Mounts/turkey.png" });
 		vfs.BindPathes({ "Data/Textures/Entities/rockdog_full.png", "Data/Textures/Entities/Mounts/rockdog.png" });
 		vfs.BindPathes({ "Data/Textures/Entities/axolotl_full.png", "Data/Textures/Entities/Mounts/axolotl.png" });

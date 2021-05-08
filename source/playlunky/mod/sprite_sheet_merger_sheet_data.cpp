@@ -1,7 +1,7 @@
 #include "sprite_sheet_merger.h"
 
 #include "entity_data_extraction.h"
-#include "generate_sticker_pixel_art.h"
+#include "image_processing.h"
 #include "util/algorithms.h"
 #include "util/format.h"
 
@@ -129,6 +129,10 @@ void SpriteSheetMerger::MakeJournalMonstersSheet() {
 			{ "Pets/monty.png", { 800, 480, 960, 640 } },
 			{ "Pets/percy.png", { 1440, 480, 1600, 640 } },
 			{ "Pets/poochi.png", { 640, 480, 800, 640 } },
+
+			{ "Pets/monty_v2.png", { 800, 480, 960, 640 } },
+			{ "Pets/percy_v2.png", { 1440, 480, 1600, 640 } },
+			{ "Pets/poochi_v2.png", { 640, 480, 800, 640 } },
 
 			{ "Mounts/turkey.png", { 1280, 640, 1440, 800 } },
 			{ "Mounts/rockdog.png", { 1440, 640, 1600, 800 } },
@@ -548,6 +552,9 @@ void SpriteSheetMerger::MakePetsTargetSheet() {
 				}
 			});
 		if (auto sheet = m_EntityDataExtractor->GetEntitySourceSheet(fmt::format("Data/Textures/Entities/Pets/{}.png", pet_name))) {
+			source_sheets.push_back(std::move(sheet).value());
+		}
+		if (auto sheet = m_EntityDataExtractor->GetEntitySourceSheet(fmt::format("Data/Textures/Entities/Pets/{}_v2.png", pet_name))) {
 			source_sheets.push_back(std::move(sheet).value());
 		}
 	}
@@ -987,5 +994,53 @@ void SpriteSheetMerger::MakeMenuLeaderTargetSheet() {
 		.Size{ .Width{ 1280 }, .Height{ 1280 } },
 		.SourceSheets{ std::move(source_sheets) },
 		.RandomSelect{ mRandomCharacterSelectEnabled }
+	});
+}
+void SpriteSheetMerger::MakeMenuBasicTargetSheet() {
+	std::vector<SourceSheet> source_sheets;
+	MultiSourceTile head_tile{
+		.Processing{ MakeCombinedMenuPetHeads }
+	};
+
+	{
+		struct MonsterJournalEntry {
+			std::string_view SubPath;
+			Tile SourceTile;
+			Tile TargetTile;
+			bool Head;
+		};
+		std::vector<MonsterJournalEntry> entries{
+			{ "Pets/monty_v2.png", { 0, 160, 64, 224 }, { 1024, 448, 1088, 512 } },
+			{ "Pets/percy_v2.png", { 0, 160, 64, 224 }, { 1088, 448, 1152, 512 } },
+			{ "Pets/poochi_v2.png", { 0, 160, 64, 224 }, { 1152, 448, 1216, 512 } },
+
+			{ "Pets/monty_v2.png", { 0, 224, 128, 352 }, { 1216, 448, 1280, 512 }, true },
+			{ "Pets/percy_v2.png", { 0, 224, 128, 352 }, { 1216, 448, 1280, 512 }, true },
+			{ "Pets/poochi_v2.png", { 0, 224, 128, 352 }, { 1216, 448, 1280, 512 }, true },
+		};
+		for (const auto& entry : entries) {
+			if (auto mapping = m_EntityDataExtractor->GetAdditionalMapping(fmt::format("Data/Textures/Entities/{}", entry.SubPath),
+				entry.SourceTile,
+				entry.TargetTile)) {
+
+				if (entry.Head) {
+					assert(mapping.value().TileMap.size() == 1);
+
+					head_tile.Paths.push_back(std::move(mapping.value().Path));
+					head_tile.Sizes.push_back(mapping.value().Size);
+					head_tile.TileMap.push_back(mapping.value().TileMap[0]);
+				}
+				else {
+					source_sheets.push_back(std::move(mapping).value());
+				}
+			}
+		}
+	}
+
+	m_TargetSheets.push_back(TargetSheet{
+		.Path{ "Data/Textures/menu_basic.png" },
+		.Size{.Width{ 1280 }, .Height{ 1280 } },
+		.SourceSheets{ std::move(source_sheets) },
+		.MultiSourceTiles{ std::move(head_tile) }
 	});
 }

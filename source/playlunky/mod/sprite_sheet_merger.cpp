@@ -2,7 +2,6 @@
 
 #include "entity_data_extraction.h"
 #include "extract_game_assets.h"
-#include "generate_sticker_pixel_art.h"
 #include "log.h"
 #include "png_dds_conversion.h"
 #include "virtual_filesystem.h"
@@ -65,6 +64,7 @@ void SpriteSheetMerger::GatherSheetData(bool force_regen_char_journal, bool forc
 	MakeCharacterTargetSheet("white");
 	MakeCharacterTargetSheet("yellow");
 	MakeMenuLeaderTargetSheet();
+	MakeMenuBasicTargetSheet();
 
 	m_EntityDataExtractor = nullptr;
 }
@@ -163,6 +163,18 @@ bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::f
 				|| registered_sheet->Outdated
 				|| registered_sheet->Deleted) {
 				return true;
+			}
+		}
+	}
+	for (const MultiSourceTile& multi_source_sheets : target_sheet.MultiSourceTiles) {
+		for (const auto& path : multi_source_sheets.Paths) {
+			if (const RegisteredSourceSheet* registered_sheet = algo::find(m_RegisteredSourceSheets, &RegisteredSourceSheet::Path, path)) {
+				if (!does_exist
+					|| random_select
+					|| registered_sheet->Outdated
+					|| registered_sheet->Deleted) {
+					return true;
+				}
 			}
 		}
 	}
@@ -290,6 +302,71 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 							fmt::print("{}", e.what());
 						}
 					}
+				}
+			}
+
+			for (const MultiSourceTile& multi_source_sheet : target_sheet.MultiSourceTiles) {
+				std::vector<std::pair<Image, std::filesystem::path>> tiles;
+				auto front_tile = multi_source_sheet.TileMap.front();
+				const ImageSubRegion target_region = ImageSubRegion{
+					.x{ static_cast<std::int32_t>(front_tile.TargetTile.Left * target_height_scaling) },
+					.y{ static_cast<std::int32_t>(front_tile.TargetTile.Top * target_height_scaling) },
+					.width{ static_cast<std::uint32_t>((front_tile.TargetTile.Right - front_tile.TargetTile.Left) * target_height_scaling) },
+					.height{ static_cast<std::uint32_t>((front_tile.TargetTile.Bottom - front_tile.TargetTile.Top) * target_height_scaling) },
+				};
+				const auto target_size = ::ImageSize{ .x{ static_cast<std::uint32_t>(target_region.width) }, .y{ static_cast<std::uint32_t>(target_region.height) } };
+
+				for (auto [path, size, tile_mapping] : zip::zip(multi_source_sheet.Paths, multi_source_sheet.Sizes, multi_source_sheet.TileMap)) {
+					auto source_file_path = [&vfs, &path, random_select = target_sheet.RandomSelect]() -> std::optional<fs::path> {
+						if (!random_select) {
+							return vfs.GetFilePath(path);
+						}
+						else {
+							return vfs.GetRandomFilePath(path);
+						}
+					}();
+
+					Image source_image;
+					source_image.LoadFromPng(source_file_path.value());
+
+					const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / size.Width;
+					const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / size.Height;
+
+					const ImageSubRegion source_region = ImageSubRegion{
+						.x{ static_cast<std::int32_t>(tile_mapping.SourceTile.Left * source_width_scaling) },
+						.y{ static_cast<std::int32_t>(tile_mapping.SourceTile.Top * source_height_scaling) },
+						.width{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Right - tile_mapping.SourceTile.Left) * source_width_scaling) },
+						.height{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Bottom - tile_mapping.SourceTile.Top) * source_height_scaling) },
+					};
+
+					if (!source_image.ContainsSubRegion(source_region)) {
+						LogError("Source image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {})... Tile expected from target image {}...", source_file_path.value().string(),
+							source_region.x, source_region.y, source_region.width, source_region.height,
+							source_image.GetWidth(), source_image.GetHeight(), target_file_path.string());
+						continue;
+					}
+
+					Image source_tile = source_image.GetSubImage(source_region);
+					tiles.push_back({ source_tile.Clone(), std::move(source_file_path).value() });
+				}
+
+				if (!target_image.ContainsSubRegion(target_region)) {
+					LogError("Target image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {}) needed for multi-source target...", target_file_path.string(),
+						target_region.x, target_region.y, target_region.width, target_region.height,
+						target_image.GetWidth(), target_image.GetHeight());
+					continue;
+				}
+
+				Image source_tile = multi_source_sheet.Processing(std::move(tiles), target_size);
+				if (source_tile.GetWidth() != target_size.x || source_tile.GetHeight() != target_size.y) {
+					source_tile.Resize(target_size);
+				}
+
+				try {
+					target_image.Blit(source_tile, target_region);
+				}
+				catch (cv::Exception& e) {
+					fmt::print("{}", e.what());
 				}
 			}
 
