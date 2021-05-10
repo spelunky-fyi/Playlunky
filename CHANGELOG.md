@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.9] - 2021-05-09
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.20.4d-orange">
+
+### Fixed
+- Fixed a bug with callbacks running at wrong
+
 ## [0.7.8] - 2021-05-08
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.20.4d-orange">
