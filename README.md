@@ -1,6 +1,6 @@
 # Playlunky
 <p align="center">
-  <img src="https://img.shields.io/badge/Spelunky 2-1.20.4d-orange">
+  <img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
   <a href="https://isocpp.org/">
       <img src="https://img.shields.io/badge/language-C%2B%2B20-blue.svg">
   </a>
