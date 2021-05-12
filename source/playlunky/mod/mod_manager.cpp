@@ -487,7 +487,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 				LogError("Failed generating a full string file from installed string mods...");
 			}
 		}
-		PatchCharacterDefinitions(vfs);
+		PatchCharacterDefinitions(vfs, settings);
 
 		vfs.MountFolder(db_folder.string(), -1);
 
