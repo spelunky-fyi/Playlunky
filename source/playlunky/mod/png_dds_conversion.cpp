@@ -88,7 +88,8 @@ bool ConvertPngToDds(const std::filesystem::path& source, const std::filesystem:
     std::uint32_t height;
     std::uint32_t error = lodepng::decode(image_buffer, width, height, source.string(), LCT_RGBA, 8);
 	if (error != 0) {
-		return false;
+        LogError("Failed loading image {}: {}", source.string(), lodepng_error_text(error));
+        return false;
 	}
 
 	auto image = span::bit_cast<ColorRGBA8>(image_buffer);
@@ -163,6 +164,7 @@ bool ConvertDdsToPng(std::span<const std::uint8_t> source, const std::filesystem
 
     std::uint32_t error = lodepng::encode(destination.string(), image_buffer, width, height);
     if (error != 0) {
+        LogError("Failed writing image {}: {}", destination.string(), lodepng_error_text(error));
         return false;
     }
 

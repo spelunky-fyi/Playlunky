@@ -1,5 +1,6 @@
 #include "image.h"
 
+#include "log.h"
 #include "util/format.h"
 #include "util/span_util.h"
 
@@ -61,6 +62,7 @@ bool Image::LoadFromPng(const std::filesystem::path& file) {
 	{
 		const std::uint32_t error = lodepng::decode(mImpl->Buffer, mImpl->Width, mImpl->Height, file.string(), LCT_RGBA, 8);
 		if (error != 0) {
+			LogError("Failed loading image {}: {}", file.string(), lodepng_error_text(error));
 			return false;
 		}
 	}
