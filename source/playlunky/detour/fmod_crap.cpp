@@ -676,7 +676,7 @@ struct DetourFmodSystemCreateSound {
 					};
 
 					// Need to specify OPENMEMORY_POINT in case the .bank file is loose
-					const FMOD::FMOD_MODE loose_mode = (FMOD::FMOD_MODE)(mode | FMOD::MODE_OPENMEMORY_POINT);
+					const FMOD::FMOD_MODE loose_mode = (FMOD::FMOD_MODE)(mode | FMOD::MODE_OPENMEMORY);
 
 					FMOD::CREATESOUNDEXINFO loose_exinfo{
 						.cbsize = sizeof(loose_exinfo),
@@ -703,7 +703,7 @@ struct DetourFmodSystemCreateSound {
 								ReleaseSound(*sub_sound);
 							}
 
-							const FMOD::FMOD_MODE loose_sub_sound_mode = (FMOD::FMOD_MODE)(mode | FMOD::MODE_OPENMEMORY_POINT | FMOD::MODE_OPENRAW);
+							const FMOD::FMOD_MODE loose_sub_sound_mode = (FMOD::FMOD_MODE)(mode | FMOD::MODE_OPENMEMORY | FMOD::MODE_OPENRAW);
 
 							FMOD::CREATESOUNDEXINFO loose_subsound_exinfo{
 								.cbsize = sizeof(loose_subsound_exinfo),
