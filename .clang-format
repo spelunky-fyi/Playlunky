@@ -1,0 +1,15 @@
+Language: Cpp
+Standard: c++20
+Cpp11BracedListStyle: false
+IndentWidth: 4
+BreakBeforeBraces: Allman
+AlignAfterOpenBracket: Align
+ColumnLimit: 0
+BinPackArguments: false
+BinPackParameters: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+AllowAllArgumentsOnNextLine: true
+AllowShortBlocksOnASingleLine: Always
+AllowShortFunctionsOnASingleLine: None
+PointerAlignment: Left
+SpaceAfterTemplateKeyword: false

@@ -9,6 +9,11 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
 # --------------------------------------------------
+# Add formatting target
+include(cmake/clang-format.cmake)
+setup_format_target(format_playlunky)
+
+# --------------------------------------------------
 # Add submodules
 add_subdirectory(submodules)
 

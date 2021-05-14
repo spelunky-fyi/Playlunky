@@ -3,11 +3,11 @@
 #include "entity_data_extraction.h"
 #include "extract_game_assets.h"
 #include "log.h"
-#include "png_dds_conversion.h"
-#include "virtual_filesystem.h"
 #include "playlunky_settings.h"
+#include "png_dds_conversion.h"
 #include "util/algorithms.h"
 #include "util/format.h"
+#include "virtual_filesystem.h"
 
 #include <cassert>
 #include <zip_adaptor.h>
@@ -20,364 +20,392 @@
 #pragma warning(pop)
 
 SpriteSheetMerger::SpriteSheetMerger(const PlaylunkySettings& settings)
-	: mRandomCharacterSelectEnabled{ settings.GetBool("settings", "random_character_select", false) || settings.GetBool("sprite_settings", "random_character_select", false) }
-	, mGenerateCharacterJournalStickersEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_stickers", true) }
-	, mGenerateCharacterJournalEntriesEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_entries", true) }
-	, mGenerateStickerPixelArtEnabled{ settings.GetBool("sprite_settings", "generate_sticker_pixel_art", true) }
-{}
+    : mRandomCharacterSelectEnabled{ settings.GetBool("settings", "random_character_select", false) || settings.GetBool("sprite_settings", "random_character_select", false) }, mGenerateCharacterJournalStickersEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_stickers", true) }, mGenerateCharacterJournalEntriesEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_entries", true) }, mGenerateStickerPixelArtEnabled{ settings.GetBool("sprite_settings", "generate_sticker_pixel_art", true) }
+{
+}
 SpriteSheetMerger::~SpriteSheetMerger() = default;
 
-void SpriteSheetMerger::GatherSheetData(bool force_regen_char_journal, bool force_regen_char_stickers) {
-	m_EntityDataExtractor = std::make_unique<EntityDataExtractor>();
-	m_EntityDataExtractor->PreloadEntityMappings();
+void SpriteSheetMerger::GatherSheetData(bool force_regen_char_journal, bool force_regen_char_stickers)
+{
+    m_EntityDataExtractor = std::make_unique<EntityDataExtractor>();
+    m_EntityDataExtractor->PreloadEntityMappings();
 
-	MakeItemsSheet();
-	MakeJournalItemsSheet();
-	MakeJournalMonstersSheet();
-	MakeJournalMonstersBigSheet();
-	MakeJournalPeopleSheet(force_regen_char_journal);
-	MakeJournalStickerSheet(force_regen_char_stickers);
-	MakeMountsTargetSheet();
-	MakePetsTargetSheet();
-	MakeMonstersTargetSheet();
-	MakeBigMonstersTargetSheet();
-	MakeCharacterTargetSheet("black");
-	MakeCharacterTargetSheet("blue");
-	MakeCharacterTargetSheet("cerulean");
-	MakeCharacterTargetSheet("cinnabar");
-	MakeCharacterTargetSheet("cyan");
-	MakeCharacterTargetSheet("eggchild");
-	MakeCharacterTargetSheet("gold");
-	MakeCharacterTargetSheet("gray");
-	MakeCharacterTargetSheet("green");
-	MakeCharacterTargetSheet("hired");
-	MakeCharacterTargetSheet("iris");
-	MakeCharacterTargetSheet("khaki");
-	MakeCharacterTargetSheet("lemon");
-	MakeCharacterTargetSheet("lime");
-	MakeCharacterTargetSheet("magenta");
-	MakeCharacterTargetSheet("olive");
-	MakeCharacterTargetSheet("orange");
-	MakeCharacterTargetSheet("pink");
-	MakeCharacterTargetSheet("red");
-	MakeCharacterTargetSheet("violet");
-	MakeCharacterTargetSheet("white");
-	MakeCharacterTargetSheet("yellow");
-	MakeMenuLeaderTargetSheet();
-	MakeMenuBasicTargetSheet();
+    MakeItemsSheet();
+    MakeJournalItemsSheet();
+    MakeJournalMonstersSheet();
+    MakeJournalMonstersBigSheet();
+    MakeJournalPeopleSheet(force_regen_char_journal);
+    MakeJournalStickerSheet(force_regen_char_stickers);
+    MakeMountsTargetSheet();
+    MakePetsTargetSheet();
+    MakeMonstersTargetSheet();
+    MakeBigMonstersTargetSheet();
+    MakeCharacterTargetSheet("black");
+    MakeCharacterTargetSheet("blue");
+    MakeCharacterTargetSheet("cerulean");
+    MakeCharacterTargetSheet("cinnabar");
+    MakeCharacterTargetSheet("cyan");
+    MakeCharacterTargetSheet("eggchild");
+    MakeCharacterTargetSheet("gold");
+    MakeCharacterTargetSheet("gray");
+    MakeCharacterTargetSheet("green");
+    MakeCharacterTargetSheet("hired");
+    MakeCharacterTargetSheet("iris");
+    MakeCharacterTargetSheet("khaki");
+    MakeCharacterTargetSheet("lemon");
+    MakeCharacterTargetSheet("lime");
+    MakeCharacterTargetSheet("magenta");
+    MakeCharacterTargetSheet("olive");
+    MakeCharacterTargetSheet("orange");
+    MakeCharacterTargetSheet("pink");
+    MakeCharacterTargetSheet("red");
+    MakeCharacterTargetSheet("violet");
+    MakeCharacterTargetSheet("white");
+    MakeCharacterTargetSheet("yellow");
+    MakeMenuLeaderTargetSheet();
+    MakeMenuBasicTargetSheet();
 
-	m_EntityDataExtractor = nullptr;
+    m_EntityDataExtractor = nullptr;
 }
 
-void SpriteSheetMerger::RegisterSheet(const std::filesystem::path& full_sheet, bool outdated, bool deleted) {
-	if (RegisteredSourceSheet* registered_sheet = algo::find_if(m_RegisteredSourceSheets,
-		[&full_sheet](const RegisteredSourceSheet& sheet) { return sheet.Path == full_sheet; })) {
-		registered_sheet->Outdated = registered_sheet->Outdated || outdated;
-		registered_sheet->Deleted = registered_sheet->Deleted || deleted;
-		return;
-	}
-	m_RegisteredSourceSheets.push_back(RegisteredSourceSheet{
-		.Path = full_sheet,
-		.Outdated = outdated,
-		.Deleted = deleted
-	});
+void SpriteSheetMerger::RegisterSheet(const std::filesystem::path& full_sheet, bool outdated, bool deleted)
+{
+    if (RegisteredSourceSheet* registered_sheet = algo::find_if(m_RegisteredSourceSheets,
+                                                                [&full_sheet](const RegisteredSourceSheet& sheet)
+                                                                { return sheet.Path == full_sheet; }))
+    {
+        registered_sheet->Outdated = registered_sheet->Outdated || outdated;
+        registered_sheet->Deleted = registered_sheet->Deleted || deleted;
+        return;
+    }
+    m_RegisteredSourceSheets.push_back(RegisteredSourceSheet{
+        .Path = full_sheet,
+        .Outdated = outdated,
+        .Deleted = deleted });
 }
-void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_path, const std::filesystem::path& original_data_folder,
-	std::int64_t priority, const CustomImages& custom_images) {
-	namespace fs = std::filesystem;
+void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_path, const std::filesystem::path& original_data_folder, std::int64_t priority, const CustomImages& custom_images)
+{
+    namespace fs = std::filesystem;
 
-	for (const auto& [relative_path, custom_image] : custom_images) {
-		const auto absolute_path = base_path / relative_path;
-		if (!fs::exists(absolute_path)) {
-			LogError("Custom image mapping from file {} is registered for mod {}, but the file does not exist in the mod...", relative_path, base_path.filename().string());
-			continue;
-		}
+    for (const auto& [relative_path, custom_image] : custom_images)
+    {
+        const auto absolute_path = base_path / relative_path;
+        if (!fs::exists(absolute_path))
+        {
+            LogError("Custom image mapping from file {} is registered for mod {}, but the file does not exist in the mod...", relative_path, base_path.filename().string());
+            continue;
+        }
 
-		Image source_image;
-		source_image.LoadInfoFromPng(absolute_path);
+        Image source_image;
+        source_image.LoadInfoFromPng(absolute_path);
 
-		for (const auto& [target_sheet, custom_image_map] : custom_image) {
-			if (TargetSheet* existing_target_sheet = algo::find(m_TargetSheets, &TargetSheet::Path, target_sheet)) {
-				auto it = std::upper_bound(existing_target_sheet->SourceSheets.begin(), existing_target_sheet->SourceSheets.end(), priority,
-					[](std::int64_t prio, const SourceSheet& sheet) { return sheet.Priority < prio; });
-				existing_target_sheet->SourceSheets.insert(it, SourceSheet{
-					.Path{ relative_path },
-					.RootPath{ base_path },
-					.Size{.Width{ source_image.GetWidth() }, .Height{ source_image.GetHeight() } },
-					.TileMap{ custom_image_map }
-				});
-			}
-			else {
-				fs::path target_sheet_path = fs::path{ target_sheet }.replace_extension(".DDS");
-				if (ExtractGameAssets(std::array{ target_sheet_path }, original_data_folder)) {
-					const auto target_file_path = original_data_folder / target_sheet;
-					Image target_image;
-					target_image.LoadInfoFromPng(target_file_path);
-					
-					const auto source_sheets = std::vector<SourceSheet>{
-						SourceSheet{
-							.Path{ relative_path },
-							.RootPath{ base_path },
-							.Priority{ priority },
-							.Size{ .Width{ source_image.GetWidth() }, .Height{ source_image.GetHeight() } },
-							.TileMap{ custom_image_map }
-						}
-					};
+        for (const auto& [target_sheet, custom_image_map] : custom_image)
+        {
+            if (TargetSheet* existing_target_sheet = algo::find(m_TargetSheets, &TargetSheet::Path, target_sheet))
+            {
+                auto it = std::upper_bound(existing_target_sheet->SourceSheets.begin(), existing_target_sheet->SourceSheets.end(), priority, [](std::int64_t prio, const SourceSheet& sheet)
+                                           { return sheet.Priority < prio; });
+                existing_target_sheet->SourceSheets.insert(it, SourceSheet{ .Path{ relative_path }, .RootPath{ base_path }, .Size{ .Width{ source_image.GetWidth() }, .Height{ source_image.GetHeight() } }, .TileMap{ custom_image_map } });
+            }
+            else
+            {
+                fs::path target_sheet_path = fs::path{ target_sheet }.replace_extension(".DDS");
+                if (ExtractGameAssets(std::array{ target_sheet_path }, original_data_folder))
+                {
+                    const auto target_file_path = original_data_folder / target_sheet;
+                    Image target_image;
+                    target_image.LoadInfoFromPng(target_file_path);
 
-					m_TargetSheets.push_back(TargetSheet{
-						.Path{ target_sheet },
-						.Size{ .Width{ target_image.GetWidth() }, .Height{ target_image.GetHeight() } },
-						.SourceSheets{ std::move(source_sheets) }
-					});
-				}
-				else {
-					LogError("Failed extracting game asset {} required by mod {}...", target_sheet, base_path.filename().string());
-				}
-			}
-		}
-	}
-}
+                    const auto source_sheets = std::vector<SourceSheet>{
+                        SourceSheet{
+                            .Path{ relative_path },
+                            .RootPath{ base_path },
+                            .Priority{ priority },
+                            .Size{ .Width{ source_image.GetWidth() }, .Height{ source_image.GetHeight() } },
+                            .TileMap{ custom_image_map } }
+                    };
 
-bool SpriteSheetMerger::NeedsRegeneration(const std::filesystem::path& destination_folder) const {
-	for (const TargetSheet& target_sheet : m_TargetSheets) {
-		if (NeedsRegen(target_sheet, destination_folder)) {
-			return true;
-		}
-	}
-	return false;
+                    m_TargetSheets.push_back(TargetSheet{
+                        .Path{ target_sheet },
+                        .Size{ .Width{ target_image.GetWidth() }, .Height{ target_image.GetHeight() } },
+                        .SourceSheets{ std::move(source_sheets) } });
+                }
+                else
+                {
+                    LogError("Failed extracting game asset {} required by mod {}...", target_sheet, base_path.filename().string());
+                }
+            }
+        }
+    }
 }
 
-bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::filesystem::path& destination_folder) const {
-	namespace fs = std::filesystem;
-
-	if (target_sheet.ForceRegen) {
-		return true;
-	}
-
-	const bool does_exist = fs::exists(fs::path{ destination_folder / target_sheet.Path }.replace_extension(".DDS"));
-	const bool random_select = target_sheet.RandomSelect;
-	for (const SourceSheet& source_sheet : target_sheet.SourceSheets) {
-		if (const RegisteredSourceSheet* registered_sheet = algo::find(m_RegisteredSourceSheets, &RegisteredSourceSheet::Path, source_sheet.Path)) {
-			if (!does_exist
-				|| random_select
-				|| registered_sheet->Outdated
-				|| registered_sheet->Deleted) {
-				return true;
-			}
-		}
-	}
-	for (const MultiSourceTile& multi_source_sheets : target_sheet.MultiSourceTiles) {
-		for (const auto& path : multi_source_sheets.Paths) {
-			if (const RegisteredSourceSheet* registered_sheet = algo::find(m_RegisteredSourceSheets, &RegisteredSourceSheet::Path, path)) {
-				if (!does_exist
-					|| random_select
-					|| registered_sheet->Outdated
-					|| registered_sheet->Deleted) {
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
+bool SpriteSheetMerger::NeedsRegeneration(const std::filesystem::path& destination_folder) const
+{
+    for (const TargetSheet& target_sheet : m_TargetSheets)
+    {
+        if (NeedsRegen(target_sheet, destination_folder))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
-bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, VirtualFilesystem& vfs) {
-	namespace fs = std::filesystem;
+bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::filesystem::path& destination_folder) const
+{
+    namespace fs = std::filesystem;
 
-	for (const TargetSheet& target_sheet : m_TargetSheets) {
-		if (NeedsRegen(target_sheet, destination_folder)) {
-			const auto target_file_path = vfs.GetFilePath(target_sheet.Path).value_or(source_folder / target_sheet.Path);
-			Image target_image;
-			target_image.LoadFromPng(target_file_path);
+    if (target_sheet.ForceRegen)
+    {
+        return true;
+    }
 
-			static auto validate_source_aspect_ratio = [](const SourceSheet& source_sheet, const Image& source_image) {
-				// Skip images with wrong aspect ratio
-				const std::uint64_t aspect_ratio_offset =
-					std::abs(
-						static_cast<int64_t>(source_sheet.Size.Width) * source_image.GetHeight()
-						- static_cast<int64_t>(source_image.GetWidth()) * source_sheet.Size.Height
-					);
-				// We accept images that are 10 pixels off in width
-				static constexpr std::uint64_t s_AcceptedPixelError{ 10 };
-				return aspect_ratio_offset <= source_sheet.Size.Height * s_AcceptedPixelError;
-			};
+    const bool does_exist = fs::exists(fs::path{ destination_folder / target_sheet.Path }.replace_extension(".DDS"));
+    const bool random_select = target_sheet.RandomSelect;
+    for (const SourceSheet& source_sheet : target_sheet.SourceSheets)
+    {
+        if (const RegisteredSourceSheet* registered_sheet = algo::find(m_RegisteredSourceSheets, &RegisteredSourceSheet::Path, source_sheet.Path))
+        {
+            if (!does_exist || random_select || registered_sheet->Outdated || registered_sheet->Deleted)
+            {
+                return true;
+            }
+        }
+    }
+    for (const MultiSourceTile& multi_source_sheets : target_sheet.MultiSourceTiles)
+    {
+        for (const auto& path : multi_source_sheets.Paths)
+        {
+            if (const RegisteredSourceSheet* registered_sheet = algo::find(m_RegisteredSourceSheets, &RegisteredSourceSheet::Path, path))
+            {
+                if (!does_exist || random_select || registered_sheet->Outdated || registered_sheet->Deleted)
+                {
+                    return true;
+                }
+            }
+        }
+    }
 
-			float upscaling = 1.0f;
+    return false;
+}
 
-			std::vector<std::optional<fs::path>> target_sheet_paths;
-			for (const SourceSheet& source_sheet : target_sheet.SourceSheets) {
-				auto source_file_path = [&vfs, &source_sheet, random_select = target_sheet.RandomSelect]() -> std::optional<fs::path> {
-					if (source_sheet.RootPath) {
-						return source_sheet.RootPath.value() / source_sheet.Path;
-					}
-					else if (!random_select) {
-						return vfs.GetFilePath(source_sheet.Path);
-					}
-					else {
-						return vfs.GetRandomFilePath(source_sheet.Path);
-					}
-				}();
+bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, VirtualFilesystem& vfs)
+{
+    namespace fs = std::filesystem;
 
-				if (source_file_path)
-				{
-					Image source_image;
-					source_image.LoadInfoFromPng(source_file_path.value());
+    for (const TargetSheet& target_sheet : m_TargetSheets)
+    {
+        if (NeedsRegen(target_sheet, destination_folder))
+        {
+            const auto target_file_path = vfs.GetFilePath(target_sheet.Path).value_or(source_folder / target_sheet.Path);
+            Image target_image;
+            target_image.LoadFromPng(target_file_path);
 
-					if (!validate_source_aspect_ratio(source_sheet, source_image)) {
-						source_file_path.reset();
-					}
-					else {
-						const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / source_sheet.Size.Width;
-						const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / source_sheet.Size.Height;
-						upscaling = std::max(std::max(upscaling, source_width_scaling), source_height_scaling);
-					}
-				}
+            static auto validate_source_aspect_ratio = [](const SourceSheet& source_sheet, const Image& source_image)
+            {
+                // Skip images with wrong aspect ratio
+                const std::uint64_t aspect_ratio_offset =
+                    std::abs(
+                        static_cast<int64_t>(source_sheet.Size.Width) * source_image.GetHeight() - static_cast<int64_t>(source_image.GetWidth()) * source_sheet.Size.Height);
+                // We accept images that are 10 pixels off in width
+                static constexpr std::uint64_t s_AcceptedPixelError{ 10 };
+                return aspect_ratio_offset <= source_sheet.Size.Height * s_AcceptedPixelError;
+            };
 
-				target_sheet_paths.push_back(std::move(source_file_path));
-			}
+            float upscaling = 1.0f;
 
-			const float original_target_width_scaling = static_cast<float>(target_image.GetWidth()) / target_sheet.Size.Width;
-			const float original_target_height_scaling = static_cast<float>(target_image.GetHeight()) / target_sheet.Size.Height;
-			const float adjusted_upscaling = upscaling / std::min(original_target_width_scaling, original_target_height_scaling);
+            std::vector<std::optional<fs::path>> target_sheet_paths;
+            for (const SourceSheet& source_sheet : target_sheet.SourceSheets)
+            {
+                auto source_file_path = [&vfs, &source_sheet, random_select = target_sheet.RandomSelect]() -> std::optional<fs::path>
+                {
+                    if (source_sheet.RootPath)
+                    {
+                        return source_sheet.RootPath.value() / source_sheet.Path;
+                    }
+                    else if (!random_select)
+                    {
+                        return vfs.GetFilePath(source_sheet.Path);
+                    }
+                    else
+                    {
+                        return vfs.GetRandomFilePath(source_sheet.Path);
+                    }
+                }();
 
-			target_image.Resize(ImageSize{
-				.x{ static_cast<std::uint32_t>(adjusted_upscaling * target_sheet.Size.Width) },
-				.y{ static_cast<std::uint32_t>(adjusted_upscaling * target_sheet.Size.Height) }
-			});
+                if (source_file_path)
+                {
+                    Image source_image;
+                    source_image.LoadInfoFromPng(source_file_path.value());
 
-			const float target_width_scaling = static_cast<float>(target_image.GetWidth()) / target_sheet.Size.Width;
-			const float target_height_scaling = static_cast<float>(target_image.GetHeight()) / target_sheet.Size.Height;
+                    if (!validate_source_aspect_ratio(source_sheet, source_image))
+                    {
+                        source_file_path.reset();
+                    }
+                    else
+                    {
+                        const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / source_sheet.Size.Width;
+                        const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / source_sheet.Size.Height;
+                        upscaling = std::max(std::max(upscaling, source_width_scaling), source_height_scaling);
+                    }
+                }
 
-			for (const auto [source_sheet, source_file_path] : zip::zip(target_sheet.SourceSheets, target_sheet_paths)) {
-				if (source_file_path) {
-					Image source_image;
-					source_image.LoadFromPng(source_file_path.value());
+                target_sheet_paths.push_back(std::move(source_file_path));
+            }
 
-					const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / source_sheet.Size.Width;
-					const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / source_sheet.Size.Height;
+            const float original_target_width_scaling = static_cast<float>(target_image.GetWidth()) / target_sheet.Size.Width;
+            const float original_target_height_scaling = static_cast<float>(target_image.GetHeight()) / target_sheet.Size.Height;
+            const float adjusted_upscaling = upscaling / std::min(original_target_width_scaling, original_target_height_scaling);
 
-					for (const TileMapping& tile_mapping : source_sheet.TileMap) {
-						const ImageSubRegion source_region = ImageSubRegion{
-							.x{ static_cast<std::int32_t>(tile_mapping.SourceTile.Left * source_width_scaling) },
-							.y{ static_cast<std::int32_t>(tile_mapping.SourceTile.Top * source_height_scaling) },
-							.width{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Right - tile_mapping.SourceTile.Left) * source_width_scaling) },
-							.height{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Bottom - tile_mapping.SourceTile.Top) * source_height_scaling) },
-						};
-						const ImageSubRegion target_region = ImageSubRegion{
-							.x{ static_cast<std::int32_t>(tile_mapping.TargetTile.Left * target_height_scaling) },
-							.y{ static_cast<std::int32_t>(tile_mapping.TargetTile.Top * target_height_scaling) },
-							.width{ static_cast<std::uint32_t>((tile_mapping.TargetTile.Right - tile_mapping.TargetTile.Left) * target_height_scaling) },
-							.height{ static_cast<std::uint32_t>((tile_mapping.TargetTile.Bottom - tile_mapping.TargetTile.Top) * target_height_scaling) },
-						};
+            target_image.Resize(ImageSize{
+                .x{ static_cast<std::uint32_t>(adjusted_upscaling * target_sheet.Size.Width) },
+                .y{ static_cast<std::uint32_t>(adjusted_upscaling * target_sheet.Size.Height) } });
 
-						if (!source_image.ContainsSubRegion(source_region)) {
-							LogError("Source image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {})... Tile expected from target image {}...", source_file_path.value().string(),
-								source_region.x, source_region.y, source_region.width, source_region.height,
-								source_image.GetWidth(), source_image.GetHeight(), target_file_path.string());
-							continue;
-						}
-						if (!target_image.ContainsSubRegion(target_region)) {
-							LogError("Target image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {})... Tile expected from source image {}...", target_file_path.string(),
-								target_region.x, target_region.y, target_region.width, target_region.height,
-								target_image.GetWidth(), target_image.GetHeight(), source_file_path.value().string());
-							continue;
-						}
+            const float target_width_scaling = static_cast<float>(target_image.GetWidth()) / target_sheet.Size.Width;
+            const float target_height_scaling = static_cast<float>(target_image.GetHeight()) / target_sheet.Size.Height;
 
-						Image source_tile = source_image.GetSubImage(source_region);
-						const auto target_size = ::ImageSize{ .x{ static_cast<std::uint32_t>(target_region.width) }, .y{ static_cast<std::uint32_t>(target_region.height) } };
+            for (const auto [source_sheet, source_file_path] : zip::zip(target_sheet.SourceSheets, target_sheet_paths))
+            {
+                if (source_file_path)
+                {
+                    Image source_image;
+                    source_image.LoadFromPng(source_file_path.value());
 
-						if (source_sheet.Processing) {
-							source_tile = source_sheet.Processing(std::move(source_tile), target_size);
-						}
+                    const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / source_sheet.Size.Width;
+                    const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / source_sheet.Size.Height;
 
-						if (source_tile.GetWidth() != target_size.x || source_tile.GetHeight() != target_size.y) {
-							source_tile.Resize(target_size);
-						}
+                    for (const TileMapping& tile_mapping : source_sheet.TileMap)
+                    {
+                        const ImageSubRegion source_region = ImageSubRegion{
+                            .x{ static_cast<std::int32_t>(tile_mapping.SourceTile.Left * source_width_scaling) },
+                            .y{ static_cast<std::int32_t>(tile_mapping.SourceTile.Top * source_height_scaling) },
+                            .width{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Right - tile_mapping.SourceTile.Left) * source_width_scaling) },
+                            .height{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Bottom - tile_mapping.SourceTile.Top) * source_height_scaling) },
+                        };
+                        const ImageSubRegion target_region = ImageSubRegion{
+                            .x{ static_cast<std::int32_t>(tile_mapping.TargetTile.Left * target_height_scaling) },
+                            .y{ static_cast<std::int32_t>(tile_mapping.TargetTile.Top * target_height_scaling) },
+                            .width{ static_cast<std::uint32_t>((tile_mapping.TargetTile.Right - tile_mapping.TargetTile.Left) * target_height_scaling) },
+                            .height{ static_cast<std::uint32_t>((tile_mapping.TargetTile.Bottom - tile_mapping.TargetTile.Top) * target_height_scaling) },
+                        };
 
-						try {
-							target_image.Blit(source_tile, target_region);
-						}
-						catch (cv::Exception& e) {
-							fmt::print("{}", e.what());
-						}
-					}
-				}
-			}
+                        if (!source_image.ContainsSubRegion(source_region))
+                        {
+                            LogError("Source image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {})... Tile expected from target image {}...", source_file_path.value().string(), source_region.x, source_region.y, source_region.width, source_region.height, source_image.GetWidth(), source_image.GetHeight(), target_file_path.string());
+                            continue;
+                        }
+                        if (!target_image.ContainsSubRegion(target_region))
+                        {
+                            LogError("Target image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {})... Tile expected from source image {}...", target_file_path.string(), target_region.x, target_region.y, target_region.width, target_region.height, target_image.GetWidth(), target_image.GetHeight(), source_file_path.value().string());
+                            continue;
+                        }
 
-			for (const MultiSourceTile& multi_source_sheet : target_sheet.MultiSourceTiles) {
-				std::vector<std::pair<Image, std::filesystem::path>> tiles;
-				auto front_tile = multi_source_sheet.TileMap.front();
-				const ImageSubRegion target_region = ImageSubRegion{
-					.x{ static_cast<std::int32_t>(front_tile.TargetTile.Left * target_height_scaling) },
-					.y{ static_cast<std::int32_t>(front_tile.TargetTile.Top * target_height_scaling) },
-					.width{ static_cast<std::uint32_t>((front_tile.TargetTile.Right - front_tile.TargetTile.Left) * target_height_scaling) },
-					.height{ static_cast<std::uint32_t>((front_tile.TargetTile.Bottom - front_tile.TargetTile.Top) * target_height_scaling) },
-				};
-				const auto target_size = ::ImageSize{ .x{ static_cast<std::uint32_t>(target_region.width) }, .y{ static_cast<std::uint32_t>(target_region.height) } };
+                        Image source_tile = source_image.GetSubImage(source_region);
+                        const auto target_size = ::ImageSize{ .x{ static_cast<std::uint32_t>(target_region.width) }, .y{ static_cast<std::uint32_t>(target_region.height) } };
 
-				for (auto [path, size, tile_mapping] : zip::zip(multi_source_sheet.Paths, multi_source_sheet.Sizes, multi_source_sheet.TileMap)) {
-					auto source_file_path = [&vfs, &path, random_select = target_sheet.RandomSelect]() -> std::optional<fs::path> {
-						if (!random_select) {
-							return vfs.GetFilePath(path);
-						}
-						else {
-							return vfs.GetRandomFilePath(path);
-						}
-					}();
+                        if (source_sheet.Processing)
+                        {
+                            source_tile = source_sheet.Processing(std::move(source_tile), target_size);
+                        }
 
-					if (source_file_path) {
-						Image source_image;
-						source_image.LoadFromPng(source_file_path.value());
+                        if (source_tile.GetWidth() != target_size.x || source_tile.GetHeight() != target_size.y)
+                        {
+                            source_tile.Resize(target_size);
+                        }
 
-						const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / size.Width;
-						const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / size.Height;
+                        try
+                        {
+                            target_image.Blit(source_tile, target_region);
+                        }
+                        catch (cv::Exception& e)
+                        {
+                            fmt::print("{}", e.what());
+                        }
+                    }
+                }
+            }
 
-						const ImageSubRegion source_region = ImageSubRegion{
-							.x{ static_cast<std::int32_t>(tile_mapping.SourceTile.Left * source_width_scaling) },
-							.y{ static_cast<std::int32_t>(tile_mapping.SourceTile.Top * source_height_scaling) },
-							.width{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Right - tile_mapping.SourceTile.Left) * source_width_scaling) },
-							.height{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Bottom - tile_mapping.SourceTile.Top) * source_height_scaling) },
-						};
+            for (const MultiSourceTile& multi_source_sheet : target_sheet.MultiSourceTiles)
+            {
+                std::vector<std::pair<Image, std::filesystem::path>> tiles;
+                auto front_tile = multi_source_sheet.TileMap.front();
+                const ImageSubRegion target_region = ImageSubRegion{
+                    .x{ static_cast<std::int32_t>(front_tile.TargetTile.Left * target_height_scaling) },
+                    .y{ static_cast<std::int32_t>(front_tile.TargetTile.Top * target_height_scaling) },
+                    .width{ static_cast<std::uint32_t>((front_tile.TargetTile.Right - front_tile.TargetTile.Left) * target_height_scaling) },
+                    .height{ static_cast<std::uint32_t>((front_tile.TargetTile.Bottom - front_tile.TargetTile.Top) * target_height_scaling) },
+                };
+                const auto target_size = ::ImageSize{ .x{ static_cast<std::uint32_t>(target_region.width) }, .y{ static_cast<std::uint32_t>(target_region.height) } };
 
-						if (!source_image.ContainsSubRegion(source_region)) {
-							LogError("Source image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {})... Tile expected from target image {}...", source_file_path.value().string(),
-								source_region.x, source_region.y, source_region.width, source_region.height,
-								source_image.GetWidth(), source_image.GetHeight(), target_file_path.string());
-							continue;
-						}
+                for (auto [path, size, tile_mapping] : zip::zip(multi_source_sheet.Paths, multi_source_sheet.Sizes, multi_source_sheet.TileMap))
+                {
+                    auto source_file_path = [&vfs, &path, random_select = target_sheet.RandomSelect]() -> std::optional<fs::path>
+                    {
+                        if (!random_select)
+                        {
+                            return vfs.GetFilePath(path);
+                        }
+                        else
+                        {
+                            return vfs.GetRandomFilePath(path);
+                        }
+                    }();
 
-						Image source_tile = source_image.GetSubImage(source_region);
-						tiles.push_back({ source_tile.Clone(), std::move(source_file_path).value() });
-					}
-				}
+                    if (source_file_path)
+                    {
+                        Image source_image;
+                        source_image.LoadFromPng(source_file_path.value());
 
-				if (!target_image.ContainsSubRegion(target_region)) {
-					LogError("Target image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {}) needed for multi-source target...", target_file_path.string(),
-						target_region.x, target_region.y, target_region.width, target_region.height,
-						target_image.GetWidth(), target_image.GetHeight());
-					continue;
-				}
+                        const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / size.Width;
+                        const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / size.Height;
 
-				Image source_tile = multi_source_sheet.Processing(std::move(tiles), target_size);
-				if (source_tile.GetWidth() != target_size.x || source_tile.GetHeight() != target_size.y) {
-					source_tile.Resize(target_size);
-				}
+                        const ImageSubRegion source_region = ImageSubRegion{
+                            .x{ static_cast<std::int32_t>(tile_mapping.SourceTile.Left * source_width_scaling) },
+                            .y{ static_cast<std::int32_t>(tile_mapping.SourceTile.Top * source_height_scaling) },
+                            .width{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Right - tile_mapping.SourceTile.Left) * source_width_scaling) },
+                            .height{ static_cast<std::uint32_t>((tile_mapping.SourceTile.Bottom - tile_mapping.SourceTile.Top) * source_height_scaling) },
+                        };
 
-				try {
-					target_image.Blit(source_tile, target_region);
-				}
-				catch (cv::Exception& e) {
-					fmt::print("{}", e.what());
-				}
-			}
+                        if (!source_image.ContainsSubRegion(source_region))
+                        {
+                            LogError("Source image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {})... Tile expected from target image {}...", source_file_path.value().string(), source_region.x, source_region.y, source_region.width, source_region.height, source_image.GetWidth(), source_image.GetHeight(), target_file_path.string());
+                            continue;
+                        }
 
-			const auto destination_file_path = fs::path{ destination_folder / target_sheet.Path }.replace_extension(".DDS");
-			if (!ConvertRBGAToDds(target_image.GetData(), target_image.GetWidth(), target_image.GetHeight(), destination_file_path)) {
-				return false;
-			}
-		}
-	}
+                        Image source_tile = source_image.GetSubImage(source_region);
+                        tiles.push_back({ source_tile.Clone(), std::move(source_file_path).value() });
+                    }
+                }
 
-	return true;
+                if (!target_image.ContainsSubRegion(target_region))
+                {
+                    LogError("Target image {} does not contain tile ({}, {}, {}, {}), image size is ({}, {}) needed for multi-source target...", target_file_path.string(), target_region.x, target_region.y, target_region.width, target_region.height, target_image.GetWidth(), target_image.GetHeight());
+                    continue;
+                }
+
+                Image source_tile = multi_source_sheet.Processing(std::move(tiles), target_size);
+                if (source_tile.GetWidth() != target_size.x || source_tile.GetHeight() != target_size.y)
+                {
+                    source_tile.Resize(target_size);
+                }
+
+                try
+                {
+                    target_image.Blit(source_tile, target_region);
+                }
+                catch (cv::Exception& e)
+                {
+                    fmt::print("{}", e.what());
+                }
+            }
+
+            const auto destination_file_path = fs::path{ destination_folder / target_sheet.Path }.replace_extension(".DDS");
+            if (!ConvertRBGAToDds(target_image.GetData(), target_image.GetWidth(), target_image.GetHeight(), destination_file_path))
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
