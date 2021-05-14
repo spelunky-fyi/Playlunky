@@ -23,15 +23,16 @@
 #ifndef FILEWATCHER_H
 #define FILEWATCHER_H
 
+// clang-format off
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <tchar.h>
 #include <Pathcch.h>
 #include <shlwapi.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <tchar.h>
-#include <windows.h>
 #endif // WIN32
+// clang-format on
 
 #if __unix__
 #include <errno.h>

@@ -8,6 +8,8 @@
 #include "mod/virtual_filesystem.h"
 #include "playlunky_settings.h"
 
+#include <Windows.h>
+
 struct Playlunky::PlaylunkyImpl
 {
     HMODULE GameModule;
@@ -35,7 +37,7 @@ Playlunky& Playlunky::Get()
     return *s_PlaylunkyInstance;
 }
 
-void Playlunky::Create(HMODULE game_module)
+void Playlunky::Create(void* game_module)
 {
     if (s_PlaylunkyInstance != nullptr)
     {
@@ -43,7 +45,7 @@ void Playlunky::Create(HMODULE game_module)
         return;
     }
 
-    s_PlaylunkyInstance = { new Playlunky(game_module), PlaylunkyDeleter{} };
+    s_PlaylunkyInstance = { new Playlunky{ (HMODULE)game_module }, PlaylunkyDeleter{} };
 }
 void Playlunky::Destroy()
 {
@@ -80,8 +82,8 @@ const PlaylunkySettings& Playlunky::GetSettings() const
     return mImpl->Settings;
 }
 
-Playlunky::Playlunky(HMODULE game_module)
-    : mImpl{ new PlaylunkyImpl{ .GameModule{ game_module }, .Settings{ "playlunky.ini" } } }
+Playlunky::Playlunky(void* game_module)
+    : mImpl{ new PlaylunkyImpl{ .GameModule{ (HMODULE)game_module }, .Settings{ "playlunky.ini" } } }
 {
     Attach(mImpl->Settings);
 }

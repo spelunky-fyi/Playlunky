@@ -1,5 +1,7 @@
 #include "playlunky.h"
 
+#include <Windows.h>
+
 // Dummy export
 __declspec(dllexport) int __stdcall _(void)
 {

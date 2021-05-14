@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Windows.h>
 #include <memory>
 
 class PlaylunkySettings;
@@ -30,7 +29,7 @@ class Playlunky
   public:
     static Playlunky& Get();
 
-    static void Create(HMODULE game_module);
+    static void Create(void* game_module);
     static void Destroy();
 
     void Init();
@@ -48,7 +47,7 @@ class Playlunky
     }
 
   private:
-    Playlunky(HMODULE game_module);
+    Playlunky(void* game_module);
     ~Playlunky();
 
     Playlunky() = delete;

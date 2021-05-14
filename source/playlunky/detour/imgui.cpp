@@ -9,11 +9,13 @@
 #include "sigscan.h"
 #include "util/call_once.h"
 
+// clang-format off
+#include <Windows.h>
 #include <ShlObj.h>
 #include <Shlwapi.h>
-#include <Windows.h>
 #include <d3d11.h>
 #include <imgui.h>
+// clang-format on
 
 #include <spel2.h>
 

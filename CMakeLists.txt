@@ -13,6 +13,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 include(cmake/clang-format.cmake)
 setup_format_target(format_playlunky)
 
+
 # --------------------------------------------------
 # Add submodules
 add_subdirectory(submodules)
@@ -69,7 +70,7 @@ endif()
 add_library(playlunky_definitions INTERFACE)
 target_compile_definitions(playlunky_definitions INTERFACE
 	_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
-	_WIN32_MEAN_AND_LEAN
+	WIN32_LEAN_AND_MEAN
 	NOMINMAX
 	"PLAYLUNKY_VERSION=\"${PLAYLUNKY_GIT_VERSION}\"")
 

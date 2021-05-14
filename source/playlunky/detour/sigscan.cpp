@@ -1,8 +1,10 @@
 #include "sigscan.h"
 
-#include <Psapi.h>
+// clang-format off
 #include <Windows.h>
 #include <winnt.h>
+#include <Psapi.h>
+// clang-format on
 
 #include <cstdint>
 #include <span>
