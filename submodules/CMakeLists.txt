@@ -30,8 +30,6 @@ endfunction()
 
 # --------------------------------------------------
 # Detours
-set(DETOURS_SOURCE detours/src)
-
 add_library(lib_detours STATIC
     detours/src/creatwth.cpp
     detours/src/detours.cpp
