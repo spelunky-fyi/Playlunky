@@ -2,10 +2,10 @@ name: Github Actions Nightly
 
 on:
   schedule:
-    - cron: '0 15 * * *' # run at 3 PM UTC every day
+    - cron: "0 15 * * *" # run at 3 PM UTC every day
   push:
     paths:
-      - '**/Nightly.yml'
+      - "**/Nightly.yml"
   workflow_dispatch:
 
 jobs:
@@ -15,18 +15,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-      - uses: lukka/get-cmake@latest
-
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
+        with:
+          submodules: "recursive"
 
       - name: Pull latest Overlunky
         run: |
           pushd submodules/overlunky
+          git status
           git pull origin main
           git submodule update --init --recursive
           popd
+
+      - uses: actions/setup-python@v2
+      - uses: lukka/get-cmake@latest
 
       - name: Prepare
         run: |
