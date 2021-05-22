@@ -114,6 +114,13 @@ void ModInfo::ReadFromDatabase(const ModDatabase& mod_db)
             if (new_image.ImageMap != old_image.ImageMap)
             {
                 new_image.Outdated = true;
+                for (auto& [target_path, image_map] : old_image.ImageMap)
+                {
+                    if (!new_image.ImageMap.contains(target_path))
+                    {
+                        new_image.ImageMap.insert(std::pair{ target_path, CustomImageMap{} });
+                    }
+                }
             }
         }
     }
