@@ -15,6 +15,10 @@ class ModInfo
     ModInfo(std::string name);
     ~ModInfo() = default;
 
+    const std::string& GetNameInternal() const
+    {
+        return mNameInternal;
+    }
     const std::string& GetName() const
     {
         return mName;
@@ -56,6 +60,7 @@ class ModInfo
     }
 
   private:
+    std::string mNameInternal;
     std::string mName;
 
     bool mExtendedVersionAvailable{ false };

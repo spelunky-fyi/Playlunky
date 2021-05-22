@@ -54,7 +54,7 @@ void to_json(nlohmann::json& j, const CustomImage& custom_image)
 }
 
 ModInfo::ModInfo(std::string name)
-    : mName{ std::move(name) }
+    : mNameInternal{ std::move(name) }, mName{ mNameInternal }
 {
 }
 

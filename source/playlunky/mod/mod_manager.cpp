@@ -619,7 +619,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             {
                 for (auto& [prio, mod_name_and_state] : mod_prio_to_name)
                 {
-                    if (algo::contains(mMods, &ModInfo::GetName, mod_name_and_state.Name))
+                    if (algo::contains(mMods, &ModInfo::GetNameInternal, mod_name_and_state.Name))
                     {
                         if (!mod_name_and_state.Enabled)
                         {
