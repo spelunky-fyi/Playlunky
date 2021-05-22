@@ -17,11 +17,15 @@ struct Tile
     std::uint32_t Top;
     std::uint32_t Right;
     std::uint32_t Bottom;
+
+    bool operator==(const Tile&) const = default;
 };
 struct TileMapping
 {
     Tile SourceTile;
     Tile TargetTile;
+
+    bool operator==(const TileMapping&) const = default;
 };
 struct SourceSheet
 {
@@ -41,5 +45,9 @@ struct MultiSourceTile
 };
 
 using CustomImageMap = std::vector<TileMapping>;
-using CustomImage = std::unordered_map<std::string, CustomImageMap>;
+struct CustomImage
+{
+    std::unordered_map<std::string, CustomImageMap> ImageMap;
+    bool Outdated;
+};
 using CustomImages = std::unordered_map<std::string, CustomImage>;

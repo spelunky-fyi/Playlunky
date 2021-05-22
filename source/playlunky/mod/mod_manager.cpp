@@ -388,6 +388,8 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                                const auto full_asset_path = mod_folder / rel_asset_path;
                                                const auto full_asset_path_string = full_asset_path.string();
                                                mod_info.ReadExtendedInfoFromJson(full_asset_path_string);
+                                               mod_info.ReadFromDatabase(mod_db);
+                                               mod_db.SetInfo(mod_info.Dump());
                                                sprite_sheet_merger.RegisterCustomImages(mod_folder, db_original_folder, prio, mod_info.GetCustomImages());
                                            }
                                        });

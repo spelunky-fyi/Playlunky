@@ -32,6 +32,15 @@ class ModDatabase
         return mWasEnabled;
     }
 
+    void SetInfo(std::string mod_info)
+    {
+        mModInfo = std::move(mod_info);
+    }
+    const std::string& GetModInfo() const
+    {
+        return mModInfo;
+    }
+
     void UpdateDatabase();
     void WriteDatabase() const;
 
@@ -112,4 +121,6 @@ class ModDatabase
 
     bool mWasEnabled{ false };
     bool mIsEnabled{ true };
+
+    std::string mModInfo;
 };

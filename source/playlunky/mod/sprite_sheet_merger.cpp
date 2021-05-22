@@ -99,13 +99,14 @@ void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_p
         Image source_image;
         source_image.LoadInfoFromPng(absolute_path);
 
-        for (const auto& [target_sheet, custom_image_map] : custom_image)
+        for (const auto& [target_sheet, custom_image_map] : custom_image.ImageMap)
         {
             if (TargetSheet* existing_target_sheet = algo::find(m_TargetSheets, &TargetSheet::Path, target_sheet))
             {
                 auto it = std::upper_bound(existing_target_sheet->SourceSheets.begin(), existing_target_sheet->SourceSheets.end(), priority, [](std::int64_t prio, const SourceSheet& sheet)
                                            { return sheet.Priority < prio; });
                 existing_target_sheet->SourceSheets.insert(it, SourceSheet{ .Path{ relative_path }, .RootPath{ base_path }, .Size{ .Width{ source_image.GetWidth() }, .Height{ source_image.GetHeight() } }, .TileMap{ custom_image_map } });
+                existing_target_sheet->ForceRegen = existing_target_sheet->ForceRegen || custom_image.Outdated;
             }
             else
             {
@@ -128,7 +129,8 @@ void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_p
                     m_TargetSheets.push_back(TargetSheet{
                         .Path{ target_sheet },
                         .Size{ .Width{ target_image.GetWidth() }, .Height{ target_image.GetHeight() } },
-                        .SourceSheets{ std::move(source_sheets) } });
+                        .SourceSheets{ std::move(source_sheets) },
+                        .ForceRegen{ custom_image.Outdated } });
                 }
                 else
                 {

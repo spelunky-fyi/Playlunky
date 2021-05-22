@@ -17,7 +17,8 @@
 //		0xBEDD1BED -- v0.7.2
 //		0xDEE25CA2 -- v0.7.3
 //		0x0BAFF1ED -- v0.8.0
-static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0x0BAFF1ED };
+//		0x0BEECAB0 -- v0.8.1
+static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0x0BEECAB0 };
 
 ModDatabase::ModDatabase(std::filesystem::path database_folder, std::filesystem::path mod_folder, ModDatabaseFlags flags)
     : mDatabaseFolder(std::move(database_folder)), mModFolder(std::move(mod_folder)), mFlags(flags)
@@ -116,6 +117,14 @@ ModDatabase::ModDatabase(std::filesystem::path database_folder, std::filesystem:
                     setting.Name = std::move(name);
                     setting.Value = value;
                 }
+            }
+
+            {
+                std::size_t mod_info_size;
+                db_file.read(reinterpret_cast<char*>(&mod_info_size), sizeof(mod_info_size));
+
+                mModInfo.resize(mod_info_size);
+                db_file.read(mModInfo.data(), mod_info_size);
             }
         }
     }
@@ -337,6 +346,12 @@ void ModDatabase::WriteDatabase() const
             db_file.write(setting.Name.data(), setting.Name.size());
 
             db_file.write(reinterpret_cast<const char*>(&setting.Value), sizeof(setting.Value));
+        }
+
+        {
+            std::size_t mod_info_size = mModInfo.size();
+            db_file.write(reinterpret_cast<char*>(&mod_info_size), sizeof(mod_info_size));
+            db_file.write(mModInfo.data(), mod_info_size);
         }
     }
 }

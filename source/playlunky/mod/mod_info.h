@@ -7,28 +7,34 @@
 #include <unordered_map>
 #include <vector>
 
+class ModDatabase;
+
 class ModInfo
 {
   public:
     ModInfo(std::string name);
     ~ModInfo() = default;
 
-    const std::string GetName() const
+    const std::string& GetName() const
     {
         return mName;
     }
-    const std::string GetDescription() const
+    const std::string& GetDescription() const
     {
         return mDescription;
     }
-    const std::string GetAuthor() const
+    const std::string& GetAuthor() const
     {
         return mAuthor;
     }
-    const std::string GetVersion() const
+    const std::string& GetVersion() const
     {
         return mVersion;
     }
+
+    std::string Dump() const;
+
+    void ReadFromDatabase(const ModDatabase& mod_db);
 
     void ReadExtendedInfoFromJson(std::string_view path);
     bool HasExtendedInfo() const
