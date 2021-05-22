@@ -15,8 +15,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          submodules: "recursive"
+
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
 
       - name: Pull latest Overlunky
         run: |
