@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2021-05-22
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
+
+### Added
+- New level gen API to be used from Lua
+
+### Fixed
+- Some issues with corrupt custom audio, both from loose file mods as well as completely custom audio
+- Fixed some issues with cache invalidation when a mod uses custom tile map
+- Fixed generation of load_order.txt when a mod ships mod_info.json
+
 ## [0.8.0] - 2021-05-10
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
