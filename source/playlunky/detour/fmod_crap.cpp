@@ -457,6 +457,7 @@ struct DetourFmodSystemLoadBankMemory
                         {
                             Playlunky::Get().RegisterModType(ModType::Sound);
                             sample.Buffer = LoadCachedAudioFile(modded_sample.value());
+                            num_samples++;
                         }
                     }
                     else
@@ -498,6 +499,7 @@ struct DetourFmodSystemLoadBankMemory
                         {
                             Playlunky::Get().RegisterModType(ModType::Sound);
                             sample.Buffer = DecodeAudioFile(modded_sample.value());
+                            num_samples++;
                         }
                     }
 
@@ -716,11 +718,9 @@ struct DetourFmodSystemCreateSound
                 if (sample.Buffer.DataSize > 0)
                 {
                     static char empty_wav[]{
-                        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // 16 bytes padding front
                         "\x52\x49\x46\x46\x25\x00\x00\x00\x57\x41\x56\x45\x66\x6D\x74\x20"
                         "\x10\x00\x00\x00\x01\x00\x01\x00\x44\xAC\x00\x00\x88\x58\x01\x00"
                         "\x02\x00\x10\x00\x64\x61\x74\x61\x74\x00\x00\x00\x00"
-                        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // 16 bytes padding back
                     };
 
                     const FMOD::FMOD_MODE loose_mode = (FMOD::FMOD_MODE)(mode | FMOD::MODE_OPENMEMORY_POINT);
