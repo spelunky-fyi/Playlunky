@@ -11,14 +11,14 @@ struct FunctorFunctionPointer<Ret(Args...), FunctorT, TagT>
 {
     static void Set(FunctorT&& functor)
     {
-        s_Functor = std::forward<FunctorT>(functor);
+        s_Functor.emplace(std::forward<FunctorT>(functor));
     }
     static Ret Call(Args... args)
     {
         return s_Functor.value()(args...);
     }
 
-    inline static std::optional<FunctorT> s_Functor;
+    inline static std::optional<std::decay_t<FunctorT>> s_Functor;
 };
 template<class MemberFunT, class TagT>
 struct MemberFunctionPointer;
