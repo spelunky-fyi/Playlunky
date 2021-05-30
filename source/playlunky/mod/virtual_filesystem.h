@@ -9,6 +9,8 @@
 #include <variant>
 #include <vector>
 
+struct SpelunkyFileInfo;
+
 class VirtualFilesystem
 {
   public:
@@ -29,14 +31,7 @@ class VirtualFilesystem
     void BindPathes(std::vector<std::string_view> pathes);
 
     // Interface for runtime loading
-    struct FileInfo
-    {
-        void* Data{ nullptr };
-        int _member_1{ 0 };
-        int DataSize{ 0 };
-        int AllocationSize{ 0 };
-        int _member_4{ 0 };
-    };
+    using FileInfo = SpelunkyFileInfo;
     FileInfo* LoadFile(const char* path, void* (*allocator)(std::size_t) = nullptr) const;
 
     // Interface for loading during preprocessing

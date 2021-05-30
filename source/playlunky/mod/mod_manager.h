@@ -27,5 +27,6 @@ class ModManager
   private:
     std::vector<class ModInfo> mMods;
     ScriptManager mScriptManager;
+    VirtualFilesystem* m_Vfs;
     bool mDeveloperMode;
 };

@@ -2,7 +2,6 @@
 
 #include "debug.h"
 #include "detour_entry.h"
-#include "file_io.h"
 #include "fmod_crap.h"
 #include "logger.h"
 #include "sigscan.h"
@@ -73,7 +72,6 @@ std::vector<DetourEntry> CollectDetourEntries(const PlaylunkySettings& settings)
 
     std::vector<DetourEntry> detour_entries;
     append(detour_entries, GetLogDetours());
-    append(detour_entries, GetFileIODetours());
     append(detour_entries, GetFmodDetours(settings));
     append(detour_entries, GetMainDetours());
 

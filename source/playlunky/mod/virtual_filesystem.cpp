@@ -4,6 +4,8 @@
 #include "util/algorithms.h"
 #include "util/on_scope_exit.h"
 
+#include <spel2.h>
+
 #include <Windows.h>
 #include <filesystem>
 

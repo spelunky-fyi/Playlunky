@@ -101,7 +101,7 @@ static constexpr std::string_view s_SpeedrunFiles[]{
 };
 
 ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& settings, VirtualFilesystem& vfs)
-    : mDeveloperMode{ settings.GetBool("settings", "enable_developer_mode", false) || settings.GetBool("script_settings", "enable_developer_mode", false) }
+    : mDeveloperMode{ settings.GetBool("settings", "enable_developer_mode", false) || settings.GetBool("script_settings", "enable_developer_mode", false) }, m_Vfs{ &vfs }
 {
     namespace fs = std::filesystem;
 
@@ -611,6 +611,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
         PatchCharacterDefinitions(vfs, settings);
 
         vfs.MountFolder(db_folder.string(), -1);
+        vfs.MountFolder(".", -2);
 
         {
             struct ModNameAndState
@@ -692,6 +693,62 @@ void ModManager::PostGameInit()
                                  out_buffer[fmt_res.size] = '\0';
                                  return true;
                              });
+
+    RegisterOnLoadFileFunc(FunctionPointer<std::remove_pointer_t<Spelunky_LoadFileFunc>, struct ModManagerLoadFile>(
+        [this](const char* file_path, SpelunkyAllocFun alloc_fun) -> SpelunkyFileInfo*
+        {
+            if (m_Vfs)
+            {
+                if (auto* file_info = m_Vfs->LoadFile(file_path, alloc_fun))
+                {
+                    return file_info;
+                }
+            }
+            return nullptr;
+        }));
+    RegisterGetImagePathFunc(FunctionPointer<std::remove_pointer_t<Spelunky_GetImageFilePathFunc>, struct ModManagerGetImagePath>(
+        [this](const char* root_path, const char* relative_path, char* out_buffer, size_t out_buffer_size) -> bool
+        {
+            auto dds_relative_path = std::filesystem::path(relative_path).replace_extension(".dds").string();
+            auto [mod_name, mod_rel_path] = [](std::filesystem::path root)
+            {
+                std::string mod_name;
+                std::filesystem::path mod_rel_path;
+                bool found_packs{ false };
+
+                for (auto seg : root)
+                {
+                    if (found_packs)
+                    {
+                        if (mod_name.empty())
+                        {
+                            mod_name = seg.string();
+                        }
+                        else
+                        {
+                            mod_rel_path /= seg;
+                        }
+                    }
+                    else if (algo::is_same_path(seg, "Packs"))
+                    {
+                        found_packs = true;
+                    }
+                }
+
+                return std::pair{ std::move(mod_name), mod_rel_path.string() };
+            }(root_path);
+
+            auto fmt_res = fmt::format_to_n(
+                out_buffer,
+                out_buffer_size - 1,
+                "Mods/Packs/.db/Mods/{}{}{}/{}",
+                mod_name,
+                mod_rel_path.empty() ? "" : "/",
+                mod_rel_path,
+                dds_relative_path);
+            out_buffer[fmt_res.size] = '\0';
+            return fmt_res.size < out_buffer_size;
+        }));
 }
 
 bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t /*l_param*/)

@@ -1,5 +1,3 @@
-#include "file_io.h"
-
 #include "detour_entry.h"
 #include "detour_helper.h"
 #include "log.h"
