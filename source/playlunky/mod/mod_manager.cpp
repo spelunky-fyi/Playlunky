@@ -664,35 +664,6 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
         LogInfo("No mods were initialized...");
     }
-}
-ModManager::~ModManager() = default;
-
-void ModManager::PostGameInit()
-{
-    InitSoundManager([](const char* file_path)
-                     {
-                         DecodedAudioBuffer buffer = DecodeAudioFile(std::filesystem::path{ file_path });
-                         return Spelunky_DecodedAudioBuffer{
-                             .num_channels{ buffer.NumChannels },
-                             .frequency{ buffer.Frequency },
-                             .format{ static_cast<Spelunky_SoundFormat>(buffer.Format) },
-                             .data{ reinterpret_cast<const char*>(buffer.Data.release()) },
-                             .data_size{ buffer.DataSize }
-                         };
-                     });
-    mScriptManager.CommitScripts();
-
-    RegisterOnInputFunc(FunctionPointer<std::remove_pointer_t<OnInputFunc>, struct ModManagerOnInput>(&ModManager::OnInput, this));
-    RegisterPreDrawFunc(FunctionPointer<std::remove_pointer_t<PreDrawFunc>, struct ModManagerUpdate>(&ModManager::Update, this));
-    RegisterImguiDrawFunc(FunctionPointer<std::remove_pointer_t<ImguiDrawFunc>, struct ModManagerDraw>(&ModManager::Draw, this));
-
-    RegisterMakeSavePathFunc([](
-                                 const char* script_path, size_t script_path_size, const char* /*script_name*/, size_t /*script_name_size*/, char* out_buffer, size_t out_buffer_size) -> bool
-                             {
-                                 auto fmt_res = fmt::format_to_n(out_buffer, out_buffer_size - 1, "{}/save.dat", std::string_view{ script_path, script_path_size });
-                                 out_buffer[fmt_res.size] = '\0';
-                                 return true;
-                             });
 
     RegisterOnLoadFileFunc(FunctionPointer<std::remove_pointer_t<Spelunky_LoadFileFunc>, struct ModManagerLoadFile>(
         [this](const char* file_path, SpelunkyAllocFun alloc_fun) -> SpelunkyFileInfo*
@@ -749,6 +720,35 @@ void ModManager::PostGameInit()
             out_buffer[fmt_res.size] = '\0';
             return fmt_res.size < out_buffer_size;
         }));
+}
+ModManager::~ModManager() = default;
+
+void ModManager::PostGameInit()
+{
+    InitSoundManager([](const char* file_path)
+                     {
+                         DecodedAudioBuffer buffer = DecodeAudioFile(std::filesystem::path{ file_path });
+                         return Spelunky_DecodedAudioBuffer{
+                             .num_channels{ buffer.NumChannels },
+                             .frequency{ buffer.Frequency },
+                             .format{ static_cast<Spelunky_SoundFormat>(buffer.Format) },
+                             .data{ reinterpret_cast<const char*>(buffer.Data.release()) },
+                             .data_size{ buffer.DataSize }
+                         };
+                     });
+    mScriptManager.CommitScripts();
+
+    RegisterOnInputFunc(FunctionPointer<std::remove_pointer_t<OnInputFunc>, struct ModManagerOnInput>(&ModManager::OnInput, this));
+    RegisterPreDrawFunc(FunctionPointer<std::remove_pointer_t<PreDrawFunc>, struct ModManagerUpdate>(&ModManager::Update, this));
+    RegisterImguiDrawFunc(FunctionPointer<std::remove_pointer_t<ImguiDrawFunc>, struct ModManagerDraw>(&ModManager::Draw, this));
+
+    RegisterMakeSavePathFunc([](
+                                 const char* script_path, size_t script_path_size, const char* /*script_name*/, size_t /*script_name_size*/, char* out_buffer, size_t out_buffer_size) -> bool
+                             {
+                                 auto fmt_res = fmt::format_to_n(out_buffer, out_buffer_size - 1, "{}/save.dat", std::string_view{ script_path, script_path_size });
+                                 out_buffer[fmt_res.size] = '\0';
+                                 return true;
+                             });
 }
 
 bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t /*l_param*/)
