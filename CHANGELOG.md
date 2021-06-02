@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.3] - 2021-06-02
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
+
+### Added
+- Newest features from Overlunky (texture API)
+
 ## [0.8.2] - 2021-05-26
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
