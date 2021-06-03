@@ -75,7 +75,7 @@ DecodedAudioBuffer DecodeAudioFile(const std::filesystem::path& file_path)
     }
     else
     {
-        nqr::ConvertFromFloat32((std::uint8_t*)data.get(), decoded_data.samples.data(), decoded_data.samples.size(), decoded_data.sourceFormat);
+        nqr::ConvertFromFloat32((std::uint8_t*)data.get() + 16, decoded_data.samples.data(), decoded_data.samples.size(), decoded_data.sourceFormat);
     }
 
     return DecodedAudioBuffer{
