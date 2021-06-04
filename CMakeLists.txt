@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.17)
 project(Playlunky LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -96,6 +96,28 @@ target_link_libraries(playlunky_lib_dependencies INTERFACE
 	inih
 	spel2)
 
+add_library(playlunky_pch INTERFACE)
+target_precompile_headers(playlunky_pch INTERFACE
+	<string>
+	<string_view>
+	<array>
+	<vector>
+	<deque>
+	<map>
+	<unordered_map>
+	<set>
+	<unordered_set>
+	<fstream>
+	<regex>
+	<filesystem>
+	<variant>
+	<functional>
+	<algorithm>
+	<codecvt>
+	<iomanip>
+	<locale>
+	<mutex>)
+
 
 # --------------------------------------------------
 # Glob for 3rd-party sources
@@ -120,8 +142,12 @@ target_link_libraries(playlunky64 PRIVATE
 	playlunky_definitions
 	playlunky_dependencies
 	playlunky_inject_dependencies
-	playlunky_lib_dependencies)
+	playlunky_lib_dependencies
+	playlunky_pch)
 target_include_directories(playlunky64 PRIVATE "source/playlunky" "source/shared" "source/3rd-party")
+target_precompile_headers(playlunky64 PRIVATE
+	<imgui.h>
+	<lodepng.h>)
 
 
 # --------------------------------------------------
@@ -135,6 +161,7 @@ target_link_libraries(playlunky_launcher PRIVATE
 	playlunky_definitions
 	playlunky_dependencies
 	playlunky_inject_dependencies
+	playlunky_pch
 	structopt::structopt)
 target_include_directories(playlunky_launcher PRIVATE "source/launcher" "source/shared" "res")
 
