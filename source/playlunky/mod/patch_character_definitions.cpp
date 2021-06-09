@@ -10,8 +10,10 @@
 
 #pragma warning(push)
 #pragma warning(disable : 4927)
-#include "FileWatch.hpp"
+#include <FileWatch.hpp>
 #pragma warning(pop)
+
+#include <spel2.h>
 
 #include <array>
 #include <cassert>
@@ -21,83 +23,7 @@
 #include <span>
 #include <unordered_map>
 
-struct Color
-{
-    float r;
-    float g;
-    float b;
-    float a;
-};
-struct CharacterDefinition
-{
-    float _float_0;
-    float _float_1;
-    float _float_2;
-    float _float_3;
-    float _float_4;
-    Color Color;
-    char16_t FullName[0x18];
-    char16_t ShortName[0xc];
-};
-static constexpr auto sizeof_CharacterDefinition = sizeof(CharacterDefinition);
-static constexpr auto expect_CharacterDefinition = 0x36 * sizeof(char16_t);
-static_assert(sizeof_CharacterDefinition == expect_CharacterDefinition);
-
 std::vector<std::unique_ptr<filewatch::FileWatch<std::filesystem::path>>> g_FileWatchers;
-
-std::span<CharacterDefinition> GetCharacterDefinitions()
-{
-    static std::span<CharacterDefinition> static_character_table = []()
-    {
-        const auto static_init_strings = SigScan::FindPattern("Spel2.exe", "\x48\x8b\xc4\x48\x81\xec\xe8\x00\x00\x00\x0f\x29\x70\xe8\x0f\x29\x78\xd8\x44\x0f\x29\x40\xc8\x44\x0f\x29\x48\xb8\x44\x0f\x29\x50\xa8"_sig, true);
-        const auto load_ana_strings = SigScan::FindPattern("\xf3\x44\x0f\x10\xc8"_sig, static_init_strings, (void*)((const char*)static_init_strings + 0x1000));
-        // load_ana_strings = (char*)load_ana_strings + 12;
-        const auto write_ana_strings = SigScan::FindPattern("\x0f\x11"_sig, load_ana_strings, (void*)((const char*)static_init_strings + 0x1000));
-
-        auto decode_pc = [](void* instruction_addr)
-        {
-            off_t rel = *(int32_t*)((char*)instruction_addr + 3);
-            return (char*)instruction_addr + rel + 7;
-        };
-
-        auto ana_strings = decode_pc(write_ana_strings);
-        auto string_table_first_element = ana_strings + sizeof(CharacterDefinition::FullName) + sizeof(CharacterDefinition::ShortName);
-        auto string_table_start = string_table_first_element - sizeof(CharacterDefinition);
-        std::span<CharacterDefinition> character_table{ (CharacterDefinition*)(string_table_start), 20 };
-        [[maybe_unused]] constexpr std::array known_tables{
-            CharacterDefinition{ .FullName{ u"Ana Spelunky" }, .ShortName{ u"Ana" } },
-            CharacterDefinition{ .FullName{ u"Margaret Tunnel" }, .ShortName{ u"Margaret" } },
-            CharacterDefinition{ .FullName{ u"Colin Northward" }, .ShortName{ u"Colin" } },
-            CharacterDefinition{ .FullName{ u"Roffy D. Sloth" }, .ShortName{ u"Roffy" } },
-            CharacterDefinition{ .FullName{ u"Alto Singh" }, .ShortName{ u"Alto" } },
-            CharacterDefinition{ .FullName{ u"Liz Mutton" }, .ShortName{ u"Liz" } },
-            CharacterDefinition{ .FullName{ u"Nekka The Eagle" }, .ShortName{ u"Nekka" } },
-            CharacterDefinition{ .FullName{ u"LISE Project" }, .ShortName{ u"LISE" } },
-            CharacterDefinition{ .FullName{ u"Coco Von Diamonds" }, .ShortName{ u"Coco" } },
-            CharacterDefinition{ .FullName{ u"Manfred Tunnel" }, .ShortName{ u"Manfred" } },
-            CharacterDefinition{ .FullName{ u"Little Jay" }, .ShortName{ u"Jay" } },
-            CharacterDefinition{ .FullName{ u"Tina Flan" }, .ShortName{ u"Tina" } },
-            CharacterDefinition{ .FullName{ u"Valerie Crump" }, .ShortName{ u"Valerie" } },
-            CharacterDefinition{ .FullName{ u"Au" }, .ShortName{ u"Au" } },
-            CharacterDefinition{ .FullName{ u"Demi Von Diamonds" }, .ShortName{ u"Demi" } },
-            CharacterDefinition{ .FullName{ u"Pilot" }, .ShortName{ u"Pilot" } },
-            CharacterDefinition{ .FullName{ u"Princess Airyn" }, .ShortName{ u"Airyn" } },
-            CharacterDefinition{ .FullName{ u"Dirk Yamaoka" }, .ShortName{ u"Dirk" } },
-            CharacterDefinition{ .FullName{ u"Guy Spelunky" }, .ShortName{ u"Guy" } },
-            CharacterDefinition{ .FullName{ u"Classic Guy" }, .ShortName{ u"Classic Guy" } },
-        };
-        for (size_t i = 0; i < 20; i++)
-        {
-            [[maybe_unused]] CharacterDefinition& string_table = character_table[i];
-            [[maybe_unused]] const CharacterDefinition& known_table = known_tables[i];
-            assert(memcmp(string_table.FullName, known_table.FullName, sizeof(CharacterDefinition::FullName)) == 0);
-            assert(memcmp(string_table.ShortName, known_table.ShortName, sizeof(CharacterDefinition::ShortName)) == 0);
-        }
-
-        return character_table;
-    }();
-    return static_character_table;
-}
 
 template<typename T>
 std::string toUTF8(const std::basic_string<T, std::char_traits<T>>& source)
@@ -115,31 +41,30 @@ std::basic_string<T, std::char_traits<T>, std::allocator<T>> fromUTF8(const std:
 
 void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& settings)
 {
-    std::span<CharacterDefinition> character_table = GetCharacterDefinitions();
-
-    constexpr std::string_view characters[]{
-        "yellow",
-        "magenta",
-        "cyan",
-        "black",
-        "cinnabar",
-        "green",
-        "olive",
-        "white",
-        "cerulean",
-        "blue",
-        "lime",
-        "lemon",
-        "iris",
-        "gold",
-        "red",
-        "pink",
-        "violet",
-        "gray",
-        "khaki",
-        "orange"
+    using namespace std::string_view_literals;
+    constexpr std::array characters{
+        "yellow"sv,
+        "magenta"sv,
+        "cyan"sv,
+        "black"sv,
+        "cinnabar"sv,
+        "green"sv,
+        "olive"sv,
+        "white"sv,
+        "cerulean"sv,
+        "blue"sv,
+        "lime"sv,
+        "lemon"sv,
+        "iris"sv,
+        "gold"sv,
+        "red"sv,
+        "pink"sv,
+        "violet"sv,
+        "gray"sv,
+        "khaki"sv,
+        "orange"sv
     };
-    for (size_t i = 0; i < sizeof(characters) / sizeof(std::string_view); i++)
+    for (std::uint32_t i = 0; i < characters.size(); i++)
     {
         auto char_name = characters[i];
 
@@ -187,28 +112,14 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
                     }
                 }
 
-                CharacterDefinition& character_def = character_table[i];
-
                 {
                     std::u16string full_name = fromUTF8<char16_t>(full_name_narrow);
-                    const auto max_size = sizeof(CharacterDefinition::FullName) / sizeof(char16_t);
-                    if (full_name.size() > max_size)
-                    {
-                        LogError("Character name {} is too long, max supported size is {}", char_name, max_size);
-                    }
-                    memset(character_def.FullName, 0, max_size * sizeof(char16_t));
-                    memcpy(character_def.FullName, full_name.c_str(), std::min(full_name.size(), max_size) * sizeof(char16_t));
+                    Spelunky_SetCharacterFullName(i, full_name.c_str());
                 }
 
                 {
                     std::u16string short_name = fromUTF8<char16_t>(short_name_narrow);
-                    const auto max_size = sizeof(CharacterDefinition::ShortName) / sizeof(char16_t);
-                    if (short_name.size() > max_size)
-                    {
-                        LogError("Character name {} is too long, max supported size is {}", char_name, max_size);
-                    }
-                    memset(character_def.ShortName, 0, max_size * sizeof(char16_t));
-                    memcpy(character_def.ShortName, short_name.c_str(), std::min(short_name.size(), max_size) * sizeof(char16_t));
+                    Spelunky_SetCharacterShortName(i, short_name.c_str());
                 }
             }
         }
@@ -216,7 +127,6 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
         auto color_file_name = fmt::format("char_{}.color", char_name);
         if (auto file_path = vfs.GetFilePath(color_file_name))
         {
-            CharacterDefinition& character_def = character_table[i];
             auto change_heart_color_from_file = [&, file_path = file_path.value()](const std::filesystem::path&, const filewatch::Event change_type)
             {
                 if (change_type == filewatch::Event::removed || change_type == filewatch::Event::renamed_old)
@@ -226,13 +136,10 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
 
                 if (auto character_source_file = std::ifstream{ file_path })
                 {
+                    float color[4]{};
                     try
                     {
-                        float r, g, b;
-                        character_source_file >> r >> g >> b;
-                        character_def.Color.r = r;
-                        character_def.Color.g = g;
-                        character_def.Color.b = b;
+                        character_source_file >> color[0] >> color[1] >> color[2];
                     }
                     catch (...)
                     {
@@ -241,8 +148,14 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
 
                     if (!character_source_file.eof())
                     {
-                        character_source_file >> character_def.Color.a;
+                        character_source_file >> color[3];
                     }
+                    else
+                    {
+                        color[3] = 1.0f;
+                    }
+
+                    Spelunky_SetCharacterHeartColor(i, color);
                 }
             };
             change_heart_color_from_file(file_path.value(), filewatch::Event::added);
@@ -252,20 +165,5 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
                 g_FileWatchers.push_back(std::make_unique<filewatch::FileWatch<std::filesystem::path>>(file_path.value(), change_heart_color_from_file));
             }
         }
-    }
-}
-
-#include <random>
-void RandomHeartColors()
-{
-    std::uniform_real_distribution dist(0.0f, 1.0f);
-    std::random_device rand_dev;
-
-    std::span<CharacterDefinition> character_table = GetCharacterDefinitions();
-    for (CharacterDefinition& def : character_table)
-    {
-        def.Color.r = dist(rand_dev);
-        def.Color.g = dist(rand_dev);
-        def.Color.b = dist(rand_dev);
     }
 }
