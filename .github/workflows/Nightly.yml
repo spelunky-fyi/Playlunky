@@ -23,6 +23,8 @@ jobs:
         run: |
           pushd submodules/overlunky
           git status
+          git config user.email "autobuilder@github.com"
+          git config user.name "Autobuilder"
           git pull origin main
           git submodule update --init --recursive
           popd
