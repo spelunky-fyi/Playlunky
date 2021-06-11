@@ -13,6 +13,7 @@
 #include <FileWatch.hpp>
 #pragma warning(pop)
 
+#include <nlohmann/json.hpp>
 #include <spel2.h>
 
 #include <array>
@@ -37,6 +38,93 @@ std::basic_string<T, std::char_traits<T>, std::allocator<T>> fromUTF8(const std:
 {
     std::wstring_convert<std::codecvt_utf8_utf16<T>, T> convertor;
     return convertor.from_bytes(source);
+}
+
+struct CharacterDefinition
+{
+    std::optional<std::string> FullName;
+    std::optional<std::string> ShortName;
+    std::optional<std::array<float, 4>> Color;
+    enum GenderVar
+    {
+        Male,
+        Female
+    };
+    std::optional<GenderVar> Gender;
+};
+void from_json(const nlohmann::json& j, CharacterDefinition& char_def)
+{
+    char_def = CharacterDefinition{};
+
+    if (j.contains("full_name"))
+    {
+        char_def.FullName = j["full_name"];
+    }
+
+    if (j.contains("short_name"))
+    {
+        char_def.ShortName = j["short_name"];
+    }
+
+    if (j.contains("color"))
+    {
+        auto j_color = j["color"];
+        auto color = std::array<float, 4>{};
+        if (j_color.is_array() && j_color.size() >= 3)
+        {
+            color[0] = j_color[0];
+            color[1] = j_color[1];
+            color[2] = j_color[2];
+            if (j_color.size() > 3)
+            {
+                color[3] = j_color[3];
+            }
+            char_def.Color = color;
+        }
+        else if (j_color.is_object())
+        {
+            color[0] = j_color["red"];
+            color[1] = j_color["green"];
+            color[2] = j_color["blue"];
+            if (j_color.contains("alpha"))
+            {
+                color[3] = j_color["alpha"];
+            }
+            char_def.Color = color;
+        }
+        else if (j_color.is_number_integer() || j_color.is_string())
+        {
+            std::uint32_t u_color;
+            if (j_color.is_number_integer())
+            {
+                u_color = j_color;
+            }
+            else
+            {
+                std::string s_color = j_color;
+                if (s_color.starts_with("0x") || s_color.starts_with("0X"))
+                {
+                    std::from_chars(s_color.data() + 2, s_color.data() + s_color.size(), u_color, 16);
+                }
+                else
+                {
+                    std::from_chars(s_color.data(), s_color.data() + s_color.size(), u_color);
+                }
+            }
+            color[0] = static_cast<float>((u_color >> 16) & 0xff) / 255.0f;
+            color[1] = static_cast<float>((u_color >> 8) & 0xff) / 255.0f;
+            color[2] = static_cast<float>((u_color >> 0) & 0xff) / 255.0f;
+            color[3] = 1.0f;
+            char_def.Color = color;
+        }
+    }
+
+    if (j.contains("gender"))
+    {
+        char_def.Gender = j["gender"] == "Male" || j["gender"] == "male" || j["gender"] == "man"
+                              ? CharacterDefinition::Male
+                              : CharacterDefinition::Female;
+    }
 }
 
 void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& settings)
@@ -127,8 +215,7 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
         auto color_file_name = fmt::format("char_{}.color", char_name);
         if (auto file_path = vfs.GetFilePath(color_file_name))
         {
-            auto change_heart_color_from_file = [&, file_path = file_path.value()](const std::filesystem::path&, const filewatch::Event change_type)
-            {
+            auto change_heart_color_from_file = [i, file_path = file_path.value()](const std::filesystem::path&, const filewatch::Event change_type) {
                 if (change_type == filewatch::Event::removed || change_type == filewatch::Event::renamed_old)
                 {
                     return;
@@ -163,6 +250,47 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
             if (settings.GetBool("script_settings", "enable_developer_mode", false))
             {
                 g_FileWatchers.push_back(std::make_unique<filewatch::FileWatch<std::filesystem::path>>(file_path.value(), change_heart_color_from_file));
+            }
+        }
+
+        auto json_file_name = fmt::format("char_{}.json", char_name);
+        if (auto file_path = vfs.GetFilePath(json_file_name))
+        {
+            auto apply_char_def_from_json = [i, file_path = file_path.value()](const std::filesystem::path&, const filewatch::Event change_type) {
+                if (change_type == filewatch::Event::removed || change_type == filewatch::Event::renamed_old)
+                {
+                    return;
+                }
+
+                if (auto char_def_file = std::ifstream{ file_path })
+                {
+                    auto char_def_json = nlohmann::json::parse(char_def_file);
+                    CharacterDefinition char_def = char_def_json;
+                    if (char_def.FullName)
+                    {
+                        Spelunky_SetCharacterFullName(i, fromUTF8<char16_t>(char_def.FullName.value()).c_str());
+                    }
+                    if (char_def.ShortName)
+                    {
+                        Spelunky_SetCharacterShortName(i, fromUTF8<char16_t>(char_def.ShortName.value()).c_str());
+                    }
+                    if (char_def.Color)
+                    {
+                        float color[4];
+                        std::copy(char_def.Color->begin(), char_def.Color->end(), color);
+                        Spelunky_SetCharacterHeartColor(i, color);
+                    }
+                    if (char_def.Gender)
+                    {
+                        Spelunky_SetCharacterGender(i, char_def.Gender == CharacterDefinition::Female);
+                    }
+                }
+            };
+            apply_char_def_from_json(file_path.value(), filewatch::Event::added);
+
+            if (settings.GetBool("script_settings", "enable_developer_mode", false))
+            {
+                g_FileWatchers.push_back(std::make_unique<filewatch::FileWatch<std::filesystem::path>>(file_path.value(), apply_char_def_from_json));
             }
         }
     }
