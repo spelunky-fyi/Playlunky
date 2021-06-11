@@ -215,7 +215,8 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
         auto color_file_name = fmt::format("char_{}.color", char_name);
         if (auto file_path = vfs.GetFilePath(color_file_name))
         {
-            auto change_heart_color_from_file = [i, file_path = file_path.value()](const std::filesystem::path&, const filewatch::Event change_type) {
+            auto change_heart_color_from_file = [i, file_path = file_path.value()](const std::filesystem::path&, const filewatch::Event change_type)
+            {
                 if (change_type == filewatch::Event::removed || change_type == filewatch::Event::renamed_old)
                 {
                     return;
@@ -256,7 +257,8 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
         auto json_file_name = fmt::format("char_{}.json", char_name);
         if (auto file_path = vfs.GetFilePath(json_file_name))
         {
-            auto apply_char_def_from_json = [i, file_path = file_path.value()](const std::filesystem::path&, const filewatch::Event change_type) {
+            auto apply_char_def_from_json = [i, file_path = file_path.value()](const std::filesystem::path&, const filewatch::Event change_type)
+            {
                 if (change_type == filewatch::Event::removed || change_type == filewatch::Event::renamed_old)
                 {
                     return;
