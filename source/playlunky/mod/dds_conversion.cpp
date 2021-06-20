@@ -1,13 +1,38 @@
-#include "png_dds_conversion.h"
+#include "dds_conversion.h"
 
 #include "log.h"
+#include "util/algorithms.h"
+#include "util/image.h"
 #include "util/on_scope_exit.h"
 #include "util/span_util.h"
 
 #include <cassert>
 #include <fstream>
-#include <lodepng.h>
 #include <span>
+
+bool IsSupportedFileType(const std::filesystem::path& extension)
+{
+    using namespace std::string_view_literals;
+    constexpr std::array supported_extensions = {
+        ".bmp"sv,
+        ".dib"sv,
+        ".jpeg"sv,
+        ".jpg"sv,
+        ".jpe"sv,
+        ".jp2"sv,
+        ".png"sv,
+        ".webp"sv,
+        ".pbm"sv,
+        ".pgm"sv,
+        ".ppm"sv,
+        ".sr"sv,
+        ".ras"sv,
+        ".tiff"sv,
+        ".tif"sv,
+    };
+    const std::string ext_string = algo::to_lower(extension.string());
+    return algo::contains(supported_extensions, ext_string);
+}
 
 struct ColorRGBA8
 {
@@ -85,28 +110,14 @@ bool ConvertRBGAToDds(std::span<const std::uint8_t> source, std::uint32_t width,
     return false;
 }
 
-bool ConvertPngToDds(const std::filesystem::path& source, const std::filesystem::path& destination)
+bool ConvertImageToDds(const std::filesystem::path& source, const std::filesystem::path& destination)
 {
-    std::vector<std::uint8_t> image_buffer;
-    std::uint32_t width;
-    std::uint32_t height;
-    std::uint32_t error = lodepng::decode(image_buffer, width, height, source.string(), LCT_RGBA, 8);
-    if (error != 0)
+    Image source_image;
+    if (source_image.Load(source))
     {
-        LogError("Failed loading image {}: {}", source.string(), lodepng_error_text(error));
-        return false;
+        return ConvertRBGAToDds(source_image.GetData(), source_image.GetWidth(), source_image.GetHeight(), destination);
     }
-
-    auto image = span::bit_cast<ColorRGBA8>(image_buffer);
-    for (ColorRGBA8& pixel : image)
-    {
-        if (pixel.A == 0)
-        {
-            pixel = ColorRGBA8{};
-        }
-    }
-
-    return ConvertRBGAToDds(image_buffer, width, height, destination);
+    return false;
 }
 
 bool ConvertDdsToPng(std::span<const std::uint8_t> source, const std::filesystem::path& destination)
@@ -175,14 +186,9 @@ bool ConvertDdsToPng(std::span<const std::uint8_t> source, const std::filesystem
         pixel.A = static_cast<std::uint8_t>(original_pixel >> ashift);
     }
 
-    std::uint32_t error = lodepng::encode(destination.string(), image_buffer, width, height);
-    if (error != 0)
-    {
-        LogError("Failed writing image {}: {}", destination.string(), lodepng_error_text(error));
-        return false;
-    }
-
-    return true;
+    Image image_file;
+    image_file.LoadRawData(image_buffer, width, height);
+    return image_file.Write(destination);
 }
 
 bool ConvertDdsToPng(const std::filesystem::path& source, const std::filesystem::path& destination)

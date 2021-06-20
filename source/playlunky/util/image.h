@@ -50,14 +50,19 @@ class Image
     Image& operator=(Image&&) noexcept;
     ~Image();
 
-    bool LoadInfoFromPng(const std::filesystem::path& file);
-    bool LoadFromPng(const std::filesystem::path& file);
-    bool LoadFromPng(const std::span<std::uint8_t>& data);
+    bool Load(const std::filesystem::path& file);
+    bool Load(const std::span<std::uint8_t>& data);
+    void LoadRawData(const std::span<std::uint8_t>& data, std::uint32_t width, std::uint32_t height);
+
+    bool Write(const std::filesystem::path& file);
 
     Image Copy();
     Image Clone() const;
 
     bool ContainsSubRegion(ImageSubRegion region) const;
+
+    Image CloneSubImage(ImageSubRegion region) const;
+    Image CloneSubImage(ImageTiling tiling, ImageSubRegion region) const;
 
     Image GetSubImage(ImageSubRegion region);
     Image GetSubImage(ImageTiling tiling, ImageSubRegion region);
@@ -75,7 +80,6 @@ class Image
     std::uint32_t GetHeight() const;
     ImageSubRegion GetBoundingRect() const;
 
-    bool IsSourceImage() const;
     std::span<std::uint8_t> GetData();
     std::span<const std::uint8_t> GetData() const;
 
@@ -85,6 +89,8 @@ class Image
     void DebugShow() const;
 
   private:
+    bool ConvertToRGBA();
+
     struct ImageImpl;
     std::unique_ptr<ImageImpl> mImpl;
 };

@@ -227,7 +227,7 @@ Image MakeCombinedMenuPetHeads(std::vector<std::pair<Image, std::filesystem::pat
                                                        UnlockResource(pet_heads_res);
                                                    } };
                     original_heads.emplace();
-                    original_heads->LoadFromPng(pet_heads_png);
+                    original_heads->Load(pet_heads_png);
                 }
 
                 pet_heads.push_back(std::pair{

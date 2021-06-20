@@ -1,10 +1,10 @@
 #include "sprite_sheet_merger.h"
 
+#include "dds_conversion.h"
 #include "entity_data_extraction.h"
 #include "extract_game_assets.h"
 #include "log.h"
 #include "playlunky_settings.h"
-#include "png_dds_conversion.h"
 #include "util/algorithms.h"
 #include "util/format.h"
 #include "virtual_filesystem.h"
@@ -70,22 +70,34 @@ void SpriteSheetMerger::GatherSheetData(bool force_regen_char_journal, bool forc
 
 void SpriteSheetMerger::RegisterSheet(const std::filesystem::path& full_sheet, bool outdated, bool deleted)
 {
+    auto full_sheet_no_ext = std::filesystem::path{ full_sheet }.replace_extension();
     if (RegisteredSourceSheet* registered_sheet = algo::find_if(m_RegisteredSourceSheets,
-                                                                [&full_sheet](const RegisteredSourceSheet& sheet)
-                                                                { return sheet.Path == full_sheet; }))
+                                                                [&full_sheet_no_ext](const RegisteredSourceSheet& sheet)
+                                                                { return sheet.Path == full_sheet_no_ext; }))
     {
         registered_sheet->Outdated = registered_sheet->Outdated || outdated;
         registered_sheet->Deleted = registered_sheet->Deleted || deleted;
         return;
     }
     m_RegisteredSourceSheets.push_back(RegisteredSourceSheet{
-        .Path = full_sheet,
+        .Path = std::move(full_sheet_no_ext),
         .Outdated = outdated,
         .Deleted = deleted });
 }
 void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_path, const std::filesystem::path& original_data_folder, std::int64_t priority, const CustomImages& custom_images)
 {
     namespace fs = std::filesystem;
+
+    auto get_image = [this](const fs::path& image_path) -> Image&
+    {
+        if (auto* image = algo::find(m_CachedImages, &LoadedImage::ImagePath, image_path))
+        {
+            return *image->ImageFile;
+        }
+        m_CachedImages.push_back({ image_path, std::make_unique<Image>() });
+        m_CachedImages.back().ImageFile->Load(image_path);
+        return *m_CachedImages.back().ImageFile;
+    };
 
     for (const auto& [relative_path, custom_image] : custom_images)
     {
@@ -96,8 +108,7 @@ void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_p
             continue;
         }
 
-        Image source_image;
-        source_image.LoadInfoFromPng(absolute_path);
+        const Image& source_image = get_image(absolute_path);
 
         for (const auto& [target_sheet, custom_image_map] : custom_image.ImageMap)
         {
@@ -114,8 +125,7 @@ void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_p
                 if (ExtractGameAssets(std::array{ target_sheet_path }, original_data_folder))
                 {
                     const auto target_file_path = original_data_folder / target_sheet;
-                    Image target_image;
-                    target_image.LoadInfoFromPng(target_file_path);
+                    const Image& target_image = get_image(target_file_path);
 
                     const auto source_sheets = std::vector<SourceSheet>{
                         SourceSheet{
@@ -195,13 +205,23 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 {
     namespace fs = std::filesystem;
 
+    auto get_image = [this](const fs::path& image_path) -> Image&
+    {
+        if (auto* image = algo::find(m_CachedImages, &LoadedImage::ImagePath, image_path))
+        {
+            return *image->ImageFile;
+        }
+        m_CachedImages.push_back({ image_path, std::make_unique<Image>() });
+        m_CachedImages.back().ImageFile->Load(image_path);
+        return *m_CachedImages.back().ImageFile;
+    };
+
     for (const TargetSheet& target_sheet : m_TargetSheets)
     {
         if (NeedsRegen(target_sheet, destination_folder))
         {
-            const auto target_file_path = vfs.GetFilePath(target_sheet.Path).value_or(source_folder / target_sheet.Path);
-            Image target_image;
-            target_image.LoadFromPng(target_file_path);
+            const auto target_file_path = vfs.GetFilePath(target_sheet.Path).value_or(fs::path{ source_folder / target_sheet.Path }.replace_extension(".png"));
+            Image target_image = get_image(target_file_path).Clone();
 
             static auto validate_source_aspect_ratio = [](const SourceSheet& source_sheet, const Image& source_image)
             {
@@ -237,8 +257,7 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 
                 if (source_file_path)
                 {
-                    Image source_image;
-                    source_image.LoadInfoFromPng(source_file_path.value());
+                    const Image& source_image = get_image(source_file_path.value());
 
                     if (!validate_source_aspect_ratio(source_sheet, source_image))
                     {
@@ -270,8 +289,7 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
             {
                 if (source_file_path)
                 {
-                    Image source_image;
-                    source_image.LoadFromPng(source_file_path.value());
+                    const Image& source_image = get_image(source_file_path.value());
 
                     const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / source_sheet.Size.Width;
                     const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / source_sheet.Size.Height;
@@ -302,7 +320,7 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
                             continue;
                         }
 
-                        Image source_tile = source_image.GetSubImage(source_region);
+                        Image source_tile = source_image.CloneSubImage(source_region);
                         const auto target_size = ::ImageSize{ .x{ static_cast<std::uint32_t>(target_region.width) }, .y{ static_cast<std::uint32_t>(target_region.height) } };
 
                         if (source_sheet.Processing)
@@ -355,8 +373,7 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 
                     if (source_file_path)
                     {
-                        Image source_image;
-                        source_image.LoadFromPng(source_file_path.value());
+                        const Image& source_image = get_image(source_file_path.value());
 
                         const float source_width_scaling = static_cast<float>(source_image.GetWidth()) / size.Width;
                         const float source_height_scaling = static_cast<float>(source_image.GetHeight()) / size.Height;
@@ -374,7 +391,7 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
                             continue;
                         }
 
-                        Image source_tile = source_image.GetSubImage(source_region);
+                        Image source_tile = source_image.CloneSubImage(source_region);
                         tiles.push_back({ source_tile.Clone(), std::move(source_file_path).value() });
                     }
                 }

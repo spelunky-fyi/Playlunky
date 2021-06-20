@@ -77,4 +77,11 @@ class SpriteSheetMerger
     std::vector<RegisteredSourceSheet> m_RegisteredSourceSheets;
 
     std::unique_ptr<EntityDataExtractor> m_EntityDataExtractor;
+
+    struct LoadedImage
+    {
+        std::filesystem::path ImagePath;
+        std::unique_ptr<Image> ImageFile;
+    };
+    std::vector<LoadedImage> m_CachedImages;
 };

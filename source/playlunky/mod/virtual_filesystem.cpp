@@ -76,11 +76,32 @@ class VfsFolderMount : public IVfsMountImpl
 
     virtual std::optional<std::filesystem::path> GetFilePath(const std::filesystem::path& path) const override
     {
-        std::filesystem::path full_path = mMountedPath / path;
-        if (std::filesystem::exists(full_path))
+        namespace fs = std::filesystem;
+        if (path.has_extension())
         {
-            return std::move(full_path);
+            const auto full_path = mMountedPath / path;
+            if (fs::exists(full_path))
+            {
+                return std::move(full_path);
+            }
         }
+        else
+        {
+            // Painfully check each file if it matches the name, return first match
+            auto parent_path = path.has_parent_path() ? mMountedPath / path.parent_path() : mMountedPath;
+            if (fs::exists(parent_path))
+            {
+                auto file_name = path.filename();
+                for (auto& dir_path : fs::directory_iterator{ parent_path })
+                {
+                    if (fs::is_regular_file(dir_path) && algo::is_same_path(dir_path.path().stem(), file_name))
+                    {
+                        return dir_path.path();
+                    }
+                }
+            }
+        }
+
         return std::nullopt;
     }
 
@@ -142,9 +163,14 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
         return nullptr;
     }
 
-    if (!m_RestrictedFiles.empty() && !algo::contains(m_RestrictedFiles, path))
+    if (!m_RestrictedFiles.empty())
     {
-        return nullptr;
+        std::string_view path_no_extension{ path };
+        path_no_extension = path_no_extension.substr(0, path_no_extension.rfind('.'));
+        if (!algo::contains(m_RestrictedFiles, path_no_extension))
+        {
+            return nullptr;
+        }
     }
 
     // Should not need to use bound pathes here because those should all be handled during preprocessing
@@ -167,9 +193,15 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::f
         return std::nullopt;
     }
 
-    if (!m_RestrictedFiles.empty() && !algo::contains(m_RestrictedFiles, path))
+    if (!m_RestrictedFiles.empty())
     {
-        return std::nullopt;
+        std::string path_str{ path.string() };
+        std::string_view path_no_extension{ path_str };
+        path_no_extension = path_no_extension.substr(0, path_no_extension.rfind('.'));
+        if (!algo::contains(m_RestrictedFiles, path_no_extension))
+        {
+            return std::nullopt;
+        }
     }
 
     if (const BoundPathes* bound_pathes = GetBoundPathes(path.string()))
@@ -177,19 +209,33 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::f
         std::int64_t current_file_prio{ std::numeric_limits<std::int64_t>::max() };
         std::optional<std::filesystem::path> file_path{ std::nullopt };
 
-        for (std::string_view bound_path : *bound_pathes)
+        for (std::string_view bound_path_str : *bound_pathes)
         {
+            std::filesystem::path bound_path = bound_path_str;
             for (const VfsMount& mount : mMounts)
             {
                 if (mount.Priority < current_file_prio)
                 {
-                    if (auto bound_file_path = mount.MountImpl->GetFilePath(bound_path))
+                    if (auto bound_file_path = mount.MountImpl->GetFilePath(bound_path)) // TODO: needs to ignore extension
                     {
                         current_file_prio = mount.Priority;
 
+                        auto is_this_path = [&path](const std::filesystem::path& found_path)
+                        {
+                            if (path.has_extension())
+                            {
+                                return algo::is_end_of_path(path, found_path);
+                            }
+                            else
+                            {
+                                auto found_path_no_ext = std::filesystem::path{ found_path }.replace_extension();
+                                return algo::is_end_of_path(path, found_path_no_ext);
+                            }
+                        };
+
                         // Only assign pathes that we are actually looking for
                         // Anything else blocks lower prio files by design
-                        if (algo::is_end_of_path(path, *bound_file_path))
+                        if (is_this_path(bound_file_path.value()))
                         {
                             file_path = std::move(bound_file_path).value();
                         }
@@ -317,6 +363,7 @@ VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(const BoundPat
 }
 const VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(std::string_view path) const
 {
+    path = path.substr(0, path.rfind('.'));
     return algo::find_if(m_BoundPathes,
                          [path](const std::vector<std::string_view>& bound_pathes)
                          {

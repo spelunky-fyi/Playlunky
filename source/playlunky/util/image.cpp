@@ -13,12 +13,9 @@
 #include <opencv2/imgproc.hpp>
 #pragma warning(pop)
 
-#include <lodepng.h>
-
 struct Image::ImageImpl
 {
     cv::Mat Image;
-    std::vector<std::uint8_t> Buffer;
     std::uint32_t Width;
     std::uint32_t Height;
 };
@@ -28,109 +25,86 @@ Image::Image(Image&&) noexcept = default;
 Image& Image::operator=(Image&&) noexcept = default;
 Image::~Image() = default;
 
-bool Image::LoadInfoFromPng(const std::filesystem::path& file)
-{
-    if (file.extension() != ".png")
-    {
-        return false;
-    }
-
-    namespace fs = std::filesystem;
-    if (fs::exists(file) && fs::is_regular_file(file))
-    {
-        mImpl = std::make_unique<ImageImpl>();
-
-        std::ifstream png_file(file, std::ios::binary);
-
-        std::array<unsigned char, 128> first_chunk;
-        png_file.read((char*)first_chunk.data(), first_chunk.size());
-
-        lodepng::State state;
-        return lodepng_inspect(&mImpl->Width, &mImpl->Height, &state, first_chunk.data(), first_chunk.size()) == 0;
-    }
-
-    return false;
-}
-
-bool Image::LoadFromPng(const std::filesystem::path& file)
-{
-    if (file.extension() != ".png")
-    {
-        return false;
-    }
-
-    if (mImpl == nullptr)
-    {
-        mImpl = std::make_unique<ImageImpl>();
-    }
-
-    {
-        const std::uint32_t error = lodepng::decode(mImpl->Buffer, mImpl->Width, mImpl->Height, file.string(), LCT_RGBA, 8);
-        if (error != 0)
-        {
-            LogError("Failed loading image {}: {}", file.string(), lodepng_error_text(error));
-            return false;
-        }
-    }
-
-    {
-        struct ColorRGBA8
-        {
-            std::uint8_t R;
-            std::uint8_t G;
-            std::uint8_t B;
-            std::uint8_t A;
-        };
-        auto image = span::bit_cast<ColorRGBA8>(mImpl->Buffer);
-        for (ColorRGBA8& pixel : image)
-        {
-            if (pixel.A == 0)
-            {
-                pixel = ColorRGBA8{};
-            }
-        }
-    }
-
-    mImpl->Image = cv::Mat{ static_cast<int>(mImpl->Height), static_cast<int>(mImpl->Width), CV_8UC4, reinterpret_cast<int*>(mImpl->Buffer.data()) };
-
-    return true;
-}
-bool Image::LoadFromPng(const std::span<std::uint8_t>& data)
+bool Image::Load(const std::filesystem::path& file)
 {
     if (mImpl == nullptr)
     {
         mImpl = std::make_unique<ImageImpl>();
     }
 
+    mImpl->Image = cv::imread(std::filesystem::absolute(file).string(), cv::IMREAD_UNCHANGED);
+    if (mImpl->Image.empty())
     {
-        const std::uint32_t error = lodepng::decode(mImpl->Buffer, mImpl->Width, mImpl->Height, data.data(), data.size(), LCT_RGBA, 8);
-        if (error != 0)
-        {
-            return false;
-        }
+        mImpl = nullptr;
+        return false;
     }
 
+    mImpl->Width = mImpl->Image.cols;
+    mImpl->Height = mImpl->Image.rows;
+
+    if (!ConvertToRGBA())
     {
-        struct ColorRGBA8
-        {
-            std::uint8_t R;
-            std::uint8_t G;
-            std::uint8_t B;
-            std::uint8_t A;
-        };
-        auto image = span::bit_cast<ColorRGBA8>(mImpl->Buffer);
-        for (ColorRGBA8& pixel : image)
-        {
-            if (pixel.A == 0)
-            {
-                pixel = ColorRGBA8{};
-            }
-        }
+        mImpl = nullptr;
+        return false;
     }
 
-    mImpl->Image = cv::Mat{ static_cast<int>(mImpl->Height), static_cast<int>(mImpl->Width), CV_8UC4, reinterpret_cast<int*>(mImpl->Buffer.data()) };
+    mImpl->Image.forEach<cv::Vec4b>([](cv::Vec4b& pixel, [[maybe_unused]] const int position[])
+                                    {
+                                        float alpha = (float)pixel[3] / 255.0f;
+                                        pixel[0] = (uchar)((float)pixel[0] * alpha);
+                                        pixel[1] = (uchar)((float)pixel[1] * alpha);
+                                        pixel[2] = (uchar)((float)pixel[2] * alpha);
+                                    });
 
     return true;
+}
+bool Image::Load(const std::span<std::uint8_t>& data)
+{
+    if (mImpl == nullptr)
+    {
+        mImpl = std::make_unique<ImageImpl>();
+    }
+
+    mImpl->Image = cv::imdecode(cv::InputArray{ data.data(), static_cast<int>(data.size()) }, cv::IMREAD_UNCHANGED);
+    if (mImpl->Image.empty())
+    {
+        mImpl = nullptr;
+        return false;
+    }
+
+    mImpl->Width = mImpl->Image.cols;
+    mImpl->Height = mImpl->Image.rows;
+
+    if (!ConvertToRGBA())
+    {
+        mImpl = nullptr;
+        return false;
+    }
+
+    return true;
+}
+void Image::LoadRawData(const std::span<std::uint8_t>& data, std::uint32_t width, std::uint32_t height)
+{
+    if (mImpl == nullptr)
+    {
+        mImpl = std::make_unique<ImageImpl>();
+    }
+
+    mImpl->Image = cv::Mat{ static_cast<int>(height), static_cast<int>(width), CV_8UC4, reinterpret_cast<int*>(data.data()) };
+
+    mImpl->Width = width;
+    mImpl->Height = height;
+}
+
+bool Image::Write(const std::filesystem::path& file)
+{
+    if (mImpl == nullptr)
+    {
+        return false;
+    }
+    cv::Mat bgra_image;
+    cv::cvtColor(mImpl->Image, bgra_image, cv::COLOR_RGBA2BGRA);
+    return cv::imwrite(file.string(), bgra_image);
 }
 
 Image Image::Copy()
@@ -156,6 +130,15 @@ bool Image::ContainsSubRegion(ImageSubRegion region) const
     const std::int32_t right = region.x + static_cast<std::int32_t>(region.width);
     const std::int32_t bottom = region.y + static_cast<std::int32_t>(region.height);
     return region.x >= 0 && region.y >= 0 && right <= static_cast<std::int32_t>(mImpl->Width) && bottom <= static_cast<std::int32_t>(mImpl->Height);
+}
+
+Image Image::CloneSubImage(ImageSubRegion region) const
+{
+    return const_cast<Image*>(this)->GetSubImage(region).Clone();
+}
+Image Image::CloneSubImage(ImageTiling tiling, ImageSubRegion region) const
+{
+    return const_cast<Image*>(this)->GetSubImage(tiling, region).Clone();
 }
 
 Image Image::GetSubImage(ImageSubRegion region)
@@ -286,10 +269,6 @@ ImageSubRegion Image::GetBoundingRect() const
     };
 }
 
-bool Image::IsSourceImage() const
-{
-    return mImpl != nullptr && !mImpl->Buffer.empty();
-}
 std::span<std::uint8_t> Image::GetData()
 {
     if (mImpl == nullptr)
@@ -326,5 +305,35 @@ void Image::DebugShow() const
     catch (cv::Exception& e)
     {
         fmt::print("{}", e.what());
+    }
+}
+
+bool Image::ConvertToRGBA()
+{
+    switch (mImpl->Image.channels())
+    {
+    default:
+    case 0:
+    case 1:
+    case 2:
+        return false;
+    case 3:
+    {
+        std::vector<cv::Mat> channels;
+        cv::split(mImpl->Image, channels);
+        std::swap(channels[0], channels[2]);
+        cv::Mat alpha = cv::Mat::ones(channels[0].size(), channels[0].type());
+        channels.push_back(alpha);
+        cv::merge(channels, mImpl->Image);
+        return true;
+    }
+    case 4:
+    {
+        std::vector<cv::Mat> channels;
+        cv::split(mImpl->Image, channels);
+        std::swap(channels[0], channels[2]);
+        cv::merge(channels, mImpl->Image);
+        return true;
+    }
     }
 }

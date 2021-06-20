@@ -1,6 +1,7 @@
 #include "mod_manager.h"
 
 #include "cache_audio_file.h"
+#include "dds_conversion.h"
 #include "decode_audio_file.h"
 #include "extract_game_assets.h"
 #include "fix_mod_structure.h"
@@ -9,7 +10,6 @@
 #include "patch_character_definitions.h"
 #include "playlunky.h"
 #include "playlunky_settings.h"
-#include "png_dds_conversion.h"
 #include "shader_merge.h"
 #include "sprite_sheet_merger.h"
 #include "string_hash.h"
@@ -33,71 +33,51 @@
 #include <unordered_map>
 #include <zip.h>
 
-static constexpr ctll::fixed_string s_CharacterRule{ ".+char_(.*)\\.png" };
+static constexpr ctll::fixed_string s_CharacterRule{ ".+char_(.*)\\.\\s+" };
 static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
 static constexpr std::string_view s_SpeedrunFiles[]{
-    "Data/Textures/char_orange.DDS",
-    "Data/Textures/char_orange.png",
-    "Data/Textures/Entities/char_orange_full.png",
-    "Data/Textures/char_pink.DDS",
-    "Data/Textures/char_pink.png",
-    "Data/Textures/Entities/char_pink_full.png",
-    "Data/Textures/char_red.DDS",
-    "Data/Textures/char_red.png",
-    "Data/Textures/Entities/char_red_full.png",
-    "Data/Textures/char_violet.DDS",
-    "Data/Textures/char_violet.png",
-    "Data/Textures/Entities/char_violet_full.png",
-    "Data/Textures/char_white.DDS",
-    "Data/Textures/char_white.png",
-    "Data/Textures/Entities/char_white_full.png",
-    "Data/Textures/char_yellow.DDS",
-    "Data/Textures/char_yellow.png",
-    "Data/Textures/Entities/char_yellow_full.png",
-    "Data/Textures/char_black.DDS",
-    "Data/Textures/char_black.png",
-    "Data/Textures/Entities/char_black_full.png",
-    "Data/Textures/char_blue.DDS",
-    "Data/Textures/char_blue.png",
-    "Data/Textures/Entities/char_blue_full.png",
-    "Data/Textures/char_cerulean.DDS",
-    "Data/Textures/char_cerulean.png",
-    "Data/Textures/Entities/char_cerulean_full.png",
-    "Data/Textures/char_cinnabar.DDS",
-    "Data/Textures/char_cinnabar.png",
-    "Data/Textures/Entities/char_cinnabar_full.png",
-    "Data/Textures/char_cyan.DDS",
-    "Data/Textures/char_cyan.png",
-    "Data/Textures/Entities/char_cyan_full.png",
-    "Data/Textures/char_gold.DDS",
-    "Data/Textures/char_gold.png",
-    "Data/Textures/Entities/char_gold_full.png",
-    "Data/Textures/char_gray.DDS",
-    "Data/Textures/char_gray.png",
-    "Data/Textures/Entities/char_gray_full.png",
-    "Data/Textures/char_green.DDS",
-    "Data/Textures/char_green.png",
-    "Data/Textures/Entities/char_green_full.png",
-    "Data/Textures/char_iris.DDS",
-    "Data/Textures/char_iris.png",
-    "Data/Textures/Entities/char_iris_full.png",
-    "Data/Textures/char_khaki.DDS",
-    "Data/Textures/char_khaki.png",
-    "Data/Textures/Entities/char_khaki_full.png",
-    "Data/Textures/char_lemon.DDS",
-    "Data/Textures/char_lemon.png",
-    "Data/Textures/Entities/char_lemon_full.png",
-    "Data/Textures/char_lime.DDS",
-    "Data/Textures/char_lime.png",
-    "Data/Textures/Entities/char_lime_full.png",
-    "Data/Textures/char_magenta.DDS",
-    "Data/Textures/char_magenta.png",
-    "Data/Textures/Entities/char_magenta_full.png",
-    "Data/Textures/char_olive.DDS",
-    "Data/Textures/char_olive.png",
-    "Data/Textures/Entities/char_olive_full.png",
+    "Data/Textures/char_orange",
+    "Data/Textures/Entities/char_orange_full",
+    "Data/Textures/char_pink",
+    "Data/Textures/Entities/char_pink_full",
+    "Data/Textures/char_red",
+    "Data/Textures/Entities/char_red_full",
+    "Data/Textures/char_violet",
+    "Data/Textures/Entities/char_violet_full",
+    "Data/Textures/char_white",
+    "Data/Textures/Entities/char_white_full",
+    "Data/Textures/char_yellow",
+    "Data/Textures/Entities/char_yellow_full",
+    "Data/Textures/char_black",
+    "Data/Textures/Entities/char_black_full",
+    "Data/Textures/char_blue",
+    "Data/Textures/Entities/char_blue_full",
+    "Data/Textures/char_cerulean",
+    "Data/Textures/Entities/char_cerulean_full",
+    "Data/Textures/char_cinnabar",
+    "Data/Textures/Entities/char_cinnabar_full",
+    "Data/Textures/char_cyan",
+    "Data/Textures/Entities/char_cyan_full",
+    "Data/Textures/char_gold",
+    "Data/Textures/Entities/char_gold_full",
+    "Data/Textures/char_gray",
+    "Data/Textures/Entities/char_gray_full",
+    "Data/Textures/char_green",
+    "Data/Textures/Entities/char_green_full",
+    "Data/Textures/char_iris",
+    "Data/Textures/Entities/char_iris_full",
+    "Data/Textures/char_khaki",
+    "Data/Textures/Entities/char_khaki_full",
+    "Data/Textures/char_lemon",
+    "Data/Textures/Entities/char_lemon_full",
+    "Data/Textures/char_lime",
+    "Data/Textures/Entities/char_lime_full",
+    "Data/Textures/char_magenta",
+    "Data/Textures/Entities/char_magenta_full",
+    "Data/Textures/char_olive",
+    "Data/Textures/Entities/char_olive_full",
 };
 
 ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& settings, VirtualFilesystem& vfs)
@@ -429,7 +409,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                                const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
                                                Playlunky::Get().RegisterModType(is_character_asset ? ModType::CharacterSprite : ModType::Sprite);
                                            }
-                                           else if (algo::is_same_path(rel_asset_path.extension(), ".png"))
+                                           else if (IsSupportedFileType(rel_asset_path.extension()))
                                            {
                                                const bool is_entity_asset = algo::contains_if(rel_asset_path,
                                                                                               [](const fs::path& element)
@@ -456,7 +436,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                                            LogInfo("Successfully deleted file '{}' that was removed from a mod...", full_asset_path.string());
                                                        }
                                                    }
-                                                   else if (ConvertPngToDds(full_asset_path, db_destination))
+                                                   else if (ConvertImageToDds(full_asset_path, db_destination))
                                                    {
                                                        LogInfo("Successfully converted file '{}' to be readable by the game...", full_asset_path.string());
                                                    }
@@ -539,36 +519,36 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
         }
 
         // Bind char pathes
-        vfs.BindPathes({ "Data/Textures/char_orange.png", "Data/Textures/Entities/char_orange_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_pink.png", "Data/Textures/Entities/char_pink_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_red.png", "Data/Textures/Entities/char_red_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_violet.png", "Data/Textures/Entities/char_violet_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_white.png", "Data/Textures/Entities/char_white_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_yellow.png", "Data/Textures/Entities/char_yellow_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_black.png", "Data/Textures/Entities/char_black_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_blue.png", "Data/Textures/Entities/char_blue_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_cerulean.png", "Data/Textures/Entities/char_cerulean_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_cinnabar.png", "Data/Textures/Entities/char_cinnabar_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_cyan.png", "Data/Textures/Entities/char_cyan_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_eggchild.png", "Data/Textures/Entities/char_eggchild_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_gold.png", "Data/Textures/Entities/char_gold_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_gray.png", "Data/Textures/Entities/char_gray_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_green.png", "Data/Textures/Entities/char_green_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_hired.png", "Data/Textures/Entities/char_hired_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_iris.png", "Data/Textures/Entities/char_iris_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_khaki.png", "Data/Textures/Entities/char_khaki_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_lemon.png", "Data/Textures/Entities/char_lemon_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_lime.png", "Data/Textures/Entities/char_lime_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_magenta.png", "Data/Textures/Entities/char_magenta_full.png" });
-        vfs.BindPathes({ "Data/Textures/char_olive.png", "Data/Textures/Entities/char_olive_full.png" });
+        vfs.BindPathes({ "Data/Textures/char_orange", "Data/Textures/Entities/char_orange_full" });
+        vfs.BindPathes({ "Data/Textures/char_pink", "Data/Textures/Entities/char_pink_full" });
+        vfs.BindPathes({ "Data/Textures/char_red", "Data/Textures/Entities/char_red_full" });
+        vfs.BindPathes({ "Data/Textures/char_violet", "Data/Textures/Entities/char_violet_full" });
+        vfs.BindPathes({ "Data/Textures/char_white", "Data/Textures/Entities/char_white_full" });
+        vfs.BindPathes({ "Data/Textures/char_yellow", "Data/Textures/Entities/char_yellow_full" });
+        vfs.BindPathes({ "Data/Textures/char_black", "Data/Textures/Entities/char_black_full" });
+        vfs.BindPathes({ "Data/Textures/char_blue", "Data/Textures/Entities/char_blue_full" });
+        vfs.BindPathes({ "Data/Textures/char_cerulean", "Data/Textures/Entities/char_cerulean_full" });
+        vfs.BindPathes({ "Data/Textures/char_cinnabar", "Data/Textures/Entities/char_cinnabar_full" });
+        vfs.BindPathes({ "Data/Textures/char_cyan", "Data/Textures/Entities/char_cyan_full" });
+        vfs.BindPathes({ "Data/Textures/char_eggchild", "Data/Textures/Entities/char_eggchild_full" });
+        vfs.BindPathes({ "Data/Textures/char_gold", "Data/Textures/Entities/char_gold_full" });
+        vfs.BindPathes({ "Data/Textures/char_gray", "Data/Textures/Entities/char_gray_full" });
+        vfs.BindPathes({ "Data/Textures/char_green", "Data/Textures/Entities/char_green_full" });
+        vfs.BindPathes({ "Data/Textures/char_hired", "Data/Textures/Entities/char_hired_full" });
+        vfs.BindPathes({ "Data/Textures/char_iris", "Data/Textures/Entities/char_iris_full" });
+        vfs.BindPathes({ "Data/Textures/char_khaki", "Data/Textures/Entities/char_khaki_full" });
+        vfs.BindPathes({ "Data/Textures/char_lemon", "Data/Textures/Entities/char_lemon_full" });
+        vfs.BindPathes({ "Data/Textures/char_lime", "Data/Textures/Entities/char_lime_full" });
+        vfs.BindPathes({ "Data/Textures/char_magenta", "Data/Textures/Entities/char_magenta_full" });
+        vfs.BindPathes({ "Data/Textures/char_olive", "Data/Textures/Entities/char_olive_full" });
 
-        vfs.BindPathes({ "Data/Textures/Entities/monty_full.png", "Data/Textures/Entities/Pets/monty.png", "Data/Textures/Entities/Pets/monty_v2.png" });
-        vfs.BindPathes({ "Data/Textures/Entities/percy_full.png", "Data/Textures/Entities/Pets/percy.png", "Data/Textures/Entities/Pets/percy_v2.png" });
-        vfs.BindPathes({ "Data/Textures/Entities/poochi_full.png", "Data/Textures/Entities/Pets/poochi.png", "Data/Textures/Entities/Pets/poochi_v2.png" });
-        vfs.BindPathes({ "Data/Textures/Entities/turkey_full.png", "Data/Textures/Entities/Mounts/turkey.png" });
-        vfs.BindPathes({ "Data/Textures/Entities/rockdog_full.png", "Data/Textures/Entities/Mounts/rockdog.png" });
-        vfs.BindPathes({ "Data/Textures/Entities/axolotl_full.png", "Data/Textures/Entities/Mounts/axolotl.png" });
-        vfs.BindPathes({ "Data/Textures/Entities/qilin_full.png", "Data/Textures/Entities/Mounts/qilin.png" });
+        vfs.BindPathes({ "Data/Textures/Entities/monty_full", "Data/Textures/Entities/Pets/monty", "Data/Textures/Entities/Pets/monty_v2" });
+        vfs.BindPathes({ "Data/Textures/Entities/percy_full", "Data/Textures/Entities/Pets/percy", "Data/Textures/Entities/Pets/percy_v2" });
+        vfs.BindPathes({ "Data/Textures/Entities/poochi_full", "Data/Textures/Entities/Pets/poochi", "Data/Textures/Entities/Pets/poochi_v2" });
+        vfs.BindPathes({ "Data/Textures/Entities/turkey_full", "Data/Textures/Entities/Mounts/turkey" });
+        vfs.BindPathes({ "Data/Textures/Entities/rockdog_full", "Data/Textures/Entities/Mounts/rockdog" });
+        vfs.BindPathes({ "Data/Textures/Entities/axolotl_full", "Data/Textures/Entities/Mounts/axolotl" });
+        vfs.BindPathes({ "Data/Textures/Entities/qilin_full", "Data/Textures/Entities/Mounts/qilin" });
 
         LogInfo("Merging entity sheets... This includes the automatic generating of stickers...");
         if (sprite_sheet_merger.NeedsRegeneration(db_folder))

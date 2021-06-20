@@ -50,7 +50,6 @@ run_conan()
 # --------------------------------------------------
 # Find packages
 find_package(structopt REQUIRED)
-find_package(lodepng REQUIRED)
 find_package(libzip REQUIRED)
 find_package(ctre REQUIRED)
 find_package(zstd REQUIRED)
@@ -85,7 +84,6 @@ target_link_libraries(playlunky_inject_dependencies INTERFACE
 
 add_library(playlunky_lib_dependencies INTERFACE)
 target_link_libraries(playlunky_lib_dependencies INTERFACE
-	lodepng::lodepng
 	ctre::ctre
 	zstd::zstd
 	opencv::opencv
@@ -146,8 +144,7 @@ target_link_libraries(playlunky64 PRIVATE
 	playlunky_pch)
 target_include_directories(playlunky64 PRIVATE "source/playlunky" "source/shared" "source/3rd-party")
 target_precompile_headers(playlunky64 PRIVATE
-	<imgui.h>
-	<lodepng.h>)
+	<imgui.h>)
 
 
 # --------------------------------------------------

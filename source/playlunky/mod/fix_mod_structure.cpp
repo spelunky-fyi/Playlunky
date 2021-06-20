@@ -15,13 +15,13 @@ static constexpr std::string_view s_ArenaLevelTargetPath{ "Data/Levels/Arena" };
 static constexpr ctll::fixed_string s_LevelRule{ ".*\\.lvl" };
 static constexpr std::string_view s_LevelTargetPath{ "Data/Levels" };
 
-static constexpr ctll::fixed_string s_OldTextureRule{ "ai\\.(DDS|png)" };
+static constexpr ctll::fixed_string s_OldTextureRule{ "ai\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
 static constexpr std::string_view s_OldTextureTargetPath{ "Data/Textures/OldTextures" };
 
-static constexpr ctll::fixed_string s_FullTextureRule{ ".*_full\\.(DDS|png)" };
+static constexpr ctll::fixed_string s_FullTextureRule{ ".*_full\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
 static constexpr std::string_view s_FullTextureTargetPath{ "Data/Textures/Entities" };
 
-static constexpr ctll::fixed_string s_TextureRule{ ".*\\.(DDS|png)" };
+static constexpr ctll::fixed_string s_TextureRule{ ".*\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
 static constexpr std::string_view s_TextureTargetPath{ "Data/Textures" };
 
 static constexpr ctll::fixed_string s_WavRule{ ".*\\.wav" };
@@ -64,7 +64,15 @@ void FixModFolderStructure(const std::filesystem::path& mod_folder)
     {
         if (fs::is_regular_file(path) && !algo::is_sub_path(path, db_folder))
         {
-            const auto file_name = path.path().filename().string();
+            const auto file_name = [&path]()
+            {
+                if (algo::is_same_path(path.path().extension(), ".dds"))
+                {
+                    return path.path().filename().replace_extension(".DDS").string();
+                }
+                return path.path().filename().string();
+            }();
+            const auto file_name_lower = algo::to_lower(file_name);
             const auto file_stem = path.path().stem().string();
             if (ctre::match<s_FontRule>(file_name))
             {
@@ -78,13 +86,13 @@ void FixModFolderStructure(const std::filesystem::path& mod_folder)
             {
                 path_mappings.push_back({ path, mod_folder / s_LevelTargetPath / file_name });
             }
-            else if (ctre::match<s_TextureRule>(file_name))
+            else if (ctre::match<s_TextureRule>(file_name_lower))
             {
-                if (ctre::match<s_OldTextureRule>(file_name))
+                if (ctre::match<s_OldTextureRule>(file_name_lower))
                 {
                     path_mappings.push_back({ path, mod_folder / s_OldTextureTargetPath / file_name });
                 }
-                else if (ctre::match<s_FullTextureRule>(file_name))
+                else if (ctre::match<s_FullTextureRule>(file_name_lower))
                 {
                     path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / file_name });
                 }

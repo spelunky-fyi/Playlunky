@@ -1,9 +1,9 @@
 #include "extract_game_assets.h"
 
 #include "chacha.h"
+#include "dds_conversion.h"
 #include "detour/sigscan.h"
 #include "log.h"
-#include "png_dds_conversion.h"
 #include "util/algorithms.h"
 
 #include <algorithm>
