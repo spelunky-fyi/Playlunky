@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.6] - 2021-06-20
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
+
+### Added
+- Support for more image formats like .webp, .tiff, .bmp and others
+
 ## [0.8.5] - 2021-06-18
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
