@@ -60,5 +60,5 @@ class Playlunky
     friend struct PlaylunkyDeleter;
     std::unique_ptr<PlaylunkyImpl> mImpl;
 
-    ModType mLoadedModTypes;
+    ModType mLoadedModTypes{ ModType::None };
 };

@@ -33,7 +33,7 @@
 #include <unordered_map>
 #include <zip.h>
 
-static constexpr ctll::fixed_string s_CharacterRule{ ".+char_(.*)\\.\\s+" };
+static constexpr ctll::fixed_string s_CharacterRule{ ".+char_(.*)\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
 static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
