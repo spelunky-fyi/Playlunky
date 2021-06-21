@@ -108,7 +108,7 @@ void from_json(const nlohmann::json& j, CharacterDefinition& char_def)
                 }
                 else
                 {
-                    std::from_chars(s_color.data(), s_color.data() + s_color.size(), u_color);
+                    std::from_chars(s_color.data(), s_color.data() + s_color.size(), u_color, 16);
                 }
             }
             color[0] = static_cast<float>((u_color >> 16) & 0xff) / 255.0f;
