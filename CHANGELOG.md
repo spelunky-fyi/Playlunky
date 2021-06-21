@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.7] - 2021-06-21
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
+
+### Fixed
+- A crash when running the daily
+- Not correctly auto-recognizing speedrun mode from enabled mods
+- Broken heart color read from char_*.json file when the `0x` prefix was not present
+
 ## [0.8.6] - 2021-06-20
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
