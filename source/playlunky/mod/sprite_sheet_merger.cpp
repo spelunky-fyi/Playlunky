@@ -183,8 +183,8 @@ bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::f
     for (const SourceSheet& source_sheet : target_sheet.SourceSheets)
     {
         const auto source_path_no_ext = source_sheet.Path.has_extension()
-            ? fs::path{ source_sheet.Path }.replace_extension()
-            : source_sheet.Path;
+                                            ? fs::path{ source_sheet.Path }.replace_extension()
+                                            : source_sheet.Path;
         if (const RegisteredSourceSheet* registered_sheet = algo::find(m_RegisteredSourceSheets, &RegisteredSourceSheet::Path, source_path_no_ext))
         {
             if (!does_exist || random_select || registered_sheet->Outdated || registered_sheet->Deleted)
