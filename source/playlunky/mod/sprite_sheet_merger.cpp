@@ -112,19 +112,25 @@ void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_p
 
         for (const auto& [target_sheet, custom_image_map] : custom_image.ImageMap)
         {
-            if (TargetSheet* existing_target_sheet = algo::find(m_TargetSheets, &TargetSheet::Path, target_sheet))
+            const auto target_sheet_no_ext = fs::path{ target_sheet }.replace_extension();
+            if (TargetSheet* existing_target_sheet = algo::find(m_TargetSheets, &TargetSheet::Path, target_sheet_no_ext))
             {
                 auto it = std::upper_bound(existing_target_sheet->SourceSheets.begin(), existing_target_sheet->SourceSheets.end(), priority, [](std::int64_t prio, const SourceSheet& sheet)
                                            { return sheet.Priority < prio; });
-                existing_target_sheet->SourceSheets.insert(it, SourceSheet{ .Path{ relative_path }, .RootPath{ base_path }, .Size{ .Width{ source_image.GetWidth() }, .Height{ source_image.GetHeight() } }, .TileMap{ custom_image_map } });
+                existing_target_sheet->SourceSheets.insert(
+                    it,
+                    SourceSheet{
+                        .Path{ relative_path },
+                        .RootPath{ base_path },
+                        .Size{ .Width{ source_image.GetWidth() }, .Height{ source_image.GetHeight() } },
+                        .TileMap{ custom_image_map } });
                 existing_target_sheet->ForceRegen = existing_target_sheet->ForceRegen || custom_image.Outdated;
             }
             else
             {
-                fs::path target_sheet_path = fs::path{ target_sheet }.replace_extension(".DDS");
-                if (ExtractGameAssets(std::array{ target_sheet_path }, original_data_folder))
+                if (ExtractGameAssets(std::array{ target_sheet_no_ext }, original_data_folder))
                 {
-                    const auto target_file_path = original_data_folder / target_sheet;
+                    const auto target_file_path = original_data_folder / fs::path{ target_sheet_no_ext }.replace_extension(".DDS");
                     const Image& target_image = get_image(target_file_path);
 
                     const auto source_sheets = std::vector<SourceSheet>{
@@ -137,7 +143,7 @@ void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_p
                     };
 
                     m_TargetSheets.push_back(TargetSheet{
-                        .Path{ target_sheet },
+                        .Path{ target_sheet_no_ext },
                         .Size{ .Width{ target_image.GetWidth() }, .Height{ target_image.GetHeight() } },
                         .SourceSheets{ std::move(source_sheets) },
                         .ForceRegen{ custom_image.Outdated } });
@@ -176,7 +182,10 @@ bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::f
     const bool random_select = target_sheet.RandomSelect;
     for (const SourceSheet& source_sheet : target_sheet.SourceSheets)
     {
-        if (const RegisteredSourceSheet* registered_sheet = algo::find(m_RegisteredSourceSheets, &RegisteredSourceSheet::Path, source_sheet.Path))
+        const auto source_path_no_ext = source_sheet.Path.has_extension()
+            ? fs::path{ source_sheet.Path }.replace_extension()
+            : source_sheet.Path;
+        if (const RegisteredSourceSheet* registered_sheet = algo::find(m_RegisteredSourceSheets, &RegisteredSourceSheet::Path, source_path_no_ext))
         {
             if (!does_exist || random_select || registered_sheet->Outdated || registered_sheet->Deleted)
             {
