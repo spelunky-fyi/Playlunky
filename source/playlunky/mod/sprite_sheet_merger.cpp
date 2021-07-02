@@ -128,9 +128,10 @@ void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_p
             }
             else
             {
-                if (ExtractGameAssets(std::array{ target_sheet_no_ext }, original_data_folder))
+                const auto target_sheet_dds = fs::path{ target_sheet }.replace_extension(".DDS");
+                if (ExtractGameAssets(std::array{ target_sheet_dds }, original_data_folder))
                 {
-                    const auto target_file_path = original_data_folder / fs::path{ target_sheet_no_ext }.replace_extension(".DDS");
+                    const auto target_file_path = original_data_folder / fs::path{ target_sheet_no_ext }.replace_extension(".png");
                     const Image& target_image = get_image(target_file_path);
 
                     const auto source_sheets = std::vector<SourceSheet>{

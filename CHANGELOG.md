@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.10] - 2021-07-02
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
+
+### Fixed
+- Another bug with the custom sprite mapping, should be the last one 🤞
+
 ## [0.8.9] - 2021-07-01
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
