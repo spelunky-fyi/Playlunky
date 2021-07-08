@@ -320,6 +320,7 @@ bool Image::ConvertToRGBA()
     case 3:
     {
         std::vector<cv::Mat> channels;
+        mImpl->Image.convertTo(mImpl->Image, CV_8UC3, 1.0 / 256.0);
         cv::split(mImpl->Image, channels);
         std::swap(channels[0], channels[2]);
         cv::Mat alpha(channels[0].size(), channels[0].type());
@@ -331,6 +332,7 @@ bool Image::ConvertToRGBA()
     case 4:
     {
         std::vector<cv::Mat> channels;
+        mImpl->Image.convertTo(mImpl->Image, CV_8UC4, 1.0 / 256.0);
         cv::split(mImpl->Image, channels);
         std::swap(channels[0], channels[2]);
         cv::merge(channels, mImpl->Image);
