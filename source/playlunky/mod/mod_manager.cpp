@@ -397,7 +397,6 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                            if (speedrun_mode_changed)
                                            {
                                                outdated = true;
-                                               deleted = true;
                                            }
 
                                            if (algo::is_same_path(rel_asset_path.extension(), ".lvl"))
