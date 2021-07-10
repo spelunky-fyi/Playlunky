@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.11] - 2021-07-10
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
+
+### Fixed
+- Allows using images with weird bit depth, that said, the game wants 8 bits per channel so just save your images with that please
+- A bug that prevented script mods from loading the first time the game is started after disabling speedrun mode 
+
 ## [0.8.10] - 2021-07-02
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
