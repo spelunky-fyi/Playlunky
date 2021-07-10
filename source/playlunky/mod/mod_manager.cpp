@@ -7,6 +7,7 @@
 #include "fix_mod_structure.h"
 #include "mod_database.h"
 #include "mod_info.h"
+#include "known_files.h"
 #include "patch_character_definitions.h"
 #include "playlunky.h"
 #include "playlunky_settings.h"
@@ -33,52 +34,8 @@
 #include <unordered_map>
 #include <zip.h>
 
-static constexpr ctll::fixed_string s_CharacterRule{ ".+char_(.*)\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
 static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
-
-static constexpr std::string_view s_SpeedrunFiles[]{
-    "Data/Textures/char_orange",
-    "Data/Textures/Entities/char_orange_full",
-    "Data/Textures/char_pink",
-    "Data/Textures/Entities/char_pink_full",
-    "Data/Textures/char_red",
-    "Data/Textures/Entities/char_red_full",
-    "Data/Textures/char_violet",
-    "Data/Textures/Entities/char_violet_full",
-    "Data/Textures/char_white",
-    "Data/Textures/Entities/char_white_full",
-    "Data/Textures/char_yellow",
-    "Data/Textures/Entities/char_yellow_full",
-    "Data/Textures/char_black",
-    "Data/Textures/Entities/char_black_full",
-    "Data/Textures/char_blue",
-    "Data/Textures/Entities/char_blue_full",
-    "Data/Textures/char_cerulean",
-    "Data/Textures/Entities/char_cerulean_full",
-    "Data/Textures/char_cinnabar",
-    "Data/Textures/Entities/char_cinnabar_full",
-    "Data/Textures/char_cyan",
-    "Data/Textures/Entities/char_cyan_full",
-    "Data/Textures/char_gold",
-    "Data/Textures/Entities/char_gold_full",
-    "Data/Textures/char_gray",
-    "Data/Textures/Entities/char_gray_full",
-    "Data/Textures/char_green",
-    "Data/Textures/Entities/char_green_full",
-    "Data/Textures/char_iris",
-    "Data/Textures/Entities/char_iris_full",
-    "Data/Textures/char_khaki",
-    "Data/Textures/Entities/char_khaki_full",
-    "Data/Textures/char_lemon",
-    "Data/Textures/Entities/char_lemon_full",
-    "Data/Textures/char_lime",
-    "Data/Textures/Entities/char_lime_full",
-    "Data/Textures/char_magenta",
-    "Data/Textures/Entities/char_magenta_full",
-    "Data/Textures/char_olive",
-    "Data/Textures/Entities/char_olive_full",
-};
 
 ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& settings, VirtualFilesystem& vfs)
     : mDeveloperMode{ settings.GetBool("settings", "enable_developer_mode", false) || settings.GetBool("script_settings", "enable_developer_mode", false) }, m_Vfs{ &vfs }
@@ -405,7 +362,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                            }
                                            else if (algo::is_same_path(rel_asset_path.extension(), ".dds"))
                                            {
-                                               const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
+                                               const bool is_character_asset = algo::contains(s_KnownCharFiles, rel_asset_path.stem());
                                                Playlunky::Get().RegisterModType(is_character_asset ? ModType::CharacterSprite : ModType::Sprite);
                                            }
                                            else if (IsSupportedFileType(rel_asset_path.extension()))
@@ -413,7 +370,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                                const bool is_entity_asset = algo::contains_if(rel_asset_path,
                                                                                               [](const fs::path& element)
                                                                                               { return algo::is_same_path(element, "Entities"); });
-                                               const bool is_character_asset = ctre::match<s_CharacterRule>(full_asset_path_string);
+                                               const bool is_character_asset = algo::contains(s_KnownCharFiles, rel_asset_path.stem());
                                                const bool is_custom_image_source = mod_info.IsCustomImageSource(rel_asset_path_string);
 
                                                Playlunky::Get().RegisterModType(is_character_asset ? ModType::CharacterSprite : ModType::Sprite);
