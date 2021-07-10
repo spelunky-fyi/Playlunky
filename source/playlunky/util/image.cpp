@@ -322,18 +322,35 @@ bool Image::ConvertToRGBA()
         std::vector<cv::Mat> channels;
         if (mImpl->Image.type() != CV_8UC3)
         {
-            if (mImpl->Image.depth() == 2)
+            double alpha = 1.0;
+            double beta = 0.0;
+            switch (mImpl->Image.depth())
             {
-                mImpl->Image.convertTo(mImpl->Image, CV_8UC3, 1.0 / UCHAR_MAX);
+            default:
+            case CV_8U:
+                break;
+            case CV_8S:
+                beta = static_cast<double>(CHAR_MIN);
+                break;
+            case CV_16U:
+                alpha = 1.0 / UCHAR_MAX;
+                break;
+            case CV_16S:
+                alpha = 1.0 / UCHAR_MAX;
+                beta = static_cast<double>(CHAR_MIN);
+                break;
+            case CV_32S:
+                alpha = 1.0 / USHRT_MAX;
+                beta = static_cast<double>(CHAR_MIN);
+                break;
+            case CV_32F:
+                alpha = static_cast<double>(UCHAR_MAX);
+                break;
+            case CV_64F:
+                alpha = static_cast<double>(UCHAR_MAX);
+                break;
             }
-            else if (mImpl->Image.depth() == 4)
-            {
-                mImpl->Image.convertTo(mImpl->Image, CV_8UC3, 1.0 / USHRT_MAX);
-            }
-            else if (mImpl->Image.depth() == 8)
-            {
-                mImpl->Image.convertTo(mImpl->Image, CV_8UC3, 1.0 / UINT_MAX);
-            }
+            mImpl->Image.convertTo(mImpl->Image, CV_8UC3, alpha, beta);
         }
         cv::split(mImpl->Image, channels);
         std::swap(channels[0], channels[2]);
@@ -348,18 +365,35 @@ bool Image::ConvertToRGBA()
         std::vector<cv::Mat> channels;
         if (mImpl->Image.type() != CV_8UC4)
         {
-            if (mImpl->Image.depth() == 2)
+            double alpha = 1.0;
+            double beta = 0.0;
+            switch (mImpl->Image.depth())
             {
-                mImpl->Image.convertTo(mImpl->Image, CV_8UC4, 1.0 / UCHAR_MAX);
+            default:
+            case CV_8U:
+                break;
+            case CV_8S:
+                beta = static_cast<double>(CHAR_MIN);
+                break;
+            case CV_16U:
+                alpha = 1.0 / UCHAR_MAX;
+                break;
+            case CV_16S:
+                alpha = 1.0 / UCHAR_MAX;
+                beta = static_cast<double>(CHAR_MIN);
+                break;
+            case CV_32S:
+                alpha = 1.0 / USHRT_MAX;
+                beta = static_cast<double>(CHAR_MIN);
+                break;
+            case CV_32F:
+                alpha = static_cast<double>(UCHAR_MAX);
+                break;
+            case CV_64F:
+                alpha = static_cast<double>(UCHAR_MAX);
+                break;
             }
-            else if (mImpl->Image.depth() == 4)
-            {
-                mImpl->Image.convertTo(mImpl->Image, CV_8UC4, 1.0 / USHRT_MAX);
-            }
-            else if (mImpl->Image.depth() == 8)
-            {
-                mImpl->Image.convertTo(mImpl->Image, CV_8UC4, 1.0 / UINT_MAX);
-            }
+            mImpl->Image.convertTo(mImpl->Image, CV_8UC4, alpha, beta);
         }
         cv::split(mImpl->Image, channels);
         std::swap(channels[0], channels[2]);
