@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.13] - 2021-07-16
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
+
+### Changed
+- Just release latest Lua features as stable
+
 ## [0.8.12] - 2021-07-11
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
