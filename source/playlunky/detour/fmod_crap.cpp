@@ -758,7 +758,7 @@ struct DetourFmodSystemCreateSound
 
                             FMOD::CREATESOUNDEXINFO loose_subsound_exinfo{
                                 .cbsize = sizeof(loose_subsound_exinfo),
-                                .length = (std::uint32_t)sample.Buffer.DataSize,
+                                .length = (std::uint32_t)sample.Buffer.DataSize - 32,
                                 .numchannels = sample.Buffer.NumChannels,
                                 .defaultfrequency = sample.Buffer.Frequency,
                                 .format = [&sample](SoundFormat format)
