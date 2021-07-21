@@ -659,7 +659,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 }
 ModManager::~ModManager() = default;
 
-void ModManager::PostGameInit()
+void ModManager::PostGameInit(const class PlaylunkySettings& settings)
 {
     InitSoundManager([](const char* file_path)
                      {
@@ -672,7 +672,7 @@ void ModManager::PostGameInit()
                              .data_size{ buffer.DataSize }
                          };
                      });
-    mScriptManager.CommitScripts();
+    mScriptManager.CommitScripts(settings);
 
     RegisterOnInputFunc(FunctionPointer<std::remove_pointer_t<OnInputFunc>, struct ModManagerOnInput>(&ModManager::OnInput, this));
     RegisterPreDrawFunc(FunctionPointer<std::remove_pointer_t<PreDrawFunc>, struct ModManagerUpdate>(&ModManager::Update, this));
@@ -698,14 +698,19 @@ bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t 
                 mScriptManager.ToggleForceShowOptions();
             }
         }
-        else if (w_param == VK_F5)
+        else if (mDeveloperMode && w_param == VK_OEM_5)
         {
             if (GetKeyState(VK_CONTROL))
             {
-                if (mDeveloperMode)
-                {
-                    mScriptManager.RefreshScripts();
-                }
+                mScriptManager.ToggleConsole();
+                return true;
+            }
+        }
+        else if (mDeveloperMode && w_param == VK_F5)
+        {
+            if (GetKeyState(VK_CONTROL))
+            {
+                mScriptManager.RefreshScripts();
             }
         }
     }

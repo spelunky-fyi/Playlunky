@@ -72,7 +72,7 @@ void Playlunky::PostGameInit()
 {
     LogInfo("Finalizing Playlunky setup...");
 
-    mImpl->Manager->PostGameInit();
+    mImpl->Manager->PostGameInit(mImpl->Settings);
 }
 
 const PlaylunkySettings& Playlunky::GetSettings() const

@@ -6,17 +6,19 @@
 #include <vector>
 
 class SpelunkyScript;
+class SpelunkyConsole;
 
 class ScriptManager
 {
   public:
     bool RegisterModWithScript(std::string_view mod_name, const std::filesystem::path& main_path, std::int64_t priority, bool enabled);
 
-    void CommitScripts();
+    void CommitScripts(const class PlaylunkySettings& settings);
     void RefreshScripts();
     void Update();
     void Draw();
 
+    void ToggleConsole();
     void ToggleForceShowOptions()
     {
         mForceShowOptions = !mForceShowOptions;
@@ -40,4 +42,6 @@ class ScriptManager
     std::vector<RegisteredMainScript> mMods;
     bool mForceShowOptions{ false };
     bool mShowCursor{ false };
+
+    SpelunkyConsole* mConsole{ nullptr };
 };

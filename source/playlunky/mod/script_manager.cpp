@@ -2,6 +2,7 @@
 
 #include "log.h"
 #include "playlunky.h"
+#include "playlunky_settings.h"
 #include "util/algorithms.h"
 
 #include <spel2.h>
@@ -24,8 +25,13 @@ bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::
     return true;
 }
 
-void ScriptManager::CommitScripts()
+void ScriptManager::CommitScripts(const class PlaylunkySettings& settings)
 {
+    if (settings.GetBool("script_settings", "enable_developer_mode", false))
+    {
+        mConsole = CreateConsole();
+    }
+
     for (RegisteredMainScript& mod : mMods)
     {
         if (mod.Enabled)
@@ -65,6 +71,10 @@ void ScriptManager::RefreshScripts()
 }
 void ScriptManager::Update()
 {
+    if (mConsole)
+    {
+        SpelunkyConsole_Update(mConsole);
+    }
     for (RegisteredMainScript& mod : mMods)
     {
         if (mod.Script != nullptr)
@@ -89,7 +99,7 @@ void ScriptManager::Update()
 }
 void ScriptManager::Draw()
 {
-    if (mMods.empty())
+    if (mMods.empty() && mConsole == nullptr)
     {
         return;
     }
@@ -143,6 +153,13 @@ void ScriptManager::Draw()
         ImGui::PushItemWidth(100.0f);
 
         ImGui::TextUnformatted("Mod Options");
+
+        if (mConsole)
+        {
+            ImGui::Separator();
+            ImGui::TextUnformatted("Dev-Console");
+            SpelunkyConsole_DrawOptions(mConsole);
+        }
 
         for (RegisteredMainScript& mod : mMods)
         {
@@ -210,6 +227,10 @@ void ScriptManager::Draw()
             ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
 
     ImDrawList* draw_list = ImGui::GetBackgroundDrawList();
+    if (mConsole)
+    {
+        SpelunkyConsole_Draw(mConsole, draw_list);
+    }
     for (RegisteredMainScript& mod : mMods)
     {
         if (mod.Script != nullptr)
@@ -219,6 +240,14 @@ void ScriptManager::Draw()
     }
 
     ImGui::End();
+}
+
+void ScriptManager::ToggleConsole()
+{
+    if (mConsole)
+    {
+        SpelunkyConsole_Toggle(mConsole);
+    }
 }
 
 void ScriptManager::RegisteredMainScript::TestScriptResult()

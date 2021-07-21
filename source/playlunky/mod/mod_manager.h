@@ -18,7 +18,7 @@ class ModManager
     ModManager& operator=(const ModManager&) = delete;
     ModManager& operator=(ModManager&&) = delete;
 
-    void PostGameInit();
+    void PostGameInit(const class PlaylunkySettings& settings);
 
     bool OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t l_param);
     void Update();
