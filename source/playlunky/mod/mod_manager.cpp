@@ -689,21 +689,21 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
 
 bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t /*l_param*/)
 {
-    if (msg == WM_KEYUP)
+    if (msg == WM_KEYDOWN)
+    {
+        if (mDeveloperMode && w_param == VK_OEM_5)
+        {
+            mScriptManager.ToggleConsole();
+            return true;
+        }
+    }
+    else if (msg == WM_KEYUP)
     {
         if (w_param == VK_F4)
         {
             if (GetKeyState(VK_CONTROL))
             {
                 mScriptManager.ToggleForceShowOptions();
-            }
-        }
-        else if (mDeveloperMode && w_param == VK_OEM_5)
-        {
-            if (GetKeyState(VK_CONTROL))
-            {
-                mScriptManager.ToggleConsole();
-                return true;
             }
         }
         else if (mDeveloperMode && w_param == VK_F5)
