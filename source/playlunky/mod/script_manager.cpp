@@ -74,6 +74,15 @@ void ScriptManager::Update()
     if (mConsole)
     {
         SpelunkyConsole_Update(mConsole);
+        const std::size_t num_messages = SpelunkyConsole_GetNumMessages(mConsole);
+        for (std::size_t i = 0; i < num_messages; i++)
+        {
+            const char* message = SpelunkyConsole_GetMessage(mConsole, i);
+            if (message != nullptr)
+            {
+                LogInfoScreen("[Dev-Console]: {}", message);
+            }
+        }
     }
     for (RegisteredMainScript& mod : mMods)
     {
