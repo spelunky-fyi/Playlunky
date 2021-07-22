@@ -691,10 +691,13 @@ bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t 
 {
     if (msg == WM_KEYDOWN)
     {
-        if (mDeveloperMode && w_param == VK_OEM_5)
+        if (mDeveloperMode)
         {
-            mScriptManager.ToggleConsole();
-            return true;
+            if (w_param == VK_OEM_5 || (mScriptManager.IsConsoleToggled() && w_param == VK_ESCAPE))
+            {
+                mScriptManager.ToggleConsole();
+                return true;
+            }
         }
     }
     else if (msg == WM_KEYUP)

@@ -83,6 +83,7 @@ void ScriptManager::Update()
                 LogInfoScreen("[Dev-Console]: {}", message);
             }
         }
+        SpelunkyConsole_ConsumeMessages(mConsole);
     }
     for (RegisteredMainScript& mod : mMods)
     {
@@ -251,6 +252,12 @@ void ScriptManager::Draw()
     ImGui::End();
 }
 
+bool ScriptManager::IsConsoleToggled()
+{
+    return mConsole
+        ? SpelunkyConsole_IsToggled(mConsole)
+        : false;
+}
 void ScriptManager::ToggleConsole()
 {
     if (mConsole)

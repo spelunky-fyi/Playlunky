@@ -18,7 +18,9 @@ class ScriptManager
     void Update();
     void Draw();
 
+    bool IsConsoleToggled();
     void ToggleConsole();
+
     void ToggleForceShowOptions()
     {
         mForceShowOptions = !mForceShowOptions;
