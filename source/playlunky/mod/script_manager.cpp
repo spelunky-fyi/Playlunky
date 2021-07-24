@@ -30,6 +30,7 @@ void ScriptManager::CommitScripts(const class PlaylunkySettings& settings)
     if (settings.GetBool("script_settings", "enable_developer_mode", false))
     {
         mConsole = CreateConsole();
+        SpelunkyConsole_LoadHistory(mConsole, "console_history.txt");
     }
 
     for (RegisteredMainScript& mod : mMods)
@@ -240,6 +241,11 @@ void ScriptManager::Draw()
     if (mConsole)
     {
         SpelunkyConsole_Draw(mConsole, draw_list);
+
+        if (SpelunkyConsole_HasNewHistory(mConsole))
+        {
+            SpelunkyConsole_SaveHistory(mConsole, "console_history.txt");
+        }
     }
     for (RegisteredMainScript& mod : mMods)
     {
