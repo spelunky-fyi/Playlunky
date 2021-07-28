@@ -89,10 +89,10 @@ class FileWatch
 
   public:
     FileWatch(T path, UnderpinningRegex pattern, std::function<void(const T& file, const Event event_type)> callback)
-        : _path(path),
-          _pattern(pattern),
-          _callback(callback),
-          _directory(get_directory(path))
+        : _path(path)
+        , _pattern(pattern)
+        , _callback(callback)
+        , _directory(get_directory(path))
     {
         init();
     }

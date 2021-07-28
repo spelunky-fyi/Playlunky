@@ -38,7 +38,12 @@ static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" 
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
 ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& settings, VirtualFilesystem& vfs)
-    : mDeveloperMode{ settings.GetBool("settings", "enable_developer_mode", false) || settings.GetBool("script_settings", "enable_developer_mode", false) }, m_Vfs{ &vfs }
+    : m_Vfs{ &vfs }
+    , mDeveloperMode{ settings.GetBool("settings", "enable_developer_mode", false) || settings.GetBool("script_settings", "enable_developer_mode", false) }
+    , mConsoleMode{ settings.GetBool("script_settings", "enable_developer_console", false) }
+    , mConsoleKey{ static_cast<std::uint64_t>(settings.GetInt("key_bindings", "console", VK_OEM_3)) }
+    , mConsoleAltKey{ static_cast<std::uint64_t>(settings.GetInt("key_bindings", "console_alt", VK_OEM_5)) }
+    , mConsoleCloseKey{ static_cast<std::uint64_t>(settings.GetInt("key_bindings", "console_close", VK_ESCAPE)) }
 {
     namespace fs = std::filesystem;
 
@@ -691,9 +696,9 @@ bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t 
 {
     if (msg == WM_KEYDOWN)
     {
-        if (mDeveloperMode)
+        if (mConsoleMode)
         {
-            if (w_param == VK_OEM_5 || (mScriptManager.IsConsoleToggled() && w_param == VK_ESCAPE))
+            if (w_param == mConsoleKey || w_param == mConsoleAltKey || (mScriptManager.IsConsoleToggled() && w_param == mConsoleCloseKey))
             {
                 mScriptManager.ToggleConsole();
                 return true;

@@ -28,5 +28,10 @@ class ModManager
     std::vector<class ModInfo> mMods;
     ScriptManager mScriptManager;
     VirtualFilesystem* m_Vfs;
+
     bool mDeveloperMode;
+    bool mConsoleMode;
+    std::uint64_t mConsoleKey;
+    std::uint64_t mConsoleAltKey;
+    std::uint64_t mConsoleCloseKey;
 };

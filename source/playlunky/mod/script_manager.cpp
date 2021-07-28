@@ -27,10 +27,11 @@ bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::
 
 void ScriptManager::CommitScripts(const class PlaylunkySettings& settings)
 {
-    if (settings.GetBool("script_settings", "enable_developer_mode", false))
+    if (settings.GetBool("script_settings", "enable_developer_console", false))
     {
         mConsole = CreateConsole();
         SpelunkyConsole_LoadHistory(mConsole, "console_history.txt");
+        SpelunkyConsole_SetMaxHistorySize(mConsole, settings.GetInt("script_settings", "console_history_size", 20));
     }
 
     for (RegisteredMainScript& mod : mMods)
@@ -261,8 +262,8 @@ void ScriptManager::Draw()
 bool ScriptManager::IsConsoleToggled()
 {
     return mConsole
-        ? SpelunkyConsole_IsToggled(mConsole)
-        : false;
+               ? SpelunkyConsole_IsToggled(mConsole)
+               : false;
 }
 void ScriptManager::ToggleConsole()
 {

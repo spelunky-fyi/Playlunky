@@ -3,6 +3,7 @@ Standard: c++20
 Cpp11BracedListStyle: false
 IndentWidth: 4
 BreakBeforeBraces: Allman
+BreakConstructorInitializers: BeforeComma
 AlignAfterOpenBracket: Align
 ColumnLimit: 0
 BinPackArguments: false
