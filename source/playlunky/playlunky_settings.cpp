@@ -1,4 +1,6 @@
-#include <playlunky_settings.h>
+#include "playlunky_settings.h"
+
+#include "util/algorithms.h"
 
 #include <array>
 #include <fstream>
@@ -50,7 +52,7 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
                                               } },
         KnownCategory{ { "key_bindings" }, {
                                                KnownSetting{ .Name{ "console" }, .DefaultValue{ "0xc0" }, .Comment{ "Default 0xc0 == ~ for US" } },
-                                               KnownSetting{ .Name{ "console_alt" }, .DefaultValue{ "0xdc" }, .Comment{ "Default 0xfc == \\ for US" } },
+                                               KnownSetting{ .Name{ "console_alt" }, .DefaultValue{ "0xdc" }, .Comment{ "Default 0xdc == \\ for US" } },
                                                KnownSetting{ .Name{ "console_close" }, .DefaultValue{ "0x1b" }, .Comment{ "Default 0x1b == ESC" } },
                                            } }
     };
@@ -69,6 +71,11 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
             if (value.empty())
             {
                 value = std::string{ known_setting.DefaultValue };
+            }
+            if (const char* comment = algo::find(value, '#'))
+            {
+                value.erase(value.begin() + (comment - value.data()), value.end());
+                value = algo::trim(std::move(value));
             }
             if (known_setting.Comment.empty())
             {
