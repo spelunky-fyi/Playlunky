@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2021-08-04
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
+
+### Added
+- Lua console, check the Wiki for more details
+
+### Changed
+- Latest Lua features from OL
+- Comes with a big refactor of the systems backing Lua scripts
+
+### Fixed
+- Crackling audio when using cached decoded audio files
+- Random issues with custom and modded audio playback
+
 ## [0.8.13] - 2021-07-16
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
