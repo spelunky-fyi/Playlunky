@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2021-08-11
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
+
+### Fixed
+- A couple of crashes that could occur when using custom textures (fix from OL)
+
 ## [0.9.0] - 2021-08-04
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
