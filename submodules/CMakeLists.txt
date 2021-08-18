@@ -72,8 +72,8 @@ add_subdirectory_with_folder("3rd_party" libnyquist)
 # Remove the vectorization instructions since those cause a crash for some users
 function(remove_arch_avx target)
     get_target_property(target_compile_options ${target} COMPILE_OPTIONS)
-    string(REPLACE "/arch:AVX" "" target_compile_options ${target_compile_options})
-    set_target_properties(${target} PROPERTIES COMPILE_OPTIONS ${target_compile_options})
+    list(REMOVE_ITEM target_compile_options /arch:AVX)
+    set_target_properties(${target} PROPERTIES COMPILE_OPTIONS "${target_compile_options}")
 endfunction()
 remove_arch_avx(libnyquist)
 
