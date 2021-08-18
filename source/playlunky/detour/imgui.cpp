@@ -31,6 +31,11 @@ void ImguiInit(ImGuiContext* imgui_context)
 {
     ImGui::SetCurrentContext(imgui_context);
 
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        io.IniFilename = "imgui_playlunky.ini";
+    }
+
     const bool loaded_font = []()
     {
         ImGuiIO& io = ImGui::GetIO();
