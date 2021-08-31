@@ -17,6 +17,32 @@ static VirtualFilesystem* s_FmodVfs{ nullptr };
 
 namespace FMOD
 {
+enum class FMOD_STUDIO_INIT_FLAGS
+{
+    NORMAL = 0x00000000,
+    LIVEUPDATE = 0x00000001,
+    ALLOW_MISSING_PLUGINS = 0x00000002,
+    SYNCHRONOUS_UPDATE = 0x00000004,
+    DEFERRED_CALLBACKS = 0x00000008,
+    LOAD_FROM_UPDATE = 0x00000010,
+    MEMORY_TRACKING = 0x00000020
+};
+enum class FMOD_INIT_FLAGS
+{
+    NORMAL = 0x00000000,
+    STREAM_FROM_UPDATE = 0x00000001,
+    MIX_FROM_UPDATE = 0x00000002,
+    RIGHTHANDED_3D = 0x00000004,
+    CHANNEL_LOWPASS = 0x00000100,
+    CHANNEL_DISTANCEFILTER = 0x00000200,
+    PROFILE_ENABLE = 0x00010000,
+    VOL0_BECOMES_VIRTUAL = 0x00020000,
+    GEOMETRY_USECLOSEST = 0x00040000,
+    PREFER_DOLBY_DOWNMIX = 0x00080000,
+    THREAD_UNSAFE = 0x00100000,
+    PROFILE_METER_ALL = 0x00200000,
+    DISABLE_SRS_HIGHPASSFILTER = 0x00400000
+};
 enum FMOD_RESULT
 {
     OK,
@@ -251,6 +277,24 @@ template<class T>
 
 inline FMOD::FMOD_RESULT CreateSound(FMOD::System* fmod_system, const char* filename_or_data, FMOD::FMOD_MODE mode, FMOD::CREATESOUNDEXINFO* exinfo, FMOD::Sound** sound);
 inline FMOD::FMOD_RESULT ReleaseSound(FMOD::Sound* sound);
+
+struct DetourFmodSystemInitialize
+{
+    inline static SigScan::Function<FMOD::FMOD_RESULT(__stdcall*)(FMOD::System*, int, FMOD::FMOD_STUDIO_INIT_FLAGS, FMOD::FMOD_INIT_FLAGS, void*)> Trampoline{
+        .ProcName = "?initialize@System@Studio@FMOD@@QEAA?AW4FMOD_RESULT@@HIIPEAX@Z",
+        .Module = "fmodstudio.dll"
+    };
+    static FMOD::FMOD_RESULT Detour(
+        FMOD::System* fmod_system,
+        int maxchannels,
+        FMOD::FMOD_STUDIO_INIT_FLAGS studioflags,
+        FMOD::FMOD_INIT_FLAGS flags,
+        void* extradriverdata)
+    {
+        studioflags = FMOD::FMOD_STUDIO_INIT_FLAGS((int)studioflags | (int)FMOD::FMOD_STUDIO_INIT_FLAGS::SYNCHRONOUS_UPDATE);
+        return Trampoline(fmod_system, maxchannels, studioflags, flags, extradriverdata);
+    }
+};
 
 struct DetourFmodSystemLoadBankMemory
 {
@@ -853,28 +897,28 @@ std::vector<DetourEntry> GetFmodDetours(const PlaylunkySettings& settings)
 
     if (!speedrun_mode)
     {
-        static const bool enable_loose_audio_files = settings.GetBool("settings", "enable_loose_audio_files", false) || settings.GetBool("audio_settings", "enable_loose_audio_files", true);
-        static const bool cache_decoded_audio_files = settings.GetBool("settings", "cache_decoded_audio_files", false) || settings.GetBool("audio_settings", "cache_decoded_audio_files", false);
-        if (enable_loose_audio_files)
+        DetourFmodSystemLoadBankMemory::s_EnableLooseFiles = settings.GetBool("settings", "enable_loose_audio_files", false) || settings.GetBool("audio_settings", "enable_loose_audio_files", true);
+        DetourFmodSystemLoadBankMemory::s_CacheDecodedFiles = settings.GetBool("settings", "cache_decoded_audio_files", false) || settings.GetBool("audio_settings", "cache_decoded_audio_files", false);
+
+        std::vector<DetourEntry> detours{
+            DetourHelper<DetourFmodSystemLoadBankMemory>::GetDetourEntry("FMOD::System::loadBankMemory"),
+            DetourHelper<DetourFmodSystemLoadBankFile>::GetDetourEntry("FMOD::System::loadBankFile")
+        };
+
+        if (settings.GetBool("settings", "synchronous_update", true))
         {
-            DetourFmodSystemLoadBankMemory::s_CacheDecodedFiles = cache_decoded_audio_files;
-            return {
-                DetourHelper<DetourFmodSystemLoadBankMemory>::GetDetourEntry("FMOD::System::loadBankMemory"),
-                DetourHelper<DetourFmodSystemLoadBankFile>::GetDetourEntry("FMOD::System::loadBankFile"),
-                DetourHelper<DetourFmodSystemUnloadBank>::GetDetourEntry("FMOD::Bank::unload"),
-                DetourHelper<DetourFmodSystemCreateSound>::GetDetourEntry("FMOD::System::createSound"),
-                DetourHelper<DetourFmodSystemCreateStream>::GetDetourEntry("FMOD::System::createStream"),
-                DetourHelper<DetourFmodSystemReleaseSound>::GetDetourEntry("FMOD::Sound::release")
-            };
+            detours.push_back(DetourHelper<DetourFmodSystemInitialize>::GetDetourEntry("FMOD::System::initialize"));
         }
-        else
+
+        if (DetourFmodSystemLoadBankMemory::s_EnableLooseFiles)
         {
-            DetourFmodSystemLoadBankMemory::s_EnableLooseFiles = false;
-            return {
-                DetourHelper<DetourFmodSystemLoadBankMemory>::GetDetourEntry("FMOD::System::loadBankMemory"),
-                DetourHelper<DetourFmodSystemLoadBankFile>::GetDetourEntry("FMOD::System::loadBankFile")
-            };
+            detours.push_back(DetourHelper<DetourFmodSystemUnloadBank>::GetDetourEntry("FMOD::Bank::unload"));
+            detours.push_back(DetourHelper<DetourFmodSystemCreateSound>::GetDetourEntry("FMOD::System::createSound"));
+            detours.push_back(DetourHelper<DetourFmodSystemCreateStream>::GetDetourEntry("FMOD::System::createStream"));
+            detours.push_back(DetourHelper<DetourFmodSystemReleaseSound>::GetDetourEntry("FMOD::Sound::release"));
         }
+
+        return detours;
     }
     return {};
 }
