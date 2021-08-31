@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2021-08-31
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
+
+### Added
+- An option to make FMOD update synchronously, this fixes some crashes that can happen with audio mods
+
+### Changed
+- Added a Playlunky specific ImGui .ini file
+
+### Fixed
+- The cursed audio crash that plagued ancient CPUs is now gone
+
 ## [0.9.1] - 2021-08-11
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
