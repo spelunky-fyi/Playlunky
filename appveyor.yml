@@ -20,14 +20,9 @@ skip_commits:
 environment:
   PYTHON: C:\Python39-x64
   PYTHON_SCRIPTS: C:\Python39-x64\Scripts
-  APPVEYOR_CACHE_ENTRY_ZIP_ARGS: "-t7z -m0=lzma2 -mx=5"
   matrix:
     - TOOLSET: v142
 #    - TOOLSET: ClangCL
-
-cache:
-  - c:\.conan -> conanfile.txt
-  - c:\Users\Appveyor\.conan -> conanfile.txt
 
 clone_folder: c:/playlunky/
 
