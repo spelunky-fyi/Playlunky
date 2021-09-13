@@ -31,9 +31,9 @@ clone_folder: c:/playlunky/
 
 install:
   - git submodule update --init --recursive
-  - python --version
-  - pip install conan --upgrade
-  - pip install numpy
+  - python3 --version
+  - pip3 install conan --upgrade
+  - pip3 install numpy
   - conan user
   - conan --version
 
@@ -48,5 +48,6 @@ before_build:
 
 build_script:
   - cmake --build . --config %CONFIGURATION%
+#
 #test_script:
 #- ctest -C %CONFIGURATION% --output-on-failure
