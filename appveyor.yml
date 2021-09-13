@@ -34,9 +34,9 @@ install:
   - SET PATH=%PYTHON%;%PYTHON%/Sripts;%PATH%
   - git submodule update --init --recursive
   - python --version
-  - pip3.9 --version
-  - pip3.9 install conan --upgrade
-  - pip3.9 install numpy
+  - python -m pip --version
+  - python -m pip install conan --upgrade
+  - python -m pip install numpy
   - conan user
   - conan --version
 
