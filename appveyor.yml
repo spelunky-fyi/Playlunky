@@ -18,6 +18,7 @@ skip_commits:
     - .github/*
 
 environment:
+  PYTHON: C:\Python39-x64
   APPVEYOR_CACHE_ENTRY_ZIP_ARGS: "-t7z -m0=lzma2 -mx=5"
   matrix:
     - TOOLSET: v142
@@ -30,10 +31,12 @@ cache:
 clone_folder: c:/playlunky/
 
 install:
+  - SET PATH=%PYTHON%;%PATH%
   - git submodule update --init --recursive
-  - python3 --version
-  - pip3 install conan --upgrade
-  - pip3 install numpy
+  - python --version
+  - pip --version
+  - pip install conan --upgrade
+  - pip install numpy
   - conan user
   - conan --version
 
