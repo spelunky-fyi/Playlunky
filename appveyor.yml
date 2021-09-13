@@ -19,6 +19,7 @@ skip_commits:
 
 environment:
   PYTHON: C:\Python39-x64
+  PYTHON_SCRIPTS: C:\Python39-x64\Scripts
   APPVEYOR_CACHE_ENTRY_ZIP_ARGS: "-t7z -m0=lzma2 -mx=5"
   matrix:
     - TOOLSET: v142
@@ -31,7 +32,7 @@ cache:
 clone_folder: c:/playlunky/
 
 install:
-  - SET PATH=%PYTHON%;%PYTHON%/Sripts;%PATH%
+  - SET PATH=%PYTHON%;%PYTHON_SCRIPTS%;%PATH%
   - git submodule update --init --recursive
   - python --version
   - python -m pip --version
@@ -42,7 +43,7 @@ install:
 
 before_build:
   - ps: >-
-      $ENV:PATH="$ENV:PYTHON;$ENV:PYTHON\Scripts;$ENV:PATH"
+      $ENV:PATH="$ENV:PYTHON;$ENV:PYTHON_SCRIPTS;$ENV:PATH"
 
       mkdir build
 
@@ -50,7 +51,7 @@ before_build:
   - cmd: cmake c:/playlunky/ -G"Visual Studio 16 2019" -A x64 -T %TOOLSET%
 
 build_script:
-  - SET PATH=%PYTHON%;%PYTHON%/Sripts;%PATH%
+  - SET PATH=%PYTHON%;%PYTHON_SCRIPTS%;%PATH%
   - cmake --build . --config %CONFIGURATION%
 #
 #test_script:
