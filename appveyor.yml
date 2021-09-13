@@ -31,18 +31,18 @@ cache:
 clone_folder: c:/playlunky/
 
 install:
-  - SET PATH=%PYTHON%;%PATH%
+  - SET PATH=%PYTHON%;%PYTHON%/Sripts;%PATH%
   - git submodule update --init --recursive
   - python --version
-  - pip3 --version
-  - pip3 install conan --upgrade
-  - pip3 install numpy
+  - pip3.9 --version
+  - pip3.9 install conan --upgrade
+  - pip3.9 install numpy
   - conan user
   - conan --version
 
 before_build:
   - ps: >-
-      $ENV:PATH="$ENV:PATH;C:\Users\appveyor\AppData\Roaming\Python\Scripts"
+      $ENV:PATH="$ENV:PYTHON;$ENV:PYTHON\Scripts;$ENV:PATH"
 
       mkdir build
 
@@ -50,6 +50,7 @@ before_build:
   - cmd: cmake c:/playlunky/ -G"Visual Studio 16 2019" -A x64 -T %TOOLSET%
 
 build_script:
+  - SET PATH=%PYTHON%;%PYTHON%/Sripts;%PATH%
   - cmake --build . --config %CONFIGURATION%
 #
 #test_script:
