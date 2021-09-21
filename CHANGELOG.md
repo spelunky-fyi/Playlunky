@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.3] - 2021-09-21
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
+
+### Added
+- An unmissable popup when starting up, give us some time.
+
 ## [0.9.2] - 2021-08-31
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.21.0c-orange">
