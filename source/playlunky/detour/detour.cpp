@@ -101,6 +101,7 @@ void Attach(const PlaylunkySettings& settings)
             *trampoline = SigScan::FindPattern(module, *signature, true);
             if (*trampoline != nullptr)
             {
+                *trampoline = SigScan::FindFunctionStart(*trampoline);
                 fmt::print("Found function {}:\n\tsig: {}\n\t at: {}\n     offset: 0x{:x}\n", function_name, ByteStr{ .Str = *signature }, *trampoline, SigScan::GetOffset(*trampoline));
             }
         }

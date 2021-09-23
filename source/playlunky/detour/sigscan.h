@@ -4,6 +4,8 @@
 
 namespace SigScan
 {
+void* FindFunctionStart(void* in_function_body);
+
 void* FindPattern(std::string_view signature, void* from, void* to);
 void* FindPattern(const char* module_name, std::string_view signature, bool code_only);
 

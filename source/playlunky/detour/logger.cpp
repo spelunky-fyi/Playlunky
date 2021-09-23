@@ -14,7 +14,7 @@
 struct DetourDoLog
 {
     inline static SigScan::Function<void(__stdcall*)(std::ofstream*, const char*, void*, LogLevel)> Trampoline{
-        .Signature = "\x48\x89\x5c\x24\x10\x48\x89\x6c\x24\x18\x48\x89\x74\x24\x20\x57\x48\x83\xec\x40\x41\x0f\xb6\xe9"_sig
+        .Signature = "\x48\x83\x80\x90\x01\x00\x00\x01\x48\x83\xbf\x88\x00\x00\x00\x00"_sig
     };
     static void Detour(std::ofstream* stream, const char* message, void* param_3, LogLevel log_level)
     {
@@ -36,15 +36,19 @@ struct DetourDoLog
     inline static std::ofstream* s_Stream{ nullptr };
 };
 
-struct DetourConstructLog
+struct DetourOpenLog
 {
-    inline static SigScan::Function<std::ofstream*(__stdcall*)(void*)> Trampoline{
-        .Signature = "\x48\x89\x5c\x24\x20\x48\x89\x4c\x24\x08\x57\x48\x83\xec\x40\x48\x8b\xf9\xc7\x44\x24\x20\x00\x00\x00\x00"_sig
+    inline static SigScan::Function<void*(__stdcall*)(void*, const char*, int)> Trampoline{
+        .Signature = "\x48\xc7\x45\x00\xfe\xff\xff\xff\x48\x83\xb9\x80\x00\x00\x00\x00"_sig
     };
-    static std::ofstream* Detour(void* memory)
+    static void* Detour(void* stream, const char* log_file, int mode)
     {
-        DetourDoLog::s_Stream = Trampoline(memory);
-        return DetourDoLog::s_Stream;
+        stream = Trampoline(stream, log_file, mode);
+        if (DetourDoLog::s_Stream == nullptr)
+        {
+            DetourDoLog::s_Stream = reinterpret_cast<std::ofstream*>(reinterpret_cast<size_t>(stream) - 0x8);
+        }
+        return stream;
     }
 };
 
@@ -52,7 +56,7 @@ std::vector<DetourEntry> GetLogDetours()
 {
     return {
         DetourHelper<DetourDoLog>::GetDetourEntry("DoLog"),
-        DetourHelper<DetourConstructLog>::GetDetourEntry("ConstructLog")
+        DetourHelper<DetourOpenLog>::GetDetourEntry("ConstructLog")
     };
 }
 

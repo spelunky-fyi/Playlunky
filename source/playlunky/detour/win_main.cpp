@@ -16,7 +16,7 @@
 struct DetourWinMain
 {
     inline static SigScan::Function<int(__stdcall*)(HINSTANCE, HINSTANCE, LPSTR, int)> Trampoline{
-        .Signature = "\x40\x53\x48\x83\xec\x20\x49\x8b\xd8\xff\x15\x2a\x2a\x2a\x2a\x48\x8b\xc8\xba\x02\x00\x00\x00"_sig
+        .Signature = "\x8b\x45\xfc\x48\x83\xc4\x38\x5e\x5d\xc3"_sig
     };
     static int Detour(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
     {
@@ -28,7 +28,7 @@ struct DetourWinMain
 struct DetourGetGameApi
 {
     inline static SigScan::Function<void*(__stdcall*)()> Trampoline{
-        .Signature = "\x40\x53\x48\x83\xec\x20\x48\x8b\x05\x2a\x2a\x2a\x2a\x48\x85\xc0\x75\x76\x48\x39\x05\x2a\x2a\x2a\x2a"_sig
+        .Signature = "\x48\x8d\x48\x38\xc6\x40\x40\x00\xc7\x40\x44\x00\x00\x00\x00"_sig
     };
     static void* Detour()
     {
@@ -39,14 +39,14 @@ struct DetourGetGameApi
 };
 
 // This is the last function called during game initialization
-struct DetourGameInitFinalize
+struct DetourInitGameManager
 {
-    inline static SigScan::Function<void*(__stdcall*)(void*, void*, void*)> Trampoline{
-        .Signature = "\x48\x89\x5c\x24\x18\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x83\xec\x30\x48\x8b\xf1\x80\x39\x00\x74\x3a\x48\x8b\x0d\x2a\x2a\x2a\x2a\x48\x8b\x01"_sig
+    inline static SigScan::Function<void*(__stdcall*)(void*, void*, void*, void*)> Trampoline{
+        .Signature = "\x48\xc7\x85\x18\x04\x00\x00\xfe\xff\xff\xff\x48\x89\x8d\xd0\x03\x00\x00"_sig
     };
-    static void* Detour(void* game_ptr, void* other_ptr, void* some_func_ptr)
+    static void* Detour(void* game_ptr, void* other_ptr, void* more_ptr, void* some_func_ptr)
     {
-        void* res = Trampoline(game_ptr, other_ptr, some_func_ptr);
+        void* res = Trampoline(game_ptr, other_ptr, more_ptr, some_func_ptr);
         CallOnce([]()
                  {
                      void* api = DetourGetGameApi::Trampoline();
@@ -67,6 +67,6 @@ std::vector<struct DetourEntry> GetMainDetours()
     return {
         DetourHelper<DetourWinMain>::GetDetourEntry("WinMain"),
         DetourHelper<DetourGetGameApi>::GetDetourEntry("GetGameApi"),
-        DetourHelper<DetourGameInitFinalize>::GetDetourEntry("GameInitFinalize")
+        DetourHelper<DetourInitGameManager>::GetDetourEntry("GameInitFinalize")
     };
 }

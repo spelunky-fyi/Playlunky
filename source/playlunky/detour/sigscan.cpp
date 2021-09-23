@@ -11,6 +11,17 @@
 
 namespace SigScan
 {
+void* FindFunctionStart(void* in_function_body)
+{
+    size_t offset{ (size_t)in_function_body };
+    offset &= ~0xf;
+    while (*(uint8_t*)(offset - 1) != 0xcc)
+    {
+        offset -= 0x10;
+    }
+    return (void*)offset;
+}
+
 void* FindPattern(std::string_view signature, void* from, void* to)
 {
     const std::size_t size = (char*)to - (char*)from;
