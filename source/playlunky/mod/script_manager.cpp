@@ -9,54 +9,71 @@
 
 #include <imgui.h>
 
+// TODO: 1.23.3
+inline constexpr bool g_DisableScriptMods = true;
+
 bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::filesystem::path& main_path, std::int64_t priority, bool enabled)
 {
-    if (algo::contains(mMods, &RegisteredMainScript::ModName, mod_name))
+    if constexpr (g_DisableScriptMods)
     {
-        return false;
+        return true;
     }
-    auto it = std::upper_bound(mMods.begin(), mMods.end(), priority, [](std::int64_t prio, const RegisteredMainScript& mod)
-                               { return mod.Priority > prio; });
-    mMods.insert(it, RegisteredMainScript{ .ModName{ std::string{ mod_name } }, .MainPath{ main_path }, .Priority{ priority }, .Enabled{ enabled }, .ScriptEnabled{ enabled } });
-    if (enabled)
+    else
     {
-        Playlunky::Get().RegisterModType(ModType::Script);
+        if (algo::contains(mMods, &RegisteredMainScript::ModName, mod_name))
+        {
+            return false;
+        }
+        auto it = std::upper_bound(mMods.begin(), mMods.end(), priority, [](std::int64_t prio, const RegisteredMainScript& mod)
+                                   { return mod.Priority > prio; });
+        mMods.insert(it, RegisteredMainScript{ .ModName{ std::string{ mod_name } }, .MainPath{ main_path }, .Priority{ priority }, .Enabled{ enabled }, .ScriptEnabled{ enabled } });
+        if (enabled)
+        {
+            Playlunky::Get().RegisterModType(ModType::Script);
+        }
+        return true;
     }
-    return true;
 }
 
 void ScriptManager::CommitScripts(const class PlaylunkySettings& settings)
 {
+    if constexpr (g_DisableScriptMods)
     {
-        const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
-        const bool enable_console = settings.GetBool("script_settings", "enable_developer_console", false);
-        if (!speedrun_mode && enable_console)
-        {
-            mConsole = CreateConsole();
-            SpelunkyConsole_LoadHistory(mConsole, "console_history.txt");
-            SpelunkyConsole_SetMaxHistorySize(mConsole, settings.GetInt("script_settings", "console_history_size", 20));
-        }
+        return;
     }
-
-    for (RegisteredMainScript& mod : mMods)
+    else
     {
-        if (mod.Enabled)
         {
-            const std::string path_string = mod.MainPath.string();
-            mod.Script = CreateScript(path_string.c_str(), false);
-            if (mod.Script != nullptr)
+            const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
+            const bool enable_console = settings.GetBool("script_settings", "enable_developer_console", false);
+            if (!speedrun_mode && enable_console)
             {
-                mod.TestScriptResult();
+                mConsole = CreateConsole();
+                SpelunkyConsole_LoadHistory(mConsole, "console_history.txt");
+                SpelunkyConsole_SetMaxHistorySize(mConsole, settings.GetInt("script_settings", "console_history_size", 20));
+            }
+        }
 
-                SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script);
-                mod.Unsafe = meta.unsafe;
-                if (meta.unsafe)
+        for (RegisteredMainScript& mod : mMods)
+        {
+            if (mod.Enabled)
+            {
+                const std::string path_string = mod.MainPath.string();
+                mod.Script = CreateScript(path_string.c_str(), false);
+                if (mod.Script != nullptr)
                 {
-                    mod.ScriptEnabled = false;
-                }
-                else
-                {
-                    SpelunkyScipt_SetEnabled(mod.Script, mod.ScriptEnabled);
+                    mod.TestScriptResult();
+
+                    SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script);
+                    mod.Unsafe = meta.unsafe;
+                    if (meta.unsafe)
+                    {
+                        mod.ScriptEnabled = false;
+                    }
+                    else
+                    {
+                        SpelunkyScipt_SetEnabled(mod.Script, mod.ScriptEnabled);
+                    }
                 }
             }
         }
@@ -115,7 +132,7 @@ void ScriptManager::Update()
 }
 void ScriptManager::Draw()
 {
-    if (mMods.empty() && mConsole == nullptr)
+    if (mMods.empty() && mConsole == nullptr && !g_DisableScriptMods)
     {
         return;
     }
@@ -169,6 +186,12 @@ void ScriptManager::Draw()
         ImGui::PushItemWidth(100.0f);
 
         ImGui::TextUnformatted("Mod Options");
+
+        if constexpr (g_DisableScriptMods)
+        {
+            ImGui::Separator();
+            ImGui::TextWrapped("%s", "Script mods are currently unavailable... Wait for version 0.11.0 to get script support back... Thank you for your patience  <3");
+        }
 
         if (mConsole)
         {
