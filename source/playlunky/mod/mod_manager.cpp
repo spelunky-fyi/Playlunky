@@ -549,7 +549,6 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                 LogError("Failed generating a full string file from installed string mods...");
             }
         }
-        PatchCharacterDefinitions(vfs, settings);
 
         vfs.MountFolder(db_folder.string(), -1);
         vfs.MountFolder(".", -2);
@@ -666,6 +665,8 @@ ModManager::~ModManager() = default;
 
 void ModManager::PostGameInit(const class PlaylunkySettings& settings)
 {
+    PatchCharacterDefinitions(*m_Vfs, settings);
+
     InitSoundManager([](const char* file_path)
                      {
                          DecodedAudioBuffer buffer = DecodeAudioFile(std::filesystem::path{ file_path });

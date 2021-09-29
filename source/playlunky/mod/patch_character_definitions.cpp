@@ -127,9 +127,8 @@ void from_json(const nlohmann::json& j, CharacterDefinition& char_def)
     }
 }
 
-void PatchCharacterDefinitions(VirtualFilesystem& /*vfs*/, const PlaylunkySettings& /*settings*/)
+void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& settings)
 {
-    /*
     using namespace std::string_view_literals;
     constexpr std::array characters{
         "yellow"sv,
@@ -297,5 +296,4 @@ void PatchCharacterDefinitions(VirtualFilesystem& /*vfs*/, const PlaylunkySettin
             }
         }
     }
-    */
 }
