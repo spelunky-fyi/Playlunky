@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.1] - 2021-09-29
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.23.3-orange">
+
+### Changed
+- Reenable character name, gender and heart color mods
+
 ## [0.10.0] - 2021-09-23
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.23.3-orange">
