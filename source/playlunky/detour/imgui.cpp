@@ -6,6 +6,7 @@
 #include "playlunky_settings.h"
 #include "sigscan.h"
 #include "util/call_once.h"
+#include "version.h"
 
 // clang-format off
 #include <Windows.h>
@@ -95,7 +96,8 @@ void ImguiDraw()
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                 ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
                 ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
-        ImGui::TextColored(ImColor(0xffffff | (overlay_alpha << 24)), "Playlunky " PLAYLUNKY_VERSION);
+        const std::string_view version = playlunky_version();
+        ImGui::TextColored(ImColor(0xffffff | (overlay_alpha << 24)), "Playlunky %.*s", static_cast<int>(version.size()), version.data());
         ImGui::End();
     }
 

@@ -6,6 +6,7 @@
 #include "logger.h"
 #include "sigscan.h"
 #include "util/format.h"
+#include "version.h"
 #include "win_main.h"
 
 #include <Windows.h>
@@ -85,7 +86,7 @@ std::vector<DetourEntry> CollectDetourEntries(const PlaylunkySettings& settings)
 
 void Attach(const PlaylunkySettings& settings)
 {
-    fmt::print(DLL_NAME "-" PLAYLUNKY_VERSION ": Attaching...\n");
+    fmt::print(DLL_NAME "-{}: Attaching...\n", playlunky_version());
 
     std::vector<DetourEntry> detour_entries = CollectDetourEntries(settings);
 

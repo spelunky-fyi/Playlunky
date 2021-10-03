@@ -70,8 +70,13 @@ add_library(playlunky_definitions INTERFACE)
 target_compile_definitions(playlunky_definitions INTERFACE
 	_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 	WIN32_LEAN_AND_MEAN
-	NOMINMAX
-	"PLAYLUNKY_VERSION=\"${PLAYLUNKY_GIT_VERSION}\"")
+	NOMINMAX)
+
+add_library(playlunky_version STATIC
+        "source/version/version.h" "source/version/version.cpp")
+target_include_directories(playlunky_version PUBLIC source/version)
+target_compile_definitions(playlunky_version PRIVATE
+	PLAYLUNKY_VERSION=${PLAYLUNKY_GIT_VERSION})
 
 add_library(playlunky_dependencies INTERFACE)
 target_link_libraries(playlunky_dependencies INTERFACE
@@ -141,7 +146,8 @@ target_link_libraries(playlunky64 PRIVATE
 	playlunky_dependencies
 	playlunky_inject_dependencies
 	playlunky_lib_dependencies
-	playlunky_pch)
+	playlunky_pch
+	playlunky_version)
 target_include_directories(playlunky64 PRIVATE "source/playlunky" "source/shared" "source/3rd-party")
 target_precompile_headers(playlunky64 PRIVATE
 	<imgui.h>)

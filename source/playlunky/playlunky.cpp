@@ -6,6 +6,7 @@
 #include "mod/mod_manager.h"
 #include "mod/virtual_filesystem.h"
 #include "playlunky_settings.h"
+#include "version.h"
 
 #include <Windows.h>
 
@@ -60,7 +61,7 @@ void Playlunky::Destroy()
 void Playlunky::Init()
 {
     LogInfo("Initializing Playlunky...");
-    LogInfo("Playlunky Version: " PLAYLUNKY_VERSION);
+    LogInfo("Playlunky Version: {}", playlunky_version());
 
     mImpl->Vfs = std::make_unique<VirtualFilesystem>();
     mImpl->Manager = std::make_unique<ModManager>("Mods/Packs", mImpl->Settings, *mImpl->Vfs);
