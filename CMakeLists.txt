@@ -212,7 +212,7 @@ group_files("${playlunky64_sources};${playlunky_launcher_sources};${shared_sourc
 
 
 # --------------------------------------------------
-# Find the Spel2.exe
+# Find the Spel2.exe, if not passed to cmake and set it for debugging in MSVC
 if(NOT EXISTS ${SPELUNKY_INSTALL_DIR}/Spel2.exe)
 	get_filename_component(STEAM_INSTALL_DIR "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Valve\\Steam;InstallPath]" ABSOLUTE)
 	set(SPELUNKY_INSTALL_DIR "${STEAM_INSTALL_DIR}/SteamApps/common/Spelunky 2")
@@ -220,7 +220,7 @@ if(NOT EXISTS ${SPELUNKY_INSTALL_DIR}/Spel2.exe)
 		set(STEAM_LIBRARY_FOLDERS_CONFIG "${STEAM_INSTALL_DIR}/SteamApps/libraryfolders.vdf")
 		if(EXISTS ${STEAM_LIBRARY_FOLDERS_CONFIG})
 			FILE(READ "${STEAM_LIBRARY_FOLDERS_CONFIG}" STEAM_LIBRARY_FOLDERS_CONFIG_CONTENT)
-			STRING(REGEX MATCHALL "\"[A-Z]\:.*\"" POTENTIAL_STEAM_LIBRARY_FOLDERS ${STEAM_LIBRARY_FOLDERS_CONFIG_CONTENT})
+			STRING(REGEX MATCHALL "\"[A-Z]\:[^\"]*\"" POTENTIAL_STEAM_LIBRARY_FOLDERS ${STEAM_LIBRARY_FOLDERS_CONFIG_CONTENT})
 			foreach(STEAM_LIBRARY_FOLDER ${POTENTIAL_STEAM_LIBRARY_FOLDERS})
 				string(REGEX REPLACE "\^\"" "" STEAM_LIBRARY_FOLDER ${STEAM_LIBRARY_FOLDER})
 				string(REGEX REPLACE "\"$" "" STEAM_LIBRARY_FOLDER ${STEAM_LIBRARY_FOLDER})
