@@ -9,8 +9,7 @@
 
 #include <imgui.h>
 
-// TODO: 1.23.3
-inline constexpr bool g_DisableScriptMods = true;
+inline constexpr bool g_DisableScriptMods = false;
 
 bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::filesystem::path& main_path, std::int64_t priority, bool enabled)
 {
