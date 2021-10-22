@@ -11,7 +11,7 @@ __declspec(dllexport) int __stdcall _(void)
     return 0;
 }
 
-inline constexpr std::string_view s_SupportedSpelunkyVersion = "1.23.3";
+inline constexpr std::string_view s_SupportedSpelunkyVersion = "1.25.0";
 
 BOOL WINAPI DllMain([[maybe_unused]] HINSTANCE hinst, DWORD dwReason, [[maybe_unused]] LPVOID reserved)
 {
