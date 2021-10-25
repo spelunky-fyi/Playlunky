@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2021-10-25
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.25.0b-orange">
+
+### Changed
+- Bumped the supported version of Spelunky
+- Reenabled script mods
+
+### Added
+- An option that allows loading plain `.str` files, disable by default. This option only changes default behavior, it's not adding any feature.
+
 ## [0.10.1] - 2021-09-29
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.23.3-orange">
