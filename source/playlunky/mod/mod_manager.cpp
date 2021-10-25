@@ -56,6 +56,8 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
     const bool disable_asset_caching = settings.GetBool("general_settings", "disable_asset_caching", false);
 
     const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
+    const bool enable_raw_string_loading = settings.GetBool("script_settings", "enable_raw_string_loading", false);
+
     if (speedrun_mode)
     {
         vfs.RestrictFiles({ std::begin(s_SpeedrunFiles), std::end(s_SpeedrunFiles) });
@@ -479,37 +481,51 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             }
         }
 
-        // Bind char pathes
-        vfs.BindPathes({ "Data/Textures/char_orange", "Data/Textures/Entities/char_orange_full" });
-        vfs.BindPathes({ "Data/Textures/char_pink", "Data/Textures/Entities/char_pink_full" });
-        vfs.BindPathes({ "Data/Textures/char_red", "Data/Textures/Entities/char_red_full" });
-        vfs.BindPathes({ "Data/Textures/char_violet", "Data/Textures/Entities/char_violet_full" });
-        vfs.BindPathes({ "Data/Textures/char_white", "Data/Textures/Entities/char_white_full" });
-        vfs.BindPathes({ "Data/Textures/char_yellow", "Data/Textures/Entities/char_yellow_full" });
-        vfs.BindPathes({ "Data/Textures/char_black", "Data/Textures/Entities/char_black_full" });
-        vfs.BindPathes({ "Data/Textures/char_blue", "Data/Textures/Entities/char_blue_full" });
-        vfs.BindPathes({ "Data/Textures/char_cerulean", "Data/Textures/Entities/char_cerulean_full" });
-        vfs.BindPathes({ "Data/Textures/char_cinnabar", "Data/Textures/Entities/char_cinnabar_full" });
-        vfs.BindPathes({ "Data/Textures/char_cyan", "Data/Textures/Entities/char_cyan_full" });
-        vfs.BindPathes({ "Data/Textures/char_eggchild", "Data/Textures/Entities/char_eggchild_full" });
-        vfs.BindPathes({ "Data/Textures/char_gold", "Data/Textures/Entities/char_gold_full" });
-        vfs.BindPathes({ "Data/Textures/char_gray", "Data/Textures/Entities/char_gray_full" });
-        vfs.BindPathes({ "Data/Textures/char_green", "Data/Textures/Entities/char_green_full" });
-        vfs.BindPathes({ "Data/Textures/char_hired", "Data/Textures/Entities/char_hired_full" });
-        vfs.BindPathes({ "Data/Textures/char_iris", "Data/Textures/Entities/char_iris_full" });
-        vfs.BindPathes({ "Data/Textures/char_khaki", "Data/Textures/Entities/char_khaki_full" });
-        vfs.BindPathes({ "Data/Textures/char_lemon", "Data/Textures/Entities/char_lemon_full" });
-        vfs.BindPathes({ "Data/Textures/char_lime", "Data/Textures/Entities/char_lime_full" });
-        vfs.BindPathes({ "Data/Textures/char_magenta", "Data/Textures/Entities/char_magenta_full" });
-        vfs.BindPathes({ "Data/Textures/char_olive", "Data/Textures/Entities/char_olive_full" });
+        {
+            // Bind char pathes
+            vfs.BindPathes({ "Data/Textures/char_orange", "Data/Textures/Entities/char_orange_full" });
+            vfs.BindPathes({ "Data/Textures/char_pink", "Data/Textures/Entities/char_pink_full" });
+            vfs.BindPathes({ "Data/Textures/char_red", "Data/Textures/Entities/char_red_full" });
+            vfs.BindPathes({ "Data/Textures/char_violet", "Data/Textures/Entities/char_violet_full" });
+            vfs.BindPathes({ "Data/Textures/char_white", "Data/Textures/Entities/char_white_full" });
+            vfs.BindPathes({ "Data/Textures/char_yellow", "Data/Textures/Entities/char_yellow_full" });
+            vfs.BindPathes({ "Data/Textures/char_black", "Data/Textures/Entities/char_black_full" });
+            vfs.BindPathes({ "Data/Textures/char_blue", "Data/Textures/Entities/char_blue_full" });
+            vfs.BindPathes({ "Data/Textures/char_cerulean", "Data/Textures/Entities/char_cerulean_full" });
+            vfs.BindPathes({ "Data/Textures/char_cinnabar", "Data/Textures/Entities/char_cinnabar_full" });
+            vfs.BindPathes({ "Data/Textures/char_cyan", "Data/Textures/Entities/char_cyan_full" });
+            vfs.BindPathes({ "Data/Textures/char_eggchild", "Data/Textures/Entities/char_eggchild_full" });
+            vfs.BindPathes({ "Data/Textures/char_gold", "Data/Textures/Entities/char_gold_full" });
+            vfs.BindPathes({ "Data/Textures/char_gray", "Data/Textures/Entities/char_gray_full" });
+            vfs.BindPathes({ "Data/Textures/char_green", "Data/Textures/Entities/char_green_full" });
+            vfs.BindPathes({ "Data/Textures/char_hired", "Data/Textures/Entities/char_hired_full" });
+            vfs.BindPathes({ "Data/Textures/char_iris", "Data/Textures/Entities/char_iris_full" });
+            vfs.BindPathes({ "Data/Textures/char_khaki", "Data/Textures/Entities/char_khaki_full" });
+            vfs.BindPathes({ "Data/Textures/char_lemon", "Data/Textures/Entities/char_lemon_full" });
+            vfs.BindPathes({ "Data/Textures/char_lime", "Data/Textures/Entities/char_lime_full" });
+            vfs.BindPathes({ "Data/Textures/char_magenta", "Data/Textures/Entities/char_magenta_full" });
+            vfs.BindPathes({ "Data/Textures/char_olive", "Data/Textures/Entities/char_olive_full" });
 
-        vfs.BindPathes({ "Data/Textures/Entities/monty_full", "Data/Textures/Entities/Pets/monty", "Data/Textures/Entities/Pets/monty_v2" });
-        vfs.BindPathes({ "Data/Textures/Entities/percy_full", "Data/Textures/Entities/Pets/percy", "Data/Textures/Entities/Pets/percy_v2" });
-        vfs.BindPathes({ "Data/Textures/Entities/poochi_full", "Data/Textures/Entities/Pets/poochi", "Data/Textures/Entities/Pets/poochi_v2" });
-        vfs.BindPathes({ "Data/Textures/Entities/turkey_full", "Data/Textures/Entities/Mounts/turkey" });
-        vfs.BindPathes({ "Data/Textures/Entities/rockdog_full", "Data/Textures/Entities/Mounts/rockdog" });
-        vfs.BindPathes({ "Data/Textures/Entities/axolotl_full", "Data/Textures/Entities/Mounts/axolotl" });
-        vfs.BindPathes({ "Data/Textures/Entities/qilin_full", "Data/Textures/Entities/Mounts/qilin" });
+            vfs.BindPathes({ "Data/Textures/Entities/monty_full", "Data/Textures/Entities/Pets/monty", "Data/Textures/Entities/Pets/monty_v2" });
+            vfs.BindPathes({ "Data/Textures/Entities/percy_full", "Data/Textures/Entities/Pets/percy", "Data/Textures/Entities/Pets/percy_v2" });
+            vfs.BindPathes({ "Data/Textures/Entities/poochi_full", "Data/Textures/Entities/Pets/poochi", "Data/Textures/Entities/Pets/poochi_v2" });
+            vfs.BindPathes({ "Data/Textures/Entities/turkey_full", "Data/Textures/Entities/Mounts/turkey" });
+            vfs.BindPathes({ "Data/Textures/Entities/rockdog_full", "Data/Textures/Entities/Mounts/rockdog" });
+            vfs.BindPathes({ "Data/Textures/Entities/axolotl_full", "Data/Textures/Entities/Mounts/axolotl" });
+            vfs.BindPathes({ "Data/Textures/Entities/qilin_full", "Data/Textures/Entities/Mounts/qilin" });
+        }
+
+        if (!speedrun_mode && !enable_raw_string_loading)
+        {
+            vfs.RegisterCustomFilter([db_folder](const fs::path& asset_path) -> bool
+                                     {
+                                         if (asset_path.extension() == L".str")
+                                         {
+                                             return ctre::match<s_StringFileRule>(asset_path.filename().string()) && algo::is_sub_path(asset_path, db_folder);
+                                         }
+                                         return true;
+                                     });
+        }
 
         LogInfo("Merging entity sheets... This includes the automatic generating of stickers...");
         if (sprite_sheet_merger.NeedsRegeneration(db_folder))

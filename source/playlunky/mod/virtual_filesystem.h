@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -27,6 +28,10 @@ class VirtualFilesystem
     // Allow loading only files specified in this list
     void RestrictFiles(std::span<const std::string_view> files);
 
+    // Register a filter to block loading arbitrary files, return true from the filter to allow loading
+    using CustomFilterFun = std::function<bool(const std::filesystem::path)>;
+    void RegisterCustomFilter(CustomFilterFun filter);
+
     // Binding pathes makes sure that only one of the bound files can be loaded
     void BindPathes(std::vector<std::string_view> pathes);
 
@@ -40,6 +45,8 @@ class VirtualFilesystem
     std::vector<std::filesystem::path> GetAllFilePaths(const std::filesystem::path& path) const;
 
   private:
+    bool FilterPath(const std::filesystem::path& path) const;
+
     using BoundPathes = std::vector<std::string_view>;
     BoundPathes* GetBoundPathes(std::string_view path);
     BoundPathes* GetBoundPathes(const BoundPathes& pathes);
@@ -59,6 +66,7 @@ class VirtualFilesystem
     mutable std::vector<CachedRandomFile> m_RandomCache;
 
     std::span<const std::string_view> m_RestrictedFiles;
+    std::vector<CustomFilterFun> m_CustomFilters;
 
     std::vector<BoundPathes> m_BoundPathes;
 };

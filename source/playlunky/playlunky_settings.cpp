@@ -32,6 +32,7 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
     std::array known_categories{
         KnownCategory{ { "general_settings" }, {
                                                    KnownSetting{ .Name{ "enable_loose_file_warning" }, .AltCategory{ "settings" }, .DefaultValue{ "on" } },
+                                                   KnownSetting{ .Name{ "enable_raw_string_loading" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "disable_asset_caching" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "speedrun_mode" }, .DefaultValue{ "off" } },
                                                } },

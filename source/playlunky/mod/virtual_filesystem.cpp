@@ -138,6 +138,11 @@ void VirtualFilesystem::RestrictFiles(std::span<const std::string_view> files)
     m_RestrictedFiles = files;
 }
 
+void VirtualFilesystem::RegisterCustomFilter(CustomFilterFun filter)
+{
+    m_CustomFilters.push_back(std::move(filter));
+}
+
 void VirtualFilesystem::BindPathes(std::vector<std::string_view> pathes)
 {
     if (std::vector<std::string_view>* bound_pathes = GetBoundPathes(pathes))
@@ -177,6 +182,17 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
     // Bound pathes should usually contain one 'actual' game asset and the rest addon assets
     for (const VfsMount& mount : mMounts)
     {
+        if (!m_CustomFilters.empty())
+        {
+            if (const auto& asset_path = mount.MountImpl->GetFilePath(path))
+            {
+                if (!FilterPath(asset_path.value()))
+                {
+                    continue;
+                }
+            }
+        }
+
         if (FileInfo* loaded_data = mount.MountImpl->LoadFile(path, allocator))
         {
             return loaded_data;
@@ -218,6 +234,11 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::f
                 {
                     if (auto bound_file_path = mount.MountImpl->GetFilePath(bound_path)) // TODO: needs to ignore extension
                     {
+                        if (!FilterPath(bound_file_path.value()))
+                        {
+                            continue;
+                        }
+
                         current_file_prio = mount.Priority;
 
                         auto is_this_path = [&path](const std::filesystem::path& found_path)
@@ -264,7 +285,10 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::f
         {
             if (auto file_path = mount.MountImpl->GetFilePath(path))
             {
-                return file_path;
+                if (FilterPath(file_path.value()))
+                {
+                    return file_path;
+                }
             }
         }
     }
@@ -351,6 +375,18 @@ std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std:
     }
 
     return file_paths;
+}
+
+bool VirtualFilesystem::FilterPath(const std::filesystem::path& path) const
+{
+    for (const auto& filter : m_CustomFilters)
+    {
+        if (!filter(path))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(std::string_view path)
