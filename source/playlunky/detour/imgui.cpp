@@ -149,6 +149,6 @@ void DrawImguiOverlay()
 
 void SetSwapchain(void* swap_chain)
 {
-    RegisterImguiInitFunc(&ImguiInit);
-    InitSwapChainHooks(static_cast<IDXGISwapChain*>(swap_chain));
+    Spelunky_RegisterImguiInitFunc(&ImguiInit);
+    Spelunky_InitSwapChainHooks(static_cast<IDXGISwapChain*>(swap_chain));
 }

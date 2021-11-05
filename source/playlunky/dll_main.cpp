@@ -1,7 +1,9 @@
 #include "playlunky.h"
 
 #include "detour/sigscan.h"
+#include "spel2.h"
 #include "util/format.h"
+#include "version.h"
 
 #include <Windows.h>
 
@@ -52,6 +54,11 @@ BOOL WINAPI DllMain([[maybe_unused]] HINSTANCE hinst, DWORD dwReason, [[maybe_un
             {
                 return TRUE;
             }
+        }
+
+        {
+            std::string version_string = fmt::format("Playlunky {}", playlunky_version());
+            Spelunky_RegisterApplicationVersion(version_string.c_str());
         }
 
         HMODULE game_handle = GetModuleHandle("Spel2.exe");

@@ -51,7 +51,8 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
     LogInfo("Scanning for mods...");
 
-    SetWriteLoadOptimization(false);
+    Spelunky_InitMemoryDatabase();
+    Spelunky_SetWriteLoadOptimization(false);
 
     const bool disable_asset_caching = settings.GetBool("general_settings", "disable_asset_caching", false);
 
@@ -606,7 +607,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
         if (Playlunky::Get().IsModTypeLoaded(ModType::Script | ModType::Level))
         {
-            SetWriteLoadOptimization(true);
+            Spelunky_SetWriteLoadOptimization(true);
         }
 
         LogInfo("All mods initialized...");
@@ -621,7 +622,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
         LogInfo("No mods were initialized...");
     }
 
-    RegisterOnLoadFileFunc(FunctionPointer<std::remove_pointer_t<Spelunky_LoadFileFunc>, struct ModManagerLoadFile>(
+    Spelunky_RegisterOnLoadFileFunc(FunctionPointer<std::remove_pointer_t<Spelunky_LoadFileFunc>, struct ModManagerLoadFile>(
         [this](const char* file_path, SpelunkyAllocFun alloc_fun) -> SpelunkyFileInfo*
         {
             if (m_Vfs)
@@ -633,7 +634,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             }
             return nullptr;
         }));
-    RegisterGetImagePathFunc(FunctionPointer<std::remove_pointer_t<Spelunky_GetImageFilePathFunc>, struct ModManagerGetImagePath>(
+    Spelunky_RegisterGetImagePathFunc(FunctionPointer<std::remove_pointer_t<Spelunky_GetImageFilePathFunc>, struct ModManagerGetImagePath>(
         [this](const char* root_path, const char* relative_path, char* out_buffer, size_t out_buffer_size) -> bool
         {
             auto dds_relative_path = std::filesystem::path(relative_path).replace_extension(".dds").string();
@@ -683,30 +684,30 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
 {
     PatchCharacterDefinitions(*m_Vfs, settings);
 
-    InitSoundManager([](const char* file_path)
-                     {
-                         DecodedAudioBuffer buffer = DecodeAudioFile(std::filesystem::path{ file_path });
-                         return Spelunky_DecodedAudioBuffer{
-                             .num_channels{ buffer.NumChannels },
-                             .frequency{ buffer.Frequency },
-                             .format{ static_cast<Spelunky_SoundFormat>(buffer.Format) },
-                             .data{ reinterpret_cast<const char*>(buffer.Data.release()) },
-                             .data_size{ buffer.DataSize }
-                         };
-                     });
+    Spelunky_InitSoundManager([](const char* file_path)
+                              {
+                                  DecodedAudioBuffer buffer = DecodeAudioFile(std::filesystem::path{ file_path });
+                                  return Spelunky_DecodedAudioBuffer{
+                                      .num_channels{ buffer.NumChannels },
+                                      .frequency{ buffer.Frequency },
+                                      .format{ static_cast<Spelunky_SoundFormat>(buffer.Format) },
+                                      .data{ reinterpret_cast<const char*>(buffer.Data.release()) },
+                                      .data_size{ buffer.DataSize }
+                                  };
+                              });
     mScriptManager.CommitScripts(settings);
 
-    RegisterOnInputFunc(FunctionPointer<std::remove_pointer_t<OnInputFunc>, struct ModManagerOnInput>(&ModManager::OnInput, this));
-    RegisterPreDrawFunc(FunctionPointer<std::remove_pointer_t<PreDrawFunc>, struct ModManagerUpdate>(&ModManager::Update, this));
-    RegisterImguiDrawFunc(FunctionPointer<std::remove_pointer_t<ImguiDrawFunc>, struct ModManagerDraw>(&ModManager::Draw, this));
+    Spelunky_RegisterOnInputFunc(FunctionPointer<std::remove_pointer_t<OnInputFunc>, struct ModManagerOnInput>(&ModManager::OnInput, this));
+    Spelunky_RegisterPreDrawFunc(FunctionPointer<std::remove_pointer_t<PreDrawFunc>, struct ModManagerUpdate>(&ModManager::Update, this));
+    Spelunky_RegisterImguiDrawFunc(FunctionPointer<std::remove_pointer_t<ImguiDrawFunc>, struct ModManagerDraw>(&ModManager::Draw, this));
 
-    RegisterMakeSavePathFunc([](
-                                 const char* script_path, size_t script_path_size, const char* /*script_name*/, size_t /*script_name_size*/, char* out_buffer, size_t out_buffer_size) -> bool
-                             {
-                                 auto fmt_res = fmt::format_to_n(out_buffer, out_buffer_size - 1, "{}/save.dat", std::string_view{ script_path, script_path_size });
-                                 out_buffer[fmt_res.size] = '\0';
-                                 return true;
-                             });
+    Spelunky_RegisterMakeSavePathFunc([](
+                                          const char* script_path, size_t script_path_size, const char* /*script_name*/, size_t /*script_name_size*/, char* out_buffer, size_t out_buffer_size) -> bool
+                                      {
+                                          auto fmt_res = fmt::format_to_n(out_buffer, out_buffer_size - 1, "{}/save.dat", std::string_view{ script_path, script_path_size });
+                                          out_buffer[fmt_res.size] = '\0';
+                                          return true;
+                                      });
 }
 
 bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t /*l_param*/)

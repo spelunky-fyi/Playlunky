@@ -11,6 +11,8 @@
 
 inline constexpr bool g_DisableScriptMods = false;
 
+ScriptManager::~ScriptManager() = default;
+
 bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::filesystem::path& main_path, std::int64_t priority, bool enabled)
 {
     if constexpr (g_DisableScriptMods)
@@ -58,12 +60,12 @@ void ScriptManager::CommitScripts(const class PlaylunkySettings& settings)
             if (mod.Enabled)
             {
                 const std::string path_string = mod.MainPath.string();
-                mod.Script = CreateScript(path_string.c_str(), false);
+                mod.Script = SpelunkyScriptPointer{ Spelunky_CreateScript(path_string.c_str(), false) };
                 if (mod.Script != nullptr)
                 {
                     mod.TestScriptResult();
 
-                    SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script);
+                    SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script.get());
                     mod.Unsafe = meta.unsafe;
                     if (meta.unsafe)
                     {
@@ -71,7 +73,7 @@ void ScriptManager::CommitScripts(const class PlaylunkySettings& settings)
                     }
                     else
                     {
-                        SpelunkyScipt_SetEnabled(mod.Script, mod.ScriptEnabled);
+                        SpelunkyScipt_SetEnabled(mod.Script.get(), mod.ScriptEnabled);
                     }
                 }
             }
@@ -83,11 +85,10 @@ void ScriptManager::RefreshScripts()
     for (RegisteredMainScript& mod : mMods)
     {
         const std::string path_string = mod.MainPath.string();
-        if (mod.Script != nullptr)
-        {
-            FreeScript(mod.Script);
-        }
-        mod.Script = CreateScript(path_string.c_str(), mod.ScriptEnabled);
+        mod.Script.reset();
+        mod.Script = SpelunkyScriptPointer{
+            Spelunky_CreateScript(path_string.c_str(), mod.ScriptEnabled),
+        };
         mod.LastResult.clear();
     }
 }
@@ -111,14 +112,14 @@ void ScriptManager::Update()
     {
         if (mod.Script != nullptr)
         {
-            SpelunkyScript_Update(mod.Script);
+            SpelunkyScript_Update(mod.Script.get());
             mod.TestScriptResult();
 
-            const std::size_t num_messages = SpelunkyScript_GetNumMessages(mod.Script);
+            const std::size_t num_messages = SpelunkyScript_GetNumMessages(mod.Script.get());
             std::size_t message_time = mod.MessageTime;
             for (std::size_t i = 0; i < num_messages; i++)
             {
-                SpelunkyScriptMessage message = SpelunkyScript_GetMessage(mod.Script, i);
+                SpelunkyScriptMessage message = SpelunkyScript_GetMessage(mod.Script.get(), i);
                 if (message.Message != nullptr && message.TimeMilliSecond > mod.MessageTime)
                 {
                     message_time = std::max(message_time, message.TimeMilliSecond);
@@ -172,7 +173,7 @@ void ScriptManager::Draw()
     {
         if (!mShowCursor)
         {
-            ShowCursor();
+            Spelunky_ShowCursor();
             mShowCursor = true;
         }
 
@@ -203,7 +204,7 @@ void ScriptManager::Draw()
         {
             if ((mod.Script != nullptr) && mod.Enabled)
             {
-                SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script);
+                SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script.get());
 
                 const std::string by_author = fmt::format("by {}", meta.author);
                 const auto author_cursor_pos =
@@ -212,7 +213,7 @@ void ScriptManager::Draw()
                 ImGui::Separator();
                 if (ImGui::Checkbox(meta.name, &mod.ScriptEnabled))
                 {
-                    SpelunkyScipt_SetEnabled(mod.Script, mod.ScriptEnabled);
+                    SpelunkyScipt_SetEnabled(mod.Script.get(), mod.ScriptEnabled);
                 }
 
                 if (meta.version != nullptr && std::strlen(meta.version) > 0)
@@ -241,7 +242,7 @@ void ScriptManager::Draw()
 
                 if (mod.ScriptEnabled)
                 {
-                    SpelunkyScript_DrawOptions(mod.Script);
+                    SpelunkyScript_DrawOptions(mod.Script.get());
                 }
             }
         }
@@ -251,7 +252,7 @@ void ScriptManager::Draw()
     }
     else if (mShowCursor)
     {
-        HideCursor();
+        Spelunky_HideCursor();
         mShowCursor = false;
     }
 
@@ -278,7 +279,7 @@ void ScriptManager::Draw()
     {
         if (mod.Script != nullptr)
         {
-            SpelunkyScript_Draw(mod.Script, draw_list);
+            SpelunkyScript_Draw(mod.Script.get(), draw_list);
         }
     }
 
@@ -304,7 +305,7 @@ void ScriptManager::RegisteredMainScript::TestScriptResult()
     if (Script != nullptr)
     {
         using namespace std::literals::string_view_literals;
-        if (const char* res = SpelunkyScript_GetResult(Script))
+        if (const char* res = SpelunkyScript_GetResult(Script.get()))
         {
             if (res != "Got metadata"sv && res != "OK"sv && res != LastResult)
             {
@@ -313,4 +314,9 @@ void ScriptManager::RegisteredMainScript::TestScriptResult()
             }
         }
     }
+}
+
+void ScriptManager::SpelunkyScriptDeleter::operator()(SpelunkyScript* script) const
+{
+    Spelunky_FreeScript(script);
 }

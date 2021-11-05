@@ -11,6 +11,8 @@ class SpelunkyConsole;
 class ScriptManager
 {
   public:
+    ~ScriptManager();
+
     bool RegisterModWithScript(std::string_view mod_name, const std::filesystem::path& main_path, std::int64_t priority, bool enabled);
 
     void CommitScripts(const class PlaylunkySettings& settings);
@@ -27,6 +29,12 @@ class ScriptManager
     }
 
   private:
+    struct SpelunkyScriptDeleter
+    {
+        void operator()(SpelunkyScript* script) const;
+    };
+    using SpelunkyScriptPointer = std::unique_ptr<SpelunkyScript, SpelunkyScriptDeleter>;
+
     struct RegisteredMainScript
     {
         std::string ModName;
@@ -37,7 +45,7 @@ class ScriptManager
         bool Unsafe;
         std::size_t MessageTime;
         std::string LastResult;
-        SpelunkyScript* Script{ nullptr };
+        SpelunkyScriptPointer Script;
 
         void TestScriptResult();
     };
