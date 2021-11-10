@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2021-11-10
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.25.0b-orange">
+
+### Fixed
+- Probably fixed theme-swap bug that was sometimes triggered after playing online.
+
 ## [0.11.0] - 2021-10-25
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.25.0b-orange">
