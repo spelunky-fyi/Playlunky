@@ -893,8 +893,7 @@ inline FMOD::FMOD_RESULT ReleaseSound(FMOD::Sound* sound)
 
 std::vector<DetourEntry> GetFmodDetours(const PlaylunkySettings& settings)
 {
-    static const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
-
+    const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
     if (!speedrun_mode)
     {
         DetourFmodSystemLoadBankMemory::s_EnableLooseFiles = settings.GetBool("settings", "enable_loose_audio_files", false) || settings.GetBool("audio_settings", "enable_loose_audio_files", true);
