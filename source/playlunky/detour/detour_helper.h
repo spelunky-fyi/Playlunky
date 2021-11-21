@@ -39,6 +39,7 @@ struct DetourHelper
                 .Trampoline = &(void_ptr&)DetourT::Trampoline.Func,
                 .Detour = &DetourT::Detour,
                 .Signature = &DetourT::Trampoline.Signature,
+                .FindFunctionStart = DetourT::Trampoline.FindFunctionStart,
                 .ProcName = DetourT::Trampoline.ProcName,
                 .Module = DetourT::Trampoline.Module,
                 .FunctionName = function_name

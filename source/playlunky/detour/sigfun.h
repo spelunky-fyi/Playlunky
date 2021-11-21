@@ -16,6 +16,7 @@ struct Function
     using type = FunT;
 
     std::string_view Signature{ "" };
+    bool FindFunctionStart{ true };
     const char* ProcName{ nullptr };
     const char* Module{ "Spel2.exe" };
     FunT Func{ nullptr };

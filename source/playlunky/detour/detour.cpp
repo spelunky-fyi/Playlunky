@@ -4,6 +4,7 @@
 #include "detour_entry.h"
 #include "fmod_crap.h"
 #include "logger.h"
+#include "save_game.h"
 #include "sigscan.h"
 #include "util/format.h"
 #include "version.h"
@@ -74,6 +75,7 @@ std::vector<DetourEntry> CollectDetourEntries(const PlaylunkySettings& settings)
     std::vector<DetourEntry> detour_entries;
     append(detour_entries, GetLogDetours());
     append(detour_entries, GetFmodDetours(settings));
+    append(detour_entries, GetSaveGameDetours(settings));
     append(detour_entries, GetMainDetours());
 
     if (IsDebuggerPresent())
@@ -95,14 +97,17 @@ void Attach(const PlaylunkySettings& settings)
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
 
-    for (auto [trampoline, detour, signature, proc_name, module, function_name] : detour_entries)
+    for (auto [trampoline, detour, signature, search_fun_start, proc_name, module, function_name] : detour_entries)
     {
         if (signature != nullptr && !signature->empty())
         {
             *trampoline = SigScan::FindPattern(module, *signature, true);
             if (*trampoline != nullptr)
             {
-                *trampoline = SigScan::FindFunctionStart(*trampoline);
+                if (search_fun_start)
+                {
+                    *trampoline = SigScan::FindFunctionStart(*trampoline);
+                }
                 fmt::print("Found function {}:\n\tsig: {}\n\t at: {}\n     offset: 0x{:x}\n", function_name, ByteStr{ .Str = *signature }, *trampoline, SigScan::GetOffset(*trampoline));
             }
         }
@@ -149,7 +154,7 @@ void Detach(const PlaylunkySettings& settings)
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
 
-    for (auto [trampoline, detour, signature, proc_name, module, function_name] : detour_entries)
+    for (auto [trampoline, detour, signature, search_fun_start, proc_name, module, function_name] : detour_entries)
     {
         DetourDetach(trampoline, detour);
     }
