@@ -2,6 +2,7 @@
 
 #include "detour/detour.h"
 #include "detour/fmod_crap.h"
+#include "detour/save_game.h"
 #include "log.h"
 #include "mod/mod_manager.h"
 #include "mod/virtual_filesystem.h"
@@ -67,6 +68,7 @@ void Playlunky::Init()
     mImpl->Manager = std::make_unique<ModManager>("Mods/Packs", mImpl->Settings, *mImpl->Vfs);
 
     SetFmodVfs(mImpl->Vfs.get());
+    SetSaveGameVfs(mImpl->Vfs.get());
 }
 
 void Playlunky::PostGameInit()

@@ -31,6 +31,7 @@ class ModManager
 
     bool mDeveloperMode;
     bool mConsoleMode;
+    std::string m_ModSaveGameOverride;
     std::uint64_t mConsoleKey;
     std::uint64_t mConsoleAltKey;
     std::uint64_t mConsoleCloseKey;
