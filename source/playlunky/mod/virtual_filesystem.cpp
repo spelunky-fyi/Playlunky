@@ -295,6 +295,18 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::f
 
     return std::nullopt;
 }
+std::optional<std::filesystem::path> VirtualFilesystem::GetDifferentFilePath(const std::filesystem::path& path) const
+{
+    namespace fs = std::filesystem;
+    for (const fs::path& found_path : GetAllFilePaths(path))
+    {
+        if (found_path.compare(path) != 0)
+        {
+            return found_path;
+        }
+    }
+    return std::nullopt;
+}
 std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePath(const std::filesystem::path& path) const
 {
     if (const BoundPathes* bound_pathes = GetBoundPathes(path.string()))

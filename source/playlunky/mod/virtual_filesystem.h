@@ -41,6 +41,7 @@ class VirtualFilesystem
 
     // Interface for loading during preprocessing
     std::optional<std::filesystem::path> GetFilePath(const std::filesystem::path& path) const;
+    std::optional<std::filesystem::path> GetDifferentFilePath(const std::filesystem::path& path) const;
     std::optional<std::filesystem::path> GetRandomFilePath(const std::filesystem::path& path) const;
     std::vector<std::filesystem::path> GetAllFilePaths(const std::filesystem::path& path) const;
 
