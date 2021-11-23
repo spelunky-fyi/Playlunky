@@ -622,10 +622,12 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
         LogInfo("No mods were initialized...");
     }
 
-    const bool allow_save_game_mods = settings.GetBool("general_settings", "allow_save_game_mods", false);
-    if (auto sav_replacement = vfs.GetDifferentFilePath("savegame.sav"))
+    if (const bool allow_save_game_mods = settings.GetBool("general_settings", "allow_save_game_mods", false))
     {
-        m_ModSaveGameOverride = sav_replacement.value().parent_path().stem().string();
+        if (auto sav_replacement = vfs.GetDifferentFilePath("savegame.sav"))
+        {
+            m_ModSaveGameOverride = sav_replacement.value().parent_path().stem().string();
+        }
     }
 
     Spelunky_RegisterOnLoadFileFunc(FunctionPointer<std::remove_pointer_t<Spelunky_LoadFileFunc>, struct ModManagerLoadFile>(
