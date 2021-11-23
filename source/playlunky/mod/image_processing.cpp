@@ -33,7 +33,13 @@ Image& make_square(Image& img)
 }
 Image& crop_to_bounding_box(Image& img)
 {
-    img.Crop(img.GetBoundingRect());
+    const auto bounding_rect = img.GetBoundingRect();
+    if (bounding_rect.height == 0 || bounding_rect.width == 0)
+    {
+        return img;
+    }
+
+    img.Crop(bounding_rect);
     make_square(img);
     return img;
 };
