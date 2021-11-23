@@ -34,6 +34,7 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
                                                    KnownSetting{ .Name{ "enable_loose_file_warning" }, .AltCategory{ "settings" }, .DefaultValue{ "on" } },
                                                    KnownSetting{ .Name{ "enable_raw_string_loading" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "disable_asset_caching" }, .DefaultValue{ "off" } },
+                                                   KnownSetting{ .Name{ "block_save_game" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "allow_save_game_mods" }, .DefaultValue{ "on" } },
                                                    KnownSetting{ .Name{ "speedrun_mode" }, .DefaultValue{ "off" } },
                                                } },

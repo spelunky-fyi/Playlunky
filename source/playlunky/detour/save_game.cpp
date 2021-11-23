@@ -46,27 +46,51 @@ struct DetourStoreSaveGame
         using namespace std::string_view_literals;
         if (save_game_sav == "savegame.sav"sv)
         {
-            if (const auto sav_replacement = s_SaveGameVfs->GetDifferentFilePath(save_game_sav))
+            if (s_Block)
             {
-                const std::string sav_replacement_str = sav_replacement.value().string();
-                const auto bak_replacement_str = std::filesystem::path{ sav_replacement.value() }.replace_extension(".bak").string();
-                Trampoline(bak_replacement_str.c_str(), sav_replacement_str.c_str(), buf, size);
                 return;
+            }
+
+            if (s_AllowMod)
+            {
+                if (const auto sav_replacement = s_SaveGameVfs->GetDifferentFilePath(save_game_sav))
+                {
+                    const std::string sav_replacement_str = sav_replacement.value().string();
+                    const auto bak_replacement_str = std::filesystem::path{ sav_replacement.value() }.replace_extension(".bak").string();
+                    Trampoline(bak_replacement_str.c_str(), sav_replacement_str.c_str(), buf, size);
+                    return;
+                }
             }
         }
         Trampoline(save_game_bak,  save_game_sav, buf, size);
     }
+
+    inline static bool s_Block{ false };
+    inline static bool s_AllowMod{ false };
 };
 
 std::vector<DetourEntry> GetSaveGameDetours(const PlaylunkySettings& settings)
 {
-    const bool allow_save_game_mods = settings.GetBool("general_settings", "allow_save_game_mods", false);
-    if (allow_save_game_mods)
+    const bool block_save_game = settings.GetBool("general_settings", "block_save_game", false);
+    const bool allow_save_game_mods = settings.GetBool("general_settings", "allow_save_game_mods", true);
+    if (allow_save_game_mods || block_save_game)
     {
-        return {
-            DetourHelper<DetourLoadFileFromDisk>::GetDetourEntry("LoadSaveGame"),
-            DetourHelper<DetourStoreSaveGame>::GetDetourEntry("StoreSaveGame")
-        };
+        DetourStoreSaveGame::s_Block = block_save_game;
+        DetourStoreSaveGame::s_AllowMod = allow_save_game_mods;
+
+        if (allow_save_game_mods)
+        {
+            return {
+                DetourHelper<DetourLoadFileFromDisk>::GetDetourEntry("LoadSaveGame"),
+                DetourHelper<DetourStoreSaveGame>::GetDetourEntry("StoreSaveGame")
+            };
+        }
+        else
+        {
+            return {
+                DetourHelper<DetourStoreSaveGame>::GetDetourEntry("StoreSaveGame")
+            };
+        }
     }
     return {};
 }
