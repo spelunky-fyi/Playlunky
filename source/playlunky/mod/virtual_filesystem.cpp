@@ -32,7 +32,14 @@ class VfsFolderMount : public IVfsMountImpl
     virtual FileInfo* LoadFile(const char* file_path, void* (*allocator)(std::size_t)) const override
     {
         char full_path[MAX_PATH];
-        sprintf_s(full_path, "%s/%s", mMountedPathString.c_str(), file_path);
+        if (mMountedPathString.empty())
+        {
+            strcpy_s(full_path, file_path);
+        }
+        else
+        {
+            sprintf_s(full_path, "%s/%s", mMountedPathString.c_str(), file_path);
+        }
 
         FILE* file{ nullptr };
         auto error = fopen_s(&file, full_path, "rb");
