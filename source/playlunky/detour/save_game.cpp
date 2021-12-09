@@ -62,7 +62,7 @@ struct DetourStoreSaveGame
                 }
             }
         }
-        Trampoline(save_game_bak,  save_game_sav, buf, size);
+        Trampoline(save_game_bak, save_game_sav, buf, size);
     }
 
     inline static bool s_Block{ false };
