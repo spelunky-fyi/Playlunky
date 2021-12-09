@@ -53,6 +53,7 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
                                                   KnownSetting{ .Name{ "generate_character_journal_stickers" }, .DefaultValue{ "on" } },
                                                   KnownSetting{ .Name{ "generate_character_journal_entries" }, .DefaultValue{ "on" } },
                                                   KnownSetting{ .Name{ "generate_sticker_pixel_art" }, .DefaultValue{ "on" } },
+                                                  KnownSetting{ .Name{ "enable_sprite_hot_loading" }, .DefaultValue{ "off" } },
                                               } },
         KnownCategory{ { "key_bindings" }, {
                                                KnownSetting{ .Name{ "console" }, .DefaultValue{ "0xc0" }, .Comment{ "Default 0xc0 == ~ for US" } },
