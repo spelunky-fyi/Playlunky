@@ -30,7 +30,7 @@ class SpriteSheetMerger
 
     bool NeedsRegeneration(const std::filesystem::path& destination_folder) const;
 
-    bool GenerateRequiredSheets(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, VirtualFilesystem& vfs);
+    bool GenerateRequiredSheets(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, VirtualFilesystem& vfs, bool force_reload = false);
 
   private:
     friend class EntityDataExtractor;

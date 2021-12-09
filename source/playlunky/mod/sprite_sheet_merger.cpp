@@ -7,7 +7,10 @@
 #include "playlunky_settings.h"
 #include "util/algorithms.h"
 #include "util/format.h"
+#include "util/on_scope_exit.h"
 #include "virtual_filesystem.h"
+
+#include <spel2.h>
 
 #include <cassert>
 #include <zip_adaptor.h>
@@ -211,8 +214,20 @@ bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::f
     return false;
 }
 
-bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, VirtualFilesystem& vfs)
+bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, VirtualFilesystem& vfs, bool force_reload)
 {
+    OnScopeExit clear_sheet_data{
+        [this]()
+        {
+            for (RegisteredSourceSheet& sheet : m_RegisteredSourceSheets)
+            {
+                sheet.Outdated = false;
+                sheet.Deleted = false;
+            }
+            m_CachedImages.clear();
+        },
+    };
+
     namespace fs = std::filesystem;
 
     auto get_image = [this](const fs::path& image_path) -> Image&
@@ -226,11 +241,27 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
         return *m_CachedImages.back().ImageFile;
     };
 
+    std::array allowed_extensions{
+        std::filesystem::path{ ".png" },
+        std::filesystem::path{ ".bmp" },
+        std::filesystem::path{ ".jpg" },
+        std::filesystem::path{ ".jpeg" },
+        std::filesystem::path{ ".jpe" },
+        std::filesystem::path{ ".jp2" },
+        std::filesystem::path{ ".tif" },
+        std::filesystem::path{ ".tiff" },
+        std::filesystem::path{ ".pbm" },
+        std::filesystem::path{ ".pgm" },
+        std::filesystem::path{ ".ppm" },
+        std::filesystem::path{ ".sr" },
+        std::filesystem::path{ ".ras" },
+    };
     for (const TargetSheet& target_sheet : m_TargetSheets)
     {
         if (NeedsRegen(target_sheet, destination_folder))
         {
-            const auto target_file_path = vfs.GetFilePath(target_sheet.Path).value_or(fs::path{ source_folder / target_sheet.Path }.replace_extension(".png"));
+            // TODO: Don't get .DDS!
+            const auto target_file_path = vfs.GetFilePathFilterExt(target_sheet.Path, allowed_extensions).value_or(fs::path{ source_folder / target_sheet.Path }.replace_extension(".png"));
             Image target_image = get_image(target_file_path).Clone();
 
             static auto validate_source_aspect_ratio = [](const SourceSheet& source_sheet, const Image& source_image)
@@ -249,7 +280,7 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
             std::vector<std::optional<fs::path>> target_sheet_paths;
             for (const SourceSheet& source_sheet : target_sheet.SourceSheets)
             {
-                auto source_file_path = [&vfs, &source_sheet, random_select = target_sheet.RandomSelect]() -> std::optional<fs::path>
+                auto source_file_path = [&, random_select = target_sheet.RandomSelect]() -> std::optional<fs::path>
                 {
                     if (source_sheet.RootPath)
                     {
@@ -257,11 +288,11 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
                     }
                     else if (!random_select)
                     {
-                        return vfs.GetFilePath(source_sheet.Path);
+                        return vfs.GetFilePathFilterExt(source_sheet.Path, allowed_extensions);
                     }
                     else
                     {
-                        return vfs.GetRandomFilePath(source_sheet.Path);
+                        return vfs.GetRandomFilePathFilterExt(source_sheet.Path, allowed_extensions);
                     }
                 }();
 
@@ -369,15 +400,15 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 
                 for (auto [path, size, tile_mapping] : zip::zip(multi_source_sheet.Paths, multi_source_sheet.Sizes, multi_source_sheet.TileMap))
                 {
-                    auto source_file_path = [&vfs, &path, random_select = target_sheet.RandomSelect]() -> std::optional<fs::path>
+                    auto source_file_path = [&, random_select = target_sheet.RandomSelect]() -> std::optional<fs::path>
                     {
                         if (!random_select)
                         {
-                            return vfs.GetFilePath(path);
+                            return vfs.GetFilePathFilterExt(path, allowed_extensions);
                         }
                         else
                         {
-                            return vfs.GetRandomFilePath(path);
+                            return vfs.GetRandomFilePathFilterExt(path, allowed_extensions);
                         }
                     }();
 
@@ -432,6 +463,10 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
             if (!ConvertRBGAToDds(target_image.GetData(), target_image.GetWidth(), target_image.GetHeight(), destination_file_path))
             {
                 return false;
+            }
+            else if (force_reload)
+            {
+                Spelunky_ReloadTexture(fs::path{ target_sheet.Path }.replace_extension(".DDS").string().c_str());
             }
         }
     }
