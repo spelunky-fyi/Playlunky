@@ -41,12 +41,14 @@ class VirtualFilesystem
 
     // Interface for loading during preprocessing
     std::optional<std::filesystem::path> GetFilePath(const std::filesystem::path& path) const;
+    std::optional<std::filesystem::path> GetFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const;
     std::optional<std::filesystem::path> GetDifferentFilePath(const std::filesystem::path& path) const;
     std::optional<std::filesystem::path> GetRandomFilePath(const std::filesystem::path& path) const;
+    std::optional<std::filesystem::path> GetRandomFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const;
     std::vector<std::filesystem::path> GetAllFilePaths(const std::filesystem::path& path) const;
 
   private:
-    bool FilterPath(const std::filesystem::path& path) const;
+    bool FilterPath(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const;
 
     using BoundPathes = std::vector<std::string_view>;
     BoundPathes* GetBoundPathes(std::string_view path);

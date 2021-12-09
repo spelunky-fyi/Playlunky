@@ -193,7 +193,7 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
         {
             if (const auto& asset_path = mount.MountImpl->GetFilePath(path))
             {
-                if (!FilterPath(asset_path.value()))
+                if (!FilterPath(asset_path.value(), {}))
                 {
                     continue;
                 }
@@ -210,6 +210,10 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
 }
 
 std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::filesystem::path& path) const
+{
+    return GetFilePathFilterExt(path, {});
+}
+std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const
 {
     if (mMounts.empty())
     {
@@ -241,7 +245,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::f
                 {
                     if (auto bound_file_path = mount.MountImpl->GetFilePath(bound_path)) // TODO: needs to ignore extension
                     {
-                        if (!FilterPath(bound_file_path.value()))
+                        if (!FilterPath(bound_file_path.value(), allowed_extensions))
                         {
                             continue;
                         }
@@ -292,7 +296,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::f
         {
             if (auto file_path = mount.MountImpl->GetFilePath(path))
             {
-                if (FilterPath(file_path.value()))
+                if (FilterPath(file_path.value(), allowed_extensions))
                 {
                     return file_path;
                 }
@@ -316,6 +320,10 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetDifferentFilePath(con
 }
 std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePath(const std::filesystem::path& path) const
 {
+    return GetRandomFilePathFilterExt(path, {});
+}
+std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const
+{
     if (const BoundPathes* bound_pathes = GetBoundPathes(path.string()))
     {
 
@@ -330,7 +338,10 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePath(const 
                 {
                     if (auto file_path = mount.MountImpl->GetFilePath(bound_path))
                     {
-                        file_paths.push_back(std::move(file_path).value());
+                        if (FilterPath(file_path.value(), allowed_extensions))
+                        {
+                            file_paths.push_back(std::move(file_path).value());
+                        }
                     }
                 }
             }
@@ -363,7 +374,10 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePath(const 
             {
                 if (auto file_path = mount.MountImpl->GetFilePath(path))
                 {
-                    file_paths.push_back(std::move(file_path).value());
+                    if (FilterPath(file_path.value(), allowed_extensions))
+                    {
+                        file_paths.push_back(std::move(file_path).value());
+                    }
                 }
             }
 
@@ -396,7 +410,7 @@ std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std:
     return file_paths;
 }
 
-bool VirtualFilesystem::FilterPath(const std::filesystem::path& path) const
+bool VirtualFilesystem::FilterPath(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const
 {
     for (const auto& filter : m_CustomFilters)
     {
@@ -405,7 +419,7 @@ bool VirtualFilesystem::FilterPath(const std::filesystem::path& path) const
             return false;
         }
     }
-    return true;
+    return allowed_extensions.empty() || algo::contains(allowed_extensions, path.extension());
 }
 
 VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(std::string_view path)
