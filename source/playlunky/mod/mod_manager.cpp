@@ -12,6 +12,7 @@
 #include "playlunky.h"
 #include "playlunky_settings.h"
 #include "shader_merge.h"
+#include "sprite_hot_loader.h"
 #include "sprite_sheet_merger.h"
 #include "string_hash.h"
 #include "string_merge.h"
@@ -38,7 +39,9 @@ static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" 
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
 ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& settings, VirtualFilesystem& vfs)
-    : m_Vfs{ &vfs }
+    : m_SpriteSheetMerger{ new SpriteSheetMerger{ settings } }
+    , m_Vfs{ &vfs }
+    , m_ModsRoot{ mods_root }
     , mDeveloperMode{ settings.GetBool("settings", "enable_developer_mode", false) || settings.GetBool("script_settings", "enable_developer_mode", false) }
     , mConsoleMode{ settings.GetBool("script_settings", "enable_developer_console", false) }
     , mConsoleKey{ static_cast<std::uint64_t>(settings.GetInt("key_bindings", "console", VK_OEM_3)) }
@@ -68,7 +71,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
     const bool cache_decoded_audio_files = enable_loose_audio_files && (settings.GetBool("settings", "cache_decoded_audio_files", false) || settings.GetBool("audio_settings", "cache_decoded_audio_files", false));
     bool load_order_updated{ false };
 
-    const fs::path mods_root_path{ mods_root };
+    const fs::path mods_root_path{ m_ModsRoot };
     if (fs::exists(mods_root_path) && fs::is_directory(mods_root_path))
     {
         const auto db_folder = mods_root_path / ".db";
@@ -290,8 +293,13 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             return mod_name_to_prio;
         }();
 
-        SpriteSheetMerger sprite_sheet_merger{ settings };
-        sprite_sheet_merger.GatherSheetData(journal_gen_settings_change, sticker_gen_settings_change);
+        const bool enable_sprite_hot_loading = settings.GetBool("sprite_settings", "enable_sprite_hot_loading", false);
+        if (enable_sprite_hot_loading)
+        {
+            m_SpriteHotLoader = std::make_unique<SpriteHotLoader>(*m_SpriteSheetMerger, settings);
+        }
+
+        m_SpriteSheetMerger->GatherSheetData(journal_gen_settings_change, sticker_gen_settings_change);
         StringMerger string_merger;
         bool has_outdated_shaders{ false };
 
@@ -337,7 +345,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                                    mod_info.ReadExtendedInfoFromJson(full_asset_path_string);
                                                    mod_info.ReadFromDatabase(mod_db);
                                                    mod_db.SetInfo(mod_info.Dump());
-                                                   sprite_sheet_merger.RegisterCustomImages(mod_folder, db_original_folder, prio, mod_info.GetCustomImages());
+                                                   m_SpriteSheetMerger->RegisterCustomImages(mod_folder, db_original_folder, prio, mod_info.GetCustomImages());
                                                }
                                            });
                     }
@@ -345,7 +353,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                     {
                         mod_info.ReadFromDatabase(mod_db);
                         mod_db.SetInfo("");
-                        sprite_sheet_merger.RegisterCustomImages(mod_folder, db_original_folder, prio, mod_info.GetCustomImages());
+                        m_SpriteSheetMerger->RegisterCustomImages(mod_folder, db_original_folder, prio, mod_info.GetCustomImages());
                     }
                     mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool outdated, bool deleted, std::optional<bool> new_enabled_state)
                                        {
@@ -383,9 +391,15 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
                                                Playlunky::Get().RegisterModType(is_character_asset ? ModType::CharacterSprite : ModType::Sprite);
 
+                                               if (m_SpriteHotLoader)
+                                               {
+                                                   const auto db_destination = (mod_db_folder / rel_asset_path).replace_extension(".dds");
+                                                   m_SpriteHotLoader->RegisterSheet(full_asset_path, db_destination);
+                                               }
+
                                                if (is_entity_asset || is_character_asset || is_custom_image_source)
                                                {
-                                                   sprite_sheet_merger.RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);
+                                                   m_SpriteSheetMerger->RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);
                                                    return;
                                                }
 
@@ -529,9 +543,9 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
         }
 
         LogInfo("Merging entity sheets... This includes the automatic generating of stickers...");
-        if (sprite_sheet_merger.NeedsRegeneration(db_folder))
+        if (m_SpriteSheetMerger->NeedsRegeneration(db_folder))
         {
-            if (sprite_sheet_merger.GenerateRequiredSheets(db_original_folder, db_folder, vfs))
+            if (m_SpriteSheetMerger->GenerateRequiredSheets(db_original_folder, db_folder, vfs))
             {
                 LogInfo("Successfully generated merged sheets from mods...");
             }
@@ -539,6 +553,16 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             {
                 LogError("Failed generating merged sheets from mods...");
             }
+        }
+
+        if (enable_sprite_hot_loading && m_SpriteHotLoader)
+        {
+            LogInfo("Setting up sprite hot-loading...");
+            m_SpriteHotLoader->FinalizeSetup();
+        }
+        else
+        {
+            m_SpriteSheetMerger.reset();
         }
 
         LogInfo("Merging shader mods...");
@@ -752,6 +776,13 @@ bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t 
 }
 void ModManager::Update()
 {
+    if (m_SpriteHotLoader && m_Vfs)
+    {
+        const auto db_folder = m_ModsRoot / ".db";
+        const auto db_original_folder = db_folder / "Original";
+        m_SpriteHotLoader->Update(db_original_folder, db_folder, *m_Vfs);
+    }
+
     mScriptManager.Update();
 }
 void ModManager::Draw()

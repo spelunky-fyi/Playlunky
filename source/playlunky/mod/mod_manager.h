@@ -2,9 +2,14 @@
 
 #include "script_manager.h"
 
+#include <filesystem>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
+
+class SpriteHotLoader;
+class SpriteSheetMerger;
 
 class ModManager
 {
@@ -26,8 +31,12 @@ class ModManager
 
   private:
     std::vector<class ModInfo> mMods;
+    std::unique_ptr<SpriteHotLoader> m_SpriteHotLoader;
+    std::unique_ptr<SpriteSheetMerger> m_SpriteSheetMerger;
     ScriptManager mScriptManager;
     VirtualFilesystem* m_Vfs;
+
+    std::filesystem::path m_ModsRoot;
 
     bool mDeveloperMode;
     bool mConsoleMode;
