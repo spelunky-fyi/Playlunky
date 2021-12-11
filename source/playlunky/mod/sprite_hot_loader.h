@@ -48,6 +48,6 @@ class SpriteHotLoader
 
     std::mutex m_PendingReloadsMutex;
     std::vector<const RegisteredSheet*> m_PendingReloads;
-    uint32_t m_ReloadTimer{ 0 };
+    std::size_t m_ReloadTimestamp{ 0 };
     bool m_HasPendingReloads{ false };
 };

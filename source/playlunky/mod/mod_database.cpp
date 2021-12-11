@@ -179,8 +179,6 @@ void ModDatabase::UpdateDatabase()
                 {
                     const auto rel_file_path = fs::relative(path, mModFolder);
 
-                    using fs_clock = fs::file_time_type::clock;
-                    using std::chrono::system_clock;
                     const auto last_write_time = get_last_write_time(path);
 
                     if (ItemDescriptor* existing_file = algo::find(mFiles, &ItemDescriptor::Path, rel_file_path))
@@ -209,8 +207,6 @@ void ModDatabase::UpdateDatabase()
                         return oldest_write_time;
                     };
 
-                    using fs_clock = fs::file_time_type::clock;
-                    using std::chrono::system_clock;
                     const auto last_write_time = get_last_folder_write_time(path);
 
                     if (ItemDescriptor* existing_file = algo::find(mFolders, &ItemDescriptor::Path, rel_folder_path))

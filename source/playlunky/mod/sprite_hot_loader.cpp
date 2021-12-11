@@ -7,6 +7,8 @@
 #include "util/algorithms.h"
 #include "util/on_scope_exit.h"
 
+#include <chrono>
+
 #pragma warning(push)
 #pragma warning(disable : 4927)
 #include <FileWatch.hpp>
@@ -14,7 +16,7 @@
 
 SpriteHotLoader::SpriteHotLoader(SpriteSheetMerger& merger, const PlaylunkySettings& settings)
     : m_Merger{ merger }
-    , m_ReloadDelay{ static_cast<std::uint32_t>(settings.GetInt("sprite_settings", "sprite_hot_load_delay", 15)) }
+    , m_ReloadDelay{ static_cast<std::uint32_t>(settings.GetInt("sprite_settings", "sprite_hot_load_delay", 500)) }
 {
 }
 SpriteHotLoader::~SpriteHotLoader() = default;
@@ -42,7 +44,7 @@ void SpriteHotLoader::FinalizeSetup()
                 m_PendingReloads.push_back(&sheet);
                 m_HasPendingReloads = true;
             }
-            m_ReloadTimer = m_ReloadDelay;
+            m_ReloadTimestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         };
         m_FileWatchers.push_back(std::make_unique<filewatch::FileWatch<std::filesystem::path>>(sheet.full_path, hot_load_sprite));
     }
@@ -51,20 +53,38 @@ void SpriteHotLoader::FinalizeSetup()
 void SpriteHotLoader::Update(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, VirtualFilesystem& vfs)
 {
     std::lock_guard lock{ m_PendingReloadsMutex };
-    if ((m_ReloadTimer > 0 && --m_ReloadTimer == 0) || (m_ReloadTimer == 0 && m_HasPendingReloads))
+    if (m_HasPendingReloads)
     {
-        algo::erase_if(m_PendingReloads, [this](const auto* sheet)
-                       { return PrepareHotLoad(sheet->full_path, sheet->db_destination); });
-        if (m_HasPendingReloads && m_PendingReloads.empty())
+        const std::size_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        if (now - m_ReloadTimestamp > m_ReloadDelay)
         {
-            m_Merger.GenerateRequiredSheets(source_folder, destination_folder, vfs, true);
-            m_HasPendingReloads = false;
+            algo::erase_if(m_PendingReloads, [this](const auto* sheet)
+                           { return PrepareHotLoad(sheet->full_path, sheet->db_destination); });
+            if (m_HasPendingReloads && m_PendingReloads.empty())
+            {
+                m_Merger.GenerateRequiredSheets(source_folder, destination_folder, vfs, true);
+                m_HasPendingReloads = false;
+            }
         }
     }
 }
 
 bool SpriteHotLoader::PrepareHotLoad(const std::filesystem::path& full_path, const std::filesystem::path& db_destination)
 {
+    LogInfo("Detected change in file {}, trying to reload it...", full_path.string());
+    HANDLE file_lock = CreateFile(full_path.string().c_str(), GENERIC_READ, 0 /* no sharing! exclusive */, NULL, OPEN_EXISTING, 0, NULL);
+    if (file_lock == nullptr)
+    {
+        LogInfo("File is not accessible, trying again in a bit...");
+        const std::size_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        m_ReloadTimestamp = now - 150;
+        return false;
+    }
+    OnScopeExit close_file_lock{ [file_lock]()
+                                 {
+                                     CloseHandle(file_lock);
+                                 } };
+
     if (ConvertImageToDds(full_path, db_destination))
     {
         return false;
