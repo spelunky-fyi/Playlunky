@@ -1,11 +1,14 @@
 #include "sprite_hot_loader.h"
 
 #include "dds_conversion.h"
+#include "known_files.h"
 #include "log.h"
 #include "playlunky_settings.h"
 #include "sprite_sheet_merger.h"
 #include "util/algorithms.h"
 #include "util/on_scope_exit.h"
+
+#include <spel2.h>
 
 #include <chrono>
 
@@ -39,9 +42,9 @@ void SpriteHotLoader::FinalizeSetup()
             }
 
             std::lock_guard lock{ m_PendingReloadsMutex };
-            if (!algo::contains(m_PendingReloads, &sheet))
+            if (!algo::contains(m_PendingReloads, &PendingReload::sheet, &sheet))
             {
-                m_PendingReloads.push_back(&sheet);
+                m_PendingReloads.push_back(PendingReload{ &sheet });
                 m_HasPendingReloads = true;
             }
             m_ReloadTimestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -58,8 +61,11 @@ void SpriteHotLoader::Update(const std::filesystem::path& source_folder, const s
         const std::size_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         if (now - m_ReloadTimestamp > m_ReloadDelay)
         {
-            algo::erase_if(m_PendingReloads, [this](const auto* sheet)
-                           { return PrepareHotLoad(sheet->full_path, sheet->db_destination); });
+            algo::erase_if(m_PendingReloads, [this](auto& pending_reload)
+                           {
+                               pending_reload.has_warned = !PrepareHotLoad(pending_reload.sheet->full_path, pending_reload.sheet->db_destination, !pending_reload.has_warned);
+                               return !pending_reload.has_warned;
+                           });
             if (m_HasPendingReloads && m_PendingReloads.empty())
             {
                 m_Merger.GenerateRequiredSheets(source_folder, destination_folder, vfs, true);
@@ -69,23 +75,31 @@ void SpriteHotLoader::Update(const std::filesystem::path& source_folder, const s
     }
 }
 
-bool SpriteHotLoader::PrepareHotLoad(const std::filesystem::path& full_path, const std::filesystem::path& db_destination)
+bool SpriteHotLoader::PrepareHotLoad(const std::filesystem::path& full_path, const std::filesystem::path& db_destination, bool emit_info)
 {
-    LogInfo("Detected change in file {}, trying to reload it...", full_path.string());
-    HANDLE file_lock = CreateFile(full_path.string().c_str(), GENERIC_READ, 0 /* no sharing! exclusive */, NULL, OPEN_EXISTING, 0, NULL);
-    if (file_lock == nullptr)
+    if (emit_info)
     {
-        LogInfo("File is not accessible, trying again in a bit...");
-        const std::size_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        m_ReloadTimestamp = now - 150;
-        return false;
+        LogInfo("Detected change in file {}, trying to reload it...", full_path.string());
     }
-    OnScopeExit close_file_lock{ [file_lock]()
-                                 {
-                                     CloseHandle(file_lock);
-                                 } };
 
-    if (ConvertImageToDds(full_path, db_destination))
+    // Try to load image, might not be written correctly yet  :/
+    {
+        Image test_image{};
+        test_image.Load(full_path);
+        if (test_image.IsEmpty())
+        {
+            if (emit_info)
+            {
+                LogInfo("File is not full written yet, trying periodically to reload...");
+            }
+
+            const std::size_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            m_ReloadTimestamp = now - 100;
+            return false;
+        }
+    }
+
+    if (!ConvertImageToDds(full_path, db_destination))
     {
         return false;
     }
@@ -108,6 +122,7 @@ bool SpriteHotLoader::PrepareHotLoad(const std::filesystem::path& full_path, con
                         return self(parent_path, self) / p.filename();
                     }
                 };
+
                 return strip_mod_dir_impl(p, strip_mod_dir_impl);
             };
 
@@ -121,5 +136,15 @@ bool SpriteHotLoader::PrepareHotLoad(const std::filesystem::path& full_path, con
     }();
 
     m_Merger.RegisterSheet(path, true, false);
+
+    if (algo::contains(s_KnownTextureFiles, std::filesystem::path{ path }.replace_extension("").filename().string()))
+    {
+        std::string dds_path = std::filesystem::path{ path }.replace_extension(".DDS").string();
+        std::replace(dds_path.begin(), dds_path.end(), '\\', '/');
+        Spelunky_ReloadTexture(dds_path.c_str());
+    }
+
+    LogInfo("File {} was successfully reloaded...", full_path.string());
+
     return true;
 }
