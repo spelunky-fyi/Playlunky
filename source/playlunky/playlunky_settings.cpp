@@ -83,14 +83,11 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
                 value.erase(value.begin() + (comment - value.data()), value.end());
                 value = algo::trim(std::move(value));
             }
-            if (known_setting.Comment.empty())
+            if (!known_setting.Comment.empty())
             {
-                ini_output += fmt::format("{}={}\n", known_setting.Name, value);
+                ini_output += fmt::format("# {}\n", known_setting.Comment);
             }
-            else
-            {
-                ini_output += fmt::format("{}={} # {}\n", known_setting.Name, value, known_setting.Comment);
-            }
+            ini_output += fmt::format("{}={}\n", known_setting.Name, value);
         }
         ini_output += '\n';
     }
