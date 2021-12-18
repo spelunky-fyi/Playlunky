@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2021-12-18
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.25.0b-orange">
+
+### Added
+- Mods can ship with a `savegame.sav` file, users will then load from and save to that file. Can be disabled in `playlunky.ini` via `allow_save_game_mods`, defaults to `on`.
+- `block_save_game` to block the game from saving to `savegame.sav`, in case you want to use mods without affecting your save. Set in `playlunky.ini`, defaults to `off`.
+- Dev option `enable_sprite_hot_loading` which automatically reloads sprite sheets (vanilla sheets, entity sheets and custom mapping sheets) when they change during runtime. This means you can work on your sheets without restarting the game. Set in `playlunky.ini`, defaults to `off`.
+- Dev option `sprite_hot_load_delay` to declare the delay measured in ms between a sheet changing and the game reloading it. Set in `playlunky.ini`, defaults to `400`.
+- Reloading custom textures requires a call to `reload_texture` or a call with an identical texture definition to `define_texture` (thus reloading a script mod will likely reload all custom textures).
+
 ## [0.11.1] - 2021-11-10
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.25.0b-orange">
