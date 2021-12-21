@@ -4,7 +4,6 @@
 #include "detour_entry.h"
 #include "fmod_crap.h"
 #include "logger.h"
-#include "save_game.h"
 #include "sigscan.h"
 #include "util/format.h"
 #include "version.h"
@@ -75,7 +74,6 @@ std::vector<DetourEntry> CollectDetourEntries(const PlaylunkySettings& settings)
     std::vector<DetourEntry> detour_entries;
     append(detour_entries, GetLogDetours());
     append(detour_entries, GetFmodDetours(settings));
-    append(detour_entries, GetSaveGameDetours(settings));
     append(detour_entries, GetMainDetours());
 
     if (IsDebuggerPresent())

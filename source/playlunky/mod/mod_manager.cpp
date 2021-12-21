@@ -11,6 +11,7 @@
 #include "patch_character_definitions.h"
 #include "playlunky.h"
 #include "playlunky_settings.h"
+#include "save_game.h"
 #include "shader_merge.h"
 #include "sprite_hot_loader.h"
 #include "sprite_sheet_merger.h"
@@ -709,6 +710,43 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             out_buffer[fmt_res.size] = '\0';
             return fmt_res.size < out_buffer_size;
         }));
+
+    const bool block_save_game = settings.GetBool("general_settings", "block_save_game", false);
+    const bool allow_save_game_mods = settings.GetBool("general_settings", "allow_save_game_mods", true);
+    if (block_save_game || allow_save_game_mods)
+    {
+        using namespace std::string_view_literals;
+        const SaveGameMod save_mod_type = block_save_game ? SaveGameMod::Block : SaveGameMod::FromMod;
+        if (save_mod_type == SaveGameMod::FromMod)
+        {
+            // Prepare for warning
+            if (auto sav_replacement = vfs.GetDifferentFilePath("savegame.sav"))
+            {
+                m_ModSaveGameOverride = sav_replacement.value().parent_path().stem().string();
+            }
+
+            Spelunky_RegisterOnReadFromFileFunc(FunctionPointer<Spelunky_ReadFromFileFunc, struct ModManagerSaveFile>(
+                [=](const char* file, void** out_data, size_t* out_data_size, [[maybe_unused]] SpelunkyAllocFun alloc_fun, Spelunky_ReadFromFileOriginal original)
+                {
+                    if (file == "savegame.sav"sv)
+                    {
+                        OnReadFromFile(save_mod_type, file, out_data, out_data_size, original);
+                        return;
+                    }
+                    original(file, out_data, out_data_size);
+                }));
+        }
+        Spelunky_RegisterOnWriteToFileFunc(FunctionPointer<Spelunky_WriteToFileFunc, struct ModManagerSaveFile>(
+            [=](const char* backup_file, const char* file, void* data, size_t data_size, Spelunky_WriteToFileOriginal original)
+            {
+                if (file == "savegame.sav"sv)
+                {
+                    OnWriteToFile(save_mod_type, backup_file, file, data, data_size, original);
+                    return;
+                }
+                original(backup_file, file, data, data_size);
+            }));
+    }
 }
 ModManager::~ModManager() = default;
 
