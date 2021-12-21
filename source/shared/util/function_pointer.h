@@ -39,6 +39,19 @@ struct MemberFunctionPointer<Ret (T::*)(Args...), TagT>
     inline static T* s_Object{ nullptr };
 };
 
+template<class T>
+struct remove_all_pointer
+{
+    using type = T;
+};
+template<class T>
+struct remove_all_pointer<T*>
+{
+    using type = typename remove_all_pointer<T>::type;
+};
+template<class T>
+using remove_all_pointer_t = typename remove_all_pointer<T>::type;
+
 template<class FunT, class OtherFunT>
 struct is_invocable_as : std::false_type
 {
@@ -56,40 +69,41 @@ struct is_invocable_as<Ret(Args...), OtherFunT> : std::is_invocable_r<Ret, Other
 {
 };
 template<class FunT, class OtherFunT>
-inline constexpr bool is_invocable_as_v = is_invocable_as<FunT, OtherFunT>::value;
+inline constexpr bool is_invocable_as_v = is_invocable_as<remove_all_pointer_t<FunT>, OtherFunT>::value;
 }; // namespace detail
 
 template<class FunT, class>
 requires detail::is_invocable_as_v<FunT, FunT>
-    FunT* FunctionPointer(FunT* function)
+detail::remove_all_pointer_t<FunT>* FunctionPointer(FunT* function)
 {
     return function;
 };
 template<class FunT, class TagT, class MemberFunT, class T>
 requires detail::is_invocable_as_v<FunT, MemberFunT>
-    FunT* FunctionPointer(MemberFunT function, T* val)
+detail::remove_all_pointer_t<FunT>* FunctionPointer(MemberFunT function, T* val)
 {
     detail::MemberFunctionPointer<MemberFunT, TagT>::Set(function, val);
     return &detail::MemberFunctionPointer<MemberFunT, TagT>::Call;
 };
 template<class FunT, class TagT, class FunctorT>
 requires detail::is_invocable_as_v<FunT, FunctorT>
-    FunT* FunctionPointer(FunctorT&& functor)
+detail::remove_all_pointer_t<FunT>* FunctionPointer(FunctorT&& functor)
 {
-    detail::FunctorFunctionPointer<FunT, FunctorT, TagT>::Set(std::forward<FunctorT>(functor));
-    return &detail::FunctorFunctionPointer<FunT, FunctorT, TagT>::Call;
+    using non_pointer_fun_t = detail::remove_all_pointer_t<FunT>;
+    detail::FunctorFunctionPointer<non_pointer_fun_t, FunctorT, TagT>::Set(std::forward<FunctorT>(functor));
+    return &detail::FunctorFunctionPointer<non_pointer_fun_t, FunctorT, TagT>::Call;
 };
 
 // Use as:
 /*
 // Works for this one instantation until called again with the exact same lambda type
 // Ideally use with lambdas that capture global data or singleton-like classes
-FunctionPointer<bool(int, int)>([](int a, int b){ return a == b; });
+FunctionPointer<bool(int, int), struct AddTag>([](int a, int b){ return a == b; });
 
 // Works for this one instantion of MyClass until called again
 // Ideally use for singelton-like classes
-FunctionPointer<bool(int, int)>(&MyClass::Compare, this);
+FunctionPointer<bool(int, int), struct MyClassCompareTag>(&MyClass::Compare, this);
 
 // Just passes through the function pointer
-FunctionPointer<bool(int, int)>(&Compare);
+FunctionPointer<bool(int, int), struct CompareTag>(&Compare);
 */

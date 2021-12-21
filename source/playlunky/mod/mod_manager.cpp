@@ -654,7 +654,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
         }
     }
 
-    Spelunky_RegisterOnLoadFileFunc(FunctionPointer<std::remove_pointer_t<Spelunky_LoadFileFunc>, struct ModManagerLoadFile>(
+    Spelunky_RegisterOnLoadFileFunc(FunctionPointer<Spelunky_LoadFileFunc, struct ModManagerLoadFile>(
         [this](const char* file_path, SpelunkyAllocFun alloc_fun) -> SpelunkyFileInfo*
         {
             if (m_Vfs)
@@ -666,7 +666,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             }
             return nullptr;
         }));
-    Spelunky_RegisterGetImagePathFunc(FunctionPointer<std::remove_pointer_t<Spelunky_GetImageFilePathFunc>, struct ModManagerGetImagePath>(
+    Spelunky_RegisterGetImagePathFunc(FunctionPointer<Spelunky_GetImageFilePathFunc, struct ModManagerGetImagePath>(
         [this](const char* root_path, const char* relative_path, char* out_buffer, size_t out_buffer_size) -> bool
         {
             auto dds_relative_path = std::filesystem::path(relative_path).replace_extension(".dds").string();
@@ -729,9 +729,9 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
                               });
     mScriptManager.CommitScripts(settings);
 
-    Spelunky_RegisterOnInputFunc(FunctionPointer<std::remove_pointer_t<OnInputFunc>, struct ModManagerOnInput>(&ModManager::OnInput, this));
-    Spelunky_RegisterPreDrawFunc(FunctionPointer<std::remove_pointer_t<PreDrawFunc>, struct ModManagerUpdate>(&ModManager::Update, this));
-    Spelunky_RegisterImguiDrawFunc(FunctionPointer<std::remove_pointer_t<ImguiDrawFunc>, struct ModManagerDraw>(&ModManager::Draw, this));
+    Spelunky_RegisterOnInputFunc(FunctionPointer<OnInputFunc, struct ModManagerOnInput>(&ModManager::OnInput, this));
+    Spelunky_RegisterPreDrawFunc(FunctionPointer<PreDrawFunc, struct ModManagerUpdate>(&ModManager::Update, this));
+    Spelunky_RegisterImguiDrawFunc(FunctionPointer<ImguiDrawFunc, struct ModManagerDraw>(&ModManager::Draw, this));
 
     Spelunky_RegisterMakeSavePathFunc([](
                                           const char* script_path, size_t script_path_size, const char* /*script_name*/, size_t /*script_name_size*/, char* out_buffer, size_t out_buffer_size) -> bool
