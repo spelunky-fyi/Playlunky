@@ -74,20 +74,23 @@ inline constexpr bool is_invocable_as_v = is_invocable_as<remove_all_pointer_t<F
 
 template<class FunT, class>
 requires detail::is_invocable_as_v<FunT, FunT>
-detail::remove_all_pointer_t<FunT>* FunctionPointer(FunT* function)
+    detail::remove_all_pointer_t<FunT>
+*FunctionPointer(FunT* function)
 {
     return function;
 };
 template<class FunT, class TagT, class MemberFunT, class T>
 requires detail::is_invocable_as_v<FunT, MemberFunT>
-detail::remove_all_pointer_t<FunT>* FunctionPointer(MemberFunT function, T* val)
+    detail::remove_all_pointer_t<FunT>
+*FunctionPointer(MemberFunT function, T* val)
 {
     detail::MemberFunctionPointer<MemberFunT, TagT>::Set(function, val);
     return &detail::MemberFunctionPointer<MemberFunT, TagT>::Call;
 };
 template<class FunT, class TagT, class FunctorT>
 requires detail::is_invocable_as_v<FunT, FunctorT>
-detail::remove_all_pointer_t<FunT>* FunctionPointer(FunctorT&& functor)
+    detail::remove_all_pointer_t<FunT>
+*FunctionPointer(FunctorT&& functor)
 {
     using non_pointer_fun_t = detail::remove_all_pointer_t<FunT>;
     detail::FunctorFunctionPointer<non_pointer_fun_t, FunctorT, TagT>::Set(std::forward<FunctorT>(functor));

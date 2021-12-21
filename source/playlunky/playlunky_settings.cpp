@@ -36,6 +36,7 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
                                                    KnownSetting{ .Name{ "disable_asset_caching" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "block_save_game" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "allow_save_game_mods" }, .DefaultValue{ "on" } },
+                                                   KnownSetting{ .Name{ "use_playlunky_save" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "disable_steam_achievements" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "speedrun_mode" }, .DefaultValue{ "off" } },
                                                } },

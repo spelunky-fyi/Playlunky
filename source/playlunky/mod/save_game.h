@@ -4,8 +4,11 @@ void SetSaveGameVfs(class VirtualFilesystem* vfs);
 
 enum class SaveGameMod
 {
-	Block,
-	FromMod,
+    None,
+    Block,
+    SeparateSave,
+    FromMod,
+    SeparateSaveOrFromMod,
 };
 using OnReadFromFileOrig = void(const char*, void**, size_t*);
 using OnWriteToFileOrig = void(const char*, const char*, void*, size_t);

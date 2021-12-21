@@ -4,9 +4,9 @@
 #include "detour/fmod_crap.h"
 #include "log.h"
 #include "mod/mod_manager.h"
+#include "mod/save_game.h"
 #include "mod/virtual_filesystem.h"
 #include "playlunky_settings.h"
-#include "mod/save_game.h"
 #include "version.h"
 
 #include <Windows.h>

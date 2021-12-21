@@ -708,13 +708,30 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             return fmt_res.size < out_buffer_size;
         }));
 
-    const bool block_save_game = settings.GetBool("general_settings", "block_save_game", false);
-    const bool allow_save_game_mods = settings.GetBool("general_settings", "allow_save_game_mods", true);
-    if (block_save_game || allow_save_game_mods)
+    const SaveGameMod save_mod_type = [](const PlaylunkySettings& settings)
+    {
+        if (const bool block_save_game = settings.GetBool("general_settings", "block_save_game", false))
+        {
+            return SaveGameMod::Block;
+        }
+        else
+        {
+            const bool allow_save_game_mods = settings.GetBool("general_settings", "allow_save_game_mods", true);
+            if (const bool use_playlunky_save = settings.GetBool("general_settings", "use_playlunky_save", true))
+            {
+                return allow_save_game_mods ? SaveGameMod::SeparateSaveOrFromMod : SaveGameMod::SeparateSave;
+            }
+            else if (allow_save_game_mods)
+            {
+                return SaveGameMod::FromMod;
+            }
+        }
+        return SaveGameMod::None;
+    }(settings);
+    if (save_mod_type != SaveGameMod::None)
     {
         using namespace std::string_view_literals;
-        const SaveGameMod save_mod_type = block_save_game ? SaveGameMod::Block : SaveGameMod::FromMod;
-        if (save_mod_type == SaveGameMod::FromMod)
+        if (save_mod_type != SaveGameMod::Block)
         {
             // Prepare for warning
             if (auto sav_replacement = vfs.GetDifferentFilePath("savegame.sav"))
