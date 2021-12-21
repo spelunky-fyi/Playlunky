@@ -66,7 +66,10 @@ BOOL WINAPI DllMain([[maybe_unused]] HINSTANCE hinst, DWORD dwReason, [[maybe_un
     }
     else if (dwReason == DLL_PROCESS_DETACH)
     {
-        Playlunky::Destroy();
+        if (!Playlunky::IsDestroy())
+        {
+            Playlunky::Destroy();
+        }
     }
 
     return TRUE;

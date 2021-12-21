@@ -58,6 +58,10 @@ void Playlunky::Destroy()
 
     s_PlaylunkyInstance.reset();
 }
+bool Playlunky::IsDestroy()
+{
+    return s_PlaylunkyInstance == nullptr;
+}
 
 void Playlunky::Init()
 {

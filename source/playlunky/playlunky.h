@@ -31,6 +31,7 @@ class Playlunky
 
     static void Create(void* game_module);
     static void Destroy();
+    static bool IsDestroy();
 
     void Init();
     void PostGameInit();

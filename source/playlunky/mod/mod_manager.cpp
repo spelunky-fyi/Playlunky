@@ -717,7 +717,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
         else
         {
             const bool allow_save_game_mods = settings.GetBool("general_settings", "allow_save_game_mods", true);
-            if (const bool use_playlunky_save = settings.GetBool("general_settings", "use_playlunky_save", true))
+            if (const bool use_playlunky_save = settings.GetBool("general_settings", "use_playlunky_save", false))
             {
                 return allow_save_game_mods ? SaveGameMod::SeparateSaveOrFromMod : SaveGameMod::SeparateSave;
             }
@@ -762,7 +762,22 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             }));
     }
 }
-ModManager::~ModManager() = default;
+ModManager::~ModManager()
+{
+    Spelunky_DestroySoundManager();
+
+    Spelunky_RegisterOnLoadFileFunc(nullptr);
+    Spelunky_RegisterGetImagePathFunc(nullptr);
+
+    Spelunky_RegisterOnReadFromFileFunc(nullptr);
+    Spelunky_RegisterOnWriteToFileFunc(nullptr);
+
+    Spelunky_RegisterOnInputFunc(nullptr);
+    Spelunky_RegisterPreDrawFunc(nullptr);
+    Spelunky_RegisterImguiDrawFunc(nullptr);
+    Spelunky_RegisterOnQuitFunc(nullptr);
+    Spelunky_RegisterMakeSavePathFunc(nullptr);
+}
 
 void ModManager::PostGameInit(const class PlaylunkySettings& settings)
 {
@@ -784,6 +799,8 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
     Spelunky_RegisterOnInputFunc(FunctionPointer<OnInputFunc, struct ModManagerOnInput>(&ModManager::OnInput, this));
     Spelunky_RegisterPreDrawFunc(FunctionPointer<PreDrawFunc, struct ModManagerUpdate>(&ModManager::Update, this));
     Spelunky_RegisterImguiDrawFunc(FunctionPointer<ImguiDrawFunc, struct ModManagerDraw>(&ModManager::Draw, this));
+
+    Spelunky_RegisterOnQuitFunc(FunctionPointer<OnQuitFunc, struct ModManagerDestroy>(&ModManager::Destroy, this));
 
     Spelunky_RegisterMakeSavePathFunc([](
                                           const char* script_path, size_t script_path_size, const char* /*script_name*/, size_t /*script_name_size*/, char* out_buffer, size_t out_buffer_size) -> bool
@@ -855,4 +872,8 @@ void ModManager::Draw()
         ImGui::TextColored(ImColor(0.3f, 0.0f, 0.0f), "Warning: savegame.sav is overriden by mod \"%s\"", m_ModSaveGameOverride.c_str());
         ImGui::End();
     }
+}
+void ModManager::Destroy()
+{
+    Playlunky::Destroy();
 }

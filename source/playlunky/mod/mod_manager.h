@@ -28,6 +28,7 @@ class ModManager
     bool OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t l_param);
     void Update();
     void Draw();
+    void Destroy();
 
   private:
     std::vector<class ModInfo> mMods;
