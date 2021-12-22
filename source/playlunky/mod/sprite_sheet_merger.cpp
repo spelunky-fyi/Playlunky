@@ -76,7 +76,7 @@ void SpriteSheetMerger::RegisterSheet(const std::filesystem::path& full_sheet, b
     auto full_sheet_no_ext = std::filesystem::path{ full_sheet }.replace_extension();
     if (RegisteredSourceSheet* registered_sheet = algo::find_if(m_RegisteredSourceSheets,
                                                                 [&full_sheet_no_ext](const RegisteredSourceSheet& sheet)
-                                                                { return sheet.Path == full_sheet_no_ext; }))
+                                                                { return algo::is_same_path(sheet.Path, full_sheet_no_ext); }))
     {
         registered_sheet->Outdated = registered_sheet->Outdated || outdated;
         registered_sheet->Deleted = registered_sheet->Deleted || deleted;
@@ -93,7 +93,9 @@ void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_p
 
     auto get_image = [this](const fs::path& image_path) -> Image&
     {
-        if (auto* image = algo::find(m_CachedImages, &LoadedImage::ImagePath, image_path))
+        if (auto* image = algo::find_if(m_CachedImages,
+                                        [&image_path](const LoadedImage& image)
+                                        { return algo::is_same_path(image.ImagePath, image_path); }))
         {
             return *image->ImageFile;
         }
@@ -189,7 +191,9 @@ bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::f
         const auto source_path_no_ext = source_sheet.Path.has_extension()
                                             ? fs::path{ source_sheet.Path }.replace_extension()
                                             : source_sheet.Path;
-        if (const RegisteredSourceSheet* registered_sheet = algo::find(m_RegisteredSourceSheets, &RegisteredSourceSheet::Path, source_path_no_ext))
+        if (const RegisteredSourceSheet* registered_sheet = algo::find_if(m_RegisteredSourceSheets,
+                                                                          [&source_path_no_ext](const RegisteredSourceSheet& sheet)
+                                                                          { return algo::is_same_path(sheet.Path, source_path_no_ext); }))
         {
             if (!does_exist || random_select || registered_sheet->Outdated || registered_sheet->Deleted)
             {
@@ -201,7 +205,9 @@ bool SpriteSheetMerger::NeedsRegen(const TargetSheet& target_sheet, const std::f
     {
         for (const auto& path : multi_source_sheets.Paths)
         {
-            if (const RegisteredSourceSheet* registered_sheet = algo::find(m_RegisteredSourceSheets, &RegisteredSourceSheet::Path, path))
+            if (const RegisteredSourceSheet* registered_sheet = algo::find_if(m_RegisteredSourceSheets,
+                                                                              [&path](const RegisteredSourceSheet& sheet)
+                                                                              { return algo::is_same_path(sheet.Path, path); }))
             {
                 if (!does_exist || random_select || registered_sheet->Outdated || registered_sheet->Deleted)
                 {
