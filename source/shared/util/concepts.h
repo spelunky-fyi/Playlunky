@@ -12,6 +12,18 @@ concept is_comparable = requires(T&& lhs, T&& rhs)
 };
 
 template<class T>
+concept std_range = requires(T&& cont)
+{
+    std::begin(cont);
+    std::end(cont);
+};
+template<class T>
+concept not_std_range = !requires(T&& cont)
+{
+    std::begin(cont);
+    std::end(cont);
+};
+template<class T>
 concept adl_range = requires(T&& cont)
 {
     begin(cont);
@@ -30,28 +42,40 @@ concept member_range = requires(T&& cont)
     cont.end();
 };
 template<class ContainerT>
-requires member_range<ContainerT> && not_adl_range<ContainerT>
+requires member_range<ContainerT> && not_adl_range<ContainerT> && not_std_range<ContainerT>
 constexpr auto get_begin(ContainerT&& cont)
 {
     return cont.begin();
 }
 template<class ContainerT>
-requires member_range<ContainerT> && not_adl_range<ContainerT>
+requires member_range<ContainerT> && not_adl_range<ContainerT> && not_std_range<ContainerT>
 constexpr auto get_end(ContainerT&& cont)
 {
     return cont.end();
 }
 template<class ContainerT>
-requires adl_range<ContainerT>
+requires adl_range<ContainerT> && not_std_range<ContainerT>
 constexpr auto get_begin(ContainerT&& cont)
 {
     return begin(cont);
 }
 template<class ContainerT>
-requires adl_range<ContainerT>
+requires adl_range<ContainerT> && not_std_range<ContainerT>
 constexpr auto get_end(ContainerT&& cont)
 {
     return end(cont);
+}
+template<class ContainerT>
+requires std_range<ContainerT>
+constexpr auto get_begin(ContainerT&& cont)
+{
+    return std::begin(cont);
+}
+template<class ContainerT>
+requires std_range<ContainerT>
+constexpr auto get_end(ContainerT&& cont)
+{
+    return std::end(cont);
 }
 
 template<class T>
