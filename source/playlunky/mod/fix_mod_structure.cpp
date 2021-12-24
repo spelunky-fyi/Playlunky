@@ -124,6 +124,10 @@ void FixModFolderStructure(const std::filesystem::path& mod_folder)
                 {
                     path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "People" / file_name });
                 }
+                else if (algo::contains(s_DecorationsEntityFiles, file_stem))
+                {
+                    path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Decorations" / file_name });
+                }
                 else if (algo::contains(s_KnownTextureFiles, file_stem))
                 {
                     path_mappings.push_back({ path, mod_folder / s_TextureTargetPath / file_name });

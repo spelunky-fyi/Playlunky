@@ -898,7 +898,7 @@ void SpriteSheetMerger::MakeCaveDecoTargetSheet()
 {
     std::vector<SourceSheet> source_sheets{
         SourceSheet{
-            .Path{ "Data/Textures/Entities/udjat_wall_heads" },
+            .Path{ "Data/Textures/Entities/Decorations/udjat_wall_heads" },
             .Size{ .Width{ 512 }, .Height{ 512 } },
             .TileMap = std::vector<TileMapping>{
                 TileMapping{

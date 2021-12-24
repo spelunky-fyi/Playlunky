@@ -124,6 +124,9 @@ inline constexpr std::string_view s_PeopleEntityFiles[]{
     "thief",
     "yang",
 };
+inline constexpr std::string_view s_DecorationsEntityFiles[]{
+    "udjat_wall_heads",
+};
 inline constexpr std::string_view s_KnownCharFiles[]{
     "char_black",
     "char_blue",
