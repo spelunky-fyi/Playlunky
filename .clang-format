@@ -4,11 +4,12 @@ Cpp11BracedListStyle: false
 IndentWidth: 4
 BreakBeforeBraces: Allman
 BreakConstructorInitializers: BeforeComma
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+AllowAllConstructorInitializersOnNextLine: false
 AlignAfterOpenBracket: Align
 ColumnLimit: 0
 BinPackArguments: false
 BinPackParameters: false
-ConstructorInitializerAllOnOneLineOrOnePerLine: true
 AllowAllArgumentsOnNextLine: true
 AllowShortBlocksOnASingleLine: Always
 AllowShortFunctionsOnASingleLine: None

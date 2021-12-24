@@ -23,7 +23,10 @@
 #pragma warning(pop)
 
 SpriteSheetMerger::SpriteSheetMerger(const PlaylunkySettings& settings)
-    : mRandomCharacterSelectEnabled{ settings.GetBool("settings", "random_character_select", false) || settings.GetBool("sprite_settings", "random_character_select", false) }, mGenerateCharacterJournalStickersEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_stickers", true) }, mGenerateCharacterJournalEntriesEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_entries", true) }, mGenerateStickerPixelArtEnabled{ settings.GetBool("sprite_settings", "generate_sticker_pixel_art", true) }
+    : mRandomCharacterSelectEnabled{ settings.GetBool("settings", "random_character_select", false) || settings.GetBool("sprite_settings", "random_character_select", false) }
+    , mGenerateCharacterJournalStickersEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_stickers", true) }
+    , mGenerateCharacterJournalEntriesEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_entries", true) }
+    , mGenerateStickerPixelArtEnabled{ settings.GetBool("sprite_settings", "generate_sticker_pixel_art", true) }
 {
 }
 SpriteSheetMerger::~SpriteSheetMerger() = default;

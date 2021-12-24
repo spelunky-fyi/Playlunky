@@ -23,7 +23,8 @@ class VfsFolderMount : public IVfsMountImpl
 {
   public:
     VfsFolderMount(std::filesystem::path mounted_path)
-        : mMountedPath(std::move(mounted_path)), mMountedPathString(mMountedPath.string())
+        : mMountedPath(std::move(mounted_path))
+        , mMountedPathString(mMountedPath.string())
     {
         std::replace(mMountedPathString.begin(), mMountedPathString.end(), '\\', '/');
     }

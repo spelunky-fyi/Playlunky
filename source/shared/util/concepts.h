@@ -18,7 +18,7 @@ concept std_range = requires(T&& cont)
     std::end(cont);
 };
 template<class T>
-concept not_std_range = !requires(T&& cont)
+concept not_std_range = !requires(T && cont)
 {
     std::begin(cont);
     std::end(cont);

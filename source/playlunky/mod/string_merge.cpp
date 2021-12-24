@@ -1,8 +1,8 @@
 #include "string_merge.h"
 
+#include "known_files.h"
 #include "log.h"
 #include "playlunky.h"
-#include "known_files.h"
 #include "util/algorithms.h"
 #include "util/format.h"
 #include "virtual_filesystem.h"

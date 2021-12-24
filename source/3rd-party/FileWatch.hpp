@@ -138,7 +138,8 @@ class FileWatch
     struct PathParts
     {
         PathParts(T directory, T filename)
-            : directory(directory), filename(filename)
+            : directory(directory)
+            , filename(filename)
         {
         }
         T directory;
