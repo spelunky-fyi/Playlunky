@@ -894,3 +894,20 @@ void SpriteSheetMerger::MakeMenuBasicTargetSheet()
         .SourceSheets{ std::move(source_sheets) },
         .MultiSourceTiles{ std::move(head_tile) } });
 }
+void SpriteSheetMerger::MakeCaveDecoTargetSheet()
+{
+    std::vector<SourceSheet> source_sheets{
+        SourceSheet{
+            .Path{ "Data/Textures/Entities/udjat_wall_heads" },
+            .Size{ .Width{ 512 }, .Height{ 512 } },
+            .TileMap = std::vector<TileMapping>{
+                TileMapping{
+                    .SourceTile{ 0, 0, 512, 512 },
+                    .TargetTile{ 1024, 1024, 1536, 1536 },
+                } } },
+    };
+    m_TargetSheets.push_back(TargetSheet{
+        .Path{ "Data/Textures/cave_deco" },
+        .Size{ .Width{ 1536 }, .Height{ 1536 } },
+        .SourceSheets{ std::move(source_sheets) } });
+}

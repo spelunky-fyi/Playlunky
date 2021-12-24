@@ -67,6 +67,7 @@ void SpriteSheetMerger::GatherSheetData(bool force_regen_char_journal, bool forc
     MakeCharacterTargetSheet("yellow");
     MakeMenuLeaderTargetSheet();
     MakeMenuBasicTargetSheet();
+    MakeCaveDecoTargetSheet();
 
     m_EntityDataExtractor = nullptr;
 }

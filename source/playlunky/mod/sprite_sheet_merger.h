@@ -51,6 +51,7 @@ class SpriteSheetMerger
     void MakeCharacterTargetSheet(std::string_view color);
     void MakeMenuLeaderTargetSheet();
     void MakeMenuBasicTargetSheet();
+    void MakeCaveDecoTargetSheet();
 
     bool mRandomCharacterSelectEnabled;
     bool mGenerateCharacterJournalStickersEnabled;
