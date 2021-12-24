@@ -324,9 +324,17 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePath(const 
 }
 std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const
 {
+    if (!m_RestrictedFiles.empty())
+    {
+        const std::string path_no_extension{ std::filesystem::path{ path }.replace_extension().string() };
+        if (!algo::contains(m_RestrictedFiles, path_no_extension))
+        {
+            return std::nullopt;
+        }
+    }
+
     if (const BoundPathes* bound_pathes = GetBoundPathes(path.string()))
     {
-
         std::lock_guard lock{ m_RandomCacheMutex };
         const CachedRandomFile* cached_file = algo::find(m_RandomCache, &CachedRandomFile::TargetPath, CachedRandomFileKey{ bound_pathes });
         if (cached_file == nullptr)
@@ -398,6 +406,15 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
 std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std::filesystem::path& path) const
 {
     std::vector<std::filesystem::path> file_paths;
+
+    if (!m_RestrictedFiles.empty())
+    {
+        const std::string path_no_extension{ std::filesystem::path{ path }.replace_extension().string() };
+        if (!algo::contains(m_RestrictedFiles, path_no_extension))
+        {
+            return file_paths;
+        }
+    }
 
     for (const VfsMount& mount : mMounts)
     {
