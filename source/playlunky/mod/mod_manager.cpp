@@ -775,7 +775,6 @@ ModManager::~ModManager()
     Spelunky_RegisterOnInputFunc(nullptr);
     Spelunky_RegisterPreDrawFunc(nullptr);
     Spelunky_RegisterImguiDrawFunc(nullptr);
-    Spelunky_RegisterOnQuitFunc(nullptr);
     Spelunky_RegisterMakeSavePathFunc(nullptr);
 }
 
@@ -799,8 +798,6 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
     Spelunky_RegisterOnInputFunc(FunctionPointer<OnInputFunc, struct ModManagerOnInput>(&ModManager::OnInput, this));
     Spelunky_RegisterPreDrawFunc(FunctionPointer<PreDrawFunc, struct ModManagerUpdate>(&ModManager::Update, this));
     Spelunky_RegisterImguiDrawFunc(FunctionPointer<ImguiDrawFunc, struct ModManagerDraw>(&ModManager::Draw, this));
-
-    Spelunky_RegisterOnQuitFunc(FunctionPointer<OnQuitFunc, struct ModManagerDestroy>(&ModManager::Destroy, this));
 
     Spelunky_RegisterMakeSavePathFunc([](
                                           const char* script_path, size_t script_path_size, const char* /*script_name*/, size_t /*script_name_size*/, char* out_buffer, size_t out_buffer_size) -> bool
@@ -872,8 +869,4 @@ void ModManager::Draw()
         ImGui::TextColored(ImColor(0.3f, 0.0f, 0.0f), "Warning: savegame.sav is overriden by mod \"%s\"", m_ModSaveGameOverride.c_str());
         ImGui::End();
     }
-}
-void ModManager::Destroy()
-{
-    Playlunky::Destroy();
 }

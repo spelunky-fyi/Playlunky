@@ -9,6 +9,8 @@
 #include "playlunky_settings.h"
 #include "version.h"
 
+#include <spel2.h>
+
 #include <Windows.h>
 
 struct Playlunky::PlaylunkyImpl
@@ -47,6 +49,7 @@ void Playlunky::Create(void* game_module)
     }
 
     s_PlaylunkyInstance = { new Playlunky{ (HMODULE)game_module }, PlaylunkyDeleter{} };
+    Spelunky_RegisterOnQuitFunc(&Playlunky::Destroy);
 }
 void Playlunky::Destroy()
 {
@@ -57,6 +60,7 @@ void Playlunky::Destroy()
     }
 
     s_PlaylunkyInstance.reset();
+    Spelunky_RegisterOnQuitFunc(nullptr);
 }
 bool Playlunky::IsDestroy()
 {
