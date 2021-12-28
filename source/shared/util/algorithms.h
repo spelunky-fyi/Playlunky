@@ -1,10 +1,12 @@
 #pragma once
 
 #include "concepts.h"
+#include "tokenize.h"
 
 #include <filesystem>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 namespace algo
 {
@@ -119,6 +121,17 @@ bool is_end_of_path(const std::filesystem::path& path, const std::filesystem::pa
 
 std::string trim(std::string str);
 std::string trim(std::string str, char to_strip);
+
+template<char Delimeter>
+std::vector<std::string_view> split(std::string_view str)
+{
+    std::vector<std::string_view> sub_strings;
+    for (auto&& sub_string : Tokenize<Delimeter>{ str })
+    {
+        sub_strings.push_back(sub_string);
+    }
+    return sub_strings;
+}
 
 std::string to_lower(std::string str);
 std::string to_upper(std::string str);
