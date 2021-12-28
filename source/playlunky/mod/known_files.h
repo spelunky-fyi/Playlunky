@@ -5361,6 +5361,17 @@ inline constexpr std::string_view s_SpeedrunFiles[]{
     "strings06_mod",
     "strings07_mod",
     "strings08_mod",
+    /* These are additionally filtered to only load from .db, i.e. after they are merged from _mod files */
+    "strings00",
+    "strings01",
+    "strings02",
+    "strings03",
+    "strings04",
+    "strings05",
+    "strings06",
+    "strings07",
+    "strings08",
+    /*  */
 };
 
 inline constexpr std::uint32_t s_SpeedrunStringHashes[] = {

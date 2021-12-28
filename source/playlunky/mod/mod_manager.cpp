@@ -532,13 +532,13 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             vfs.BindPathes({ "Data/Textures/Entities/qilin_full", "Data/Textures/Entities/Mounts/qilin" });
         }
 
-        if (!speedrun_mode && !enable_raw_string_loading)
+        if (speedrun_mode || !enable_raw_string_loading)
         {
             vfs.RegisterCustomFilter([db_folder](const fs::path& asset_path) -> bool
                                      {
                                          if (asset_path.extension() == L".str")
                                          {
-                                             return ctre::match<s_StringFileRule>(asset_path.filename().string()) && algo::is_sub_path(asset_path, db_folder);
+                                             return ctre::match<s_StringModFileRule>(asset_path.filename().string()) || algo::is_sub_path(asset_path, db_folder);
                                          }
                                          return true;
                                      });
