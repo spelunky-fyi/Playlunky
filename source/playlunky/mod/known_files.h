@@ -5352,15 +5352,15 @@ inline constexpr std::string_view s_SpeedrunFiles[]{
     "Data/Textures/Entities/Pets/monty_v2",
     "Data/Textures/Entities/Pets/percy_v2",
     "Data/Textures/Entities/Pets/poochi_v2",
-    "Data/strings00_mod"
-    "Data/strings01_mod"
-    "Data/strings02_mod"
-    "Data/strings03_mod"
-    "Data/strings04_mod"
-    "Data/strings05_mod"
-    "Data/strings06_mod"
-    "Data/strings07_mod"
-    "Data/strings08_mod"
+    "strings00_mod",
+    "strings01_mod",
+    "strings02_mod",
+    "strings03_mod",
+    "strings04_mod",
+    "strings05_mod",
+    "strings06_mod",
+    "strings07_mod",
+    "strings08_mod",
 };
 
 inline constexpr std::uint32_t s_SpeedrunStringHashes[] = {
