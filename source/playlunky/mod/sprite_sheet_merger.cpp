@@ -270,7 +270,6 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
     {
         if (NeedsRegen(target_sheet, destination_folder))
         {
-            // TODO: Don't get .DDS!
             const auto target_file_path = vfs.GetFilePathFilterExt(target_sheet.Path, allowed_extensions).value_or(fs::path{ source_folder / target_sheet.Path }.replace_extension(".png"));
             Image target_image = get_image(target_file_path).Clone();
 

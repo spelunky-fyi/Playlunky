@@ -907,7 +907,7 @@ void SpriteSheetMerger::MakeCaveDecoTargetSheet()
                 } } },
     };
     m_TargetSheets.push_back(TargetSheet{
-        .Path{ "Data/Textures/cave_deco" },
+        .Path{ "Data/Textures/deco_cave" },
         .Size{ .Width{ 1536 }, .Height{ 1536 } },
         .SourceSheets{ std::move(source_sheets) } });
 }
