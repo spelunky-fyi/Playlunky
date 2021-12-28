@@ -102,14 +102,16 @@ void from_json(const nlohmann::json& j, CharacterDefinition& char_def)
             else
             {
                 std::string s_color = j_color;
+                size_t start = 0;
                 if (s_color.starts_with("0x") || s_color.starts_with("0X"))
                 {
-                    std::from_chars(s_color.data() + 2, s_color.data() + s_color.size(), u_color, 16);
+                    start = 2;
                 }
-                else
+                else if (s_color.starts_with("#"))
                 {
-                    std::from_chars(s_color.data(), s_color.data() + s_color.size(), u_color, 16);
+                    start = 1;
                 }
+                std::from_chars(s_color.data() + start, s_color.data() + s_color.size(), u_color, 16);
             }
             color[0] = static_cast<float>((u_color >> 16) & 0xff) / 255.0f;
             color[1] = static_cast<float>((u_color >> 8) & 0xff) / 255.0f;
