@@ -195,6 +195,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                 fs::path{ "Data/Textures/journal_entry_people.DDS" },
                 fs::path{ "Data/Textures/menu_basic.DDS" },
                 fs::path{ "Data/Textures/menu_leader.DDS" },
+                fs::path{ "Data/Textures/cave_deco.DDS" },
                 fs::path{ "shaders.hlsl" },
                 fs::path{ "strings00.str" },
                 fs::path{ "strings01.str" },
