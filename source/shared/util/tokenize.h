@@ -77,7 +77,9 @@ class Tokenize
     {
     };
     constexpr Tokenize(std::string_view source, end_tag_t)
-        : m_Source{ source }, m_Position{ source.size() }, m_Next{ source.size() }
+        : m_Source{ source }
+        , m_Position{ source.size() }
+        , m_Next{ source.size() }
     {
     }
 
