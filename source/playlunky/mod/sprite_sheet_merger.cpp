@@ -23,7 +23,10 @@
 #pragma warning(pop)
 
 SpriteSheetMerger::SpriteSheetMerger(const PlaylunkySettings& settings)
-    : mRandomCharacterSelectEnabled{ settings.GetBool("settings", "random_character_select", false) || settings.GetBool("sprite_settings", "random_character_select", false) }, mGenerateCharacterJournalStickersEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_stickers", true) }, mGenerateCharacterJournalEntriesEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_entries", true) }, mGenerateStickerPixelArtEnabled{ settings.GetBool("sprite_settings", "generate_sticker_pixel_art", true) }
+    : mRandomCharacterSelectEnabled{ settings.GetBool("settings", "random_character_select", false) || settings.GetBool("sprite_settings", "random_character_select", false) }
+    , mGenerateCharacterJournalStickersEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_stickers", true) }
+    , mGenerateCharacterJournalEntriesEnabled{ settings.GetBool("sprite_settings", "generate_character_journal_entries", true) }
+    , mGenerateStickerPixelArtEnabled{ settings.GetBool("sprite_settings", "generate_sticker_pixel_art", true) }
 {
 }
 SpriteSheetMerger::~SpriteSheetMerger() = default;
@@ -67,6 +70,7 @@ void SpriteSheetMerger::GatherSheetData(bool force_regen_char_journal, bool forc
     MakeCharacterTargetSheet("yellow");
     MakeMenuLeaderTargetSheet();
     MakeMenuBasicTargetSheet();
+    MakeCaveDecoTargetSheet();
 
     m_EntityDataExtractor = nullptr;
 }
@@ -266,7 +270,6 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
     {
         if (NeedsRegen(target_sheet, destination_folder))
         {
-            // TODO: Don't get .DDS!
             const auto target_file_path = vfs.GetFilePathFilterExt(target_sheet.Path, allowed_extensions).value_or(fs::path{ source_folder / target_sheet.Path }.replace_extension(".png"));
             Image target_image = get_image(target_file_path).Clone();
 

@@ -26,7 +26,7 @@ class StringMerger
     }
 
     bool MergeStrings(
-        const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, const std::filesystem::path& hash_file_path, VirtualFilesystem& vfs);
+        const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, const std::filesystem::path& hash_file_path, bool speedrun_mode, VirtualFilesystem& vfs);
 
   private:
     bool mNeedsRegen{ false };

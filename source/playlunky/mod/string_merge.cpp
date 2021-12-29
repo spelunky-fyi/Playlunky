@@ -1,5 +1,6 @@
 #include "string_merge.h"
 
+#include "known_files.h"
 #include "log.h"
 #include "playlunky.h"
 #include "util/algorithms.h"
@@ -58,7 +59,7 @@ bool StringMerger::RegisterModdedStringTable(std::string_view table)
 }
 
 bool StringMerger::MergeStrings(
-    const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, const std::filesystem::path& hash_file_path, VirtualFilesystem& vfs)
+    const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, const std::filesystem::path& hash_file_path, bool speedrun_mode, VirtualFilesystem& vfs)
 {
 
     namespace fs = std::filesystem;
@@ -146,7 +147,9 @@ bool StringMerger::MergeStrings(
                                             return false;
                                         }
 
-                                        if (!algo::contains(modded_strings, &ModdedString::Hash, full_hash_string))
+                                        const bool is_allowed_string = !speedrun_mode || algo::contains(s_SpeedrunStringHashes, hash);
+
+                                        if (is_allowed_string && !algo::contains(modded_strings, &ModdedString::Hash, full_hash_string))
                                         {
                                             const std::size_t string_start = 3 + hash_string.size();
                                             std::string_view string = std::string_view{ modded_string }.substr(modded_string.find_first_not_of(' ', string_start));

@@ -20,10 +20,13 @@
 //		0x0BEECAB0 -- v0.8.1
 //		0x0CABBA6E -- v0.10.0
 //		0xFEEDFACE -- v0.11.0
+//		0xFEEDFACE -- v0.12.0 (had no breaking asset changes)
 static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xFEEDFACE };
 
 ModDatabase::ModDatabase(std::filesystem::path database_folder, std::filesystem::path mod_folder, ModDatabaseFlags flags)
-    : mDatabaseFolder(std::move(database_folder)), mModFolder(std::move(mod_folder)), mFlags(flags)
+    : mDatabaseFolder(std::move(database_folder))
+    , mModFolder(std::move(mod_folder))
+    , mFlags(flags)
 {
     namespace fs = std::filesystem;
 

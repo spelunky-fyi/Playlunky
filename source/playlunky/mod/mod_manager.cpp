@@ -61,7 +61,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
     const bool disable_asset_caching = settings.GetBool("general_settings", "disable_asset_caching", false);
 
     const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
-    const bool enable_raw_string_loading = settings.GetBool("script_settings", "enable_raw_string_loading", false);
+    const bool enable_raw_string_loading = !speedrun_mode && settings.GetBool("script_settings", "enable_raw_string_loading", false);
 
     if (speedrun_mode)
     {
@@ -195,6 +195,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                 fs::path{ "Data/Textures/journal_entry_people.DDS" },
                 fs::path{ "Data/Textures/menu_basic.DDS" },
                 fs::path{ "Data/Textures/menu_leader.DDS" },
+                fs::path{ "Data/Textures/deco_cave.DDS" },
                 fs::path{ "shaders.hlsl" },
                 fs::path{ "strings00.str" },
                 fs::path{ "strings01.str" },
@@ -531,13 +532,13 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             vfs.BindPathes({ "Data/Textures/Entities/qilin_full", "Data/Textures/Entities/Mounts/qilin" });
         }
 
-        if (!speedrun_mode && !enable_raw_string_loading)
+        if (speedrun_mode || !enable_raw_string_loading)
         {
             vfs.RegisterCustomFilter([db_folder](const fs::path& asset_path) -> bool
                                      {
                                          if (asset_path.extension() == L".str")
                                          {
-                                             return ctre::match<s_StringFileRule>(asset_path.filename().string()) && algo::is_sub_path(asset_path, db_folder);
+                                             return ctre::match<s_StringModFileRule>(asset_path.filename().string()) || algo::is_sub_path(asset_path, db_folder);
                                          }
                                          return true;
                                      });
@@ -582,7 +583,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
         LogInfo("Merging string mods...");
         if (string_merger.NeedsRegen() || !fs::exists(db_folder / "strings00.str"))
         {
-            if (string_merger.MergeStrings(db_original_folder, db_folder, "strings_hashes.hash", vfs))
+            if (string_merger.MergeStrings(db_original_folder, db_folder, "strings_hashes.hash", speedrun_mode, vfs))
             {
                 LogInfo("Successfully generated a full string file from installed string mods...");
             }
