@@ -854,7 +854,28 @@ void ModManager::Update()
 }
 void ModManager::Draw()
 {
+    if (mScriptManager.NeedsWindowDraw())
+    {
+        ImGuiIO& io = ImGui::GetIO();
+
+        ImGui::SetNextWindowSize({ io.DisplaySize.x / 4, io.DisplaySize.y });
+        ImGui::SetNextWindowPos({ io.DisplaySize.x * 3 / 4, 0 });
+        ImGui::Begin(
+            "Mod Options",
+            nullptr,
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration);
+        ImGui::PushItemWidth(100.0f);
+
+        ImGui::TextUnformatted("Mod Options");
+
+        mScriptManager.WindowDraw();
+
+        ImGui::PopItemWidth();
+        ImGui::End();
+    }
+
     mScriptManager.Draw();
+
     DrawImguiOverlay();
 
     if (!m_ModSaveGameOverride.empty() && SpelunkyState_GetScreen() <= SpelunkyScreen::Menu)

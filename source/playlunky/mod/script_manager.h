@@ -18,6 +18,9 @@ class ScriptManager
     void CommitScripts(const class PlaylunkySettings& settings);
     void RefreshScripts();
     void Update();
+
+    bool NeedsWindowDraw();
+    void WindowDraw();
     void Draw();
 
     bool IsConsoleToggled();

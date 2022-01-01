@@ -130,43 +130,21 @@ void ScriptManager::Update()
         }
     }
 }
-void ScriptManager::Draw()
+
+bool ScriptManager::NeedsWindowDraw()
+{
+    if (mMods.empty() && mConsole == nullptr && !g_DisableScriptMods)
+    {
+        return false;
+    }
+
+    return mForceShowOptions || SpelunkyState_GetScreen() == SpelunkyScreen::Menu;
+}
+void ScriptManager::WindowDraw()
 {
     if (mMods.empty() && mConsole == nullptr && !g_DisableScriptMods)
     {
         return;
-    }
-
-    ImGuiIO& io = ImGui::GetIO();
-
-    if (SpelunkyState_GetScreen() == SpelunkyScreen::Online && algo::contains(mMods, &RegisteredMainScript::ScriptEnabled, true))
-    {
-        ImGui::SetNextWindowSize({ -1, -1 });
-        ImGui::Begin(
-            "Online Warning Overlay",
-            nullptr,
-            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
-                ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
-                ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
-        {
-            const int num_colors = 64;
-            const float frequency = 10.0f / num_colors;
-            for (int i = 0; i < num_colors; ++i)
-            {
-                const float red = std::sin(frequency * i + 0) * 0.5f + 0.5f;
-                const float green = std::sin(frequency * i + 2) * 0.5f + 0.5f;
-                const float blue = std::sin(frequency * i + 4) * 0.5f + 0.5f;
-
-                ImGui::TextColored(ImVec4(red, green, blue, 1.0f), "Do not use script mods online! Your game will not work! Press Ctrl+F4 and disable your mods! ");
-                for (int j = 0; j < 4; j++)
-                {
-                    ImGui::SameLine();
-                    ImGui::TextColored(ImVec4(red, green, blue, 1.0f), "Do not use script mods online! Your game will not work! Press Ctrl+F4 and disable your mods! ");
-                }
-            }
-        }
-        ImGui::SetWindowPos({ ImGui::GetIO().DisplaySize.x / 2 - ImGui::GetWindowWidth() / 2, ImGui::GetIO().DisplaySize.y / 2 - ImGui::GetWindowHeight() / 2 }, ImGuiCond_Always);
-        ImGui::End();
     }
 
     if (mForceShowOptions || SpelunkyState_GetScreen() == SpelunkyScreen::Menu)
@@ -176,16 +154,6 @@ void ScriptManager::Draw()
             Spelunky_ShowCursor();
             mShowCursor = true;
         }
-
-        ImGui::SetNextWindowSize({ io.DisplaySize.x / 4, io.DisplaySize.y });
-        ImGui::SetNextWindowPos({ io.DisplaySize.x * 3 / 4, 0 });
-        ImGui::Begin(
-            "Mod Options",
-            nullptr,
-            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration);
-        ImGui::PushItemWidth(100.0f);
-
-        ImGui::TextUnformatted("Mod Options");
 
         if constexpr (g_DisableScriptMods)
         {
@@ -246,14 +214,50 @@ void ScriptManager::Draw()
                 }
             }
         }
-
-        ImGui::PopItemWidth();
-        ImGui::End();
     }
     else if (mShowCursor)
     {
         Spelunky_HideCursor();
         mShowCursor = false;
+    }
+}
+void ScriptManager::Draw()
+{
+    if (mMods.empty() && mConsole == nullptr && !g_DisableScriptMods)
+    {
+        return;
+    }
+
+    ImGuiIO& io = ImGui::GetIO();
+
+    if (SpelunkyState_GetScreen() == SpelunkyScreen::Online && algo::contains(mMods, &RegisteredMainScript::ScriptEnabled, true))
+    {
+        ImGui::SetNextWindowSize({ -1, -1 });
+        ImGui::Begin(
+            "Online Warning Overlay",
+            nullptr,
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
+                ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
+        {
+            const int num_colors = 64;
+            const float frequency = 10.0f / num_colors;
+            for (int i = 0; i < num_colors; ++i)
+            {
+                const float red = std::sin(frequency * i + 0) * 0.5f + 0.5f;
+                const float green = std::sin(frequency * i + 2) * 0.5f + 0.5f;
+                const float blue = std::sin(frequency * i + 4) * 0.5f + 0.5f;
+
+                ImGui::TextColored(ImVec4(red, green, blue, 1.0f), "Do not use script mods online! Your game will not work! Press Ctrl+F4 and disable your mods! ");
+                for (int j = 0; j < 4; j++)
+                {
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(red, green, blue, 1.0f), "Do not use script mods online! Your game will not work! Press Ctrl+F4 and disable your mods! ");
+                }
+            }
+        }
+        ImGui::SetWindowPos({ ImGui::GetIO().DisplaySize.x / 2 - ImGui::GetWindowWidth() / 2, ImGui::GetIO().DisplaySize.y / 2 - ImGui::GetWindowHeight() / 2 }, ImGuiCond_Always);
+        ImGui::End();
     }
 
     ImGui::SetNextWindowSize(io.DisplaySize);
