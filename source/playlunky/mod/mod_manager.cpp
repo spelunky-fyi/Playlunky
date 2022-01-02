@@ -14,6 +14,7 @@
 #include "save_game.h"
 #include "shader_merge.h"
 #include "sprite_hot_loader.h"
+#include "sprite_painter.h"
 #include "sprite_sheet_merger.h"
 #include "string_hash.h"
 #include "string_merge.h"
@@ -36,6 +37,7 @@
 #include <unordered_map>
 #include <zip.h>
 
+static constexpr ctll::fixed_string s_ColorTextureRule{ ".*_col\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
 static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
@@ -385,6 +387,19 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                            }
                                            else if (IsSupportedFileType(rel_asset_path.extension()))
                                            {
+                                               if (ctre::match<s_ColorTextureRule>(rel_asset_path.filename().string()))
+                                               {
+                                                   if (!m_SpritePainter)
+                                                   {
+                                                       m_SpritePainter = std::make_unique<SpritePainter>(*m_SpriteSheetMerger, vfs, settings);
+                                                   }
+
+                                                   // Does not necessarily write dds to the db
+                                                   const auto db_destination = mod_db_folder / rel_asset_path;
+                                                   m_SpritePainter->RegisterSheet(full_asset_path, db_destination, outdated, deleted);
+                                                   return;
+                                               }
+
                                                const bool is_entity_asset = algo::contains_if(rel_asset_path,
                                                                                               [](const fs::path& element)
                                                                                               { return algo::is_same_path(element, "Entities"); });
@@ -542,6 +557,12 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                          }
                                          return true;
                                      });
+        }
+
+        if (m_SpritePainter)
+        {
+            LogInfo("Setting up sprite painting...");
+            m_SpritePainter->FinalizeSetup(db_original_folder, db_folder);
         }
 
         LogInfo("Merging entity sheets... This includes the automatic generating of stickers...");

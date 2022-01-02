@@ -5,6 +5,8 @@
 #include "util/algorithms.h"
 #include "util/regex.h"
 
+#include <optional>
+
 static constexpr ctll::fixed_string s_FontRule{ ".*\\.fnb" };
 static constexpr std::string_view s_FontTargetPath{ "Data/Fonts" };
 
@@ -14,6 +16,8 @@ static constexpr std::string_view s_ArenaLevelTargetPath{ "Data/Levels/Arena" };
 
 static constexpr ctll::fixed_string s_LevelRule{ ".*\\.lvl" };
 static constexpr std::string_view s_LevelTargetPath{ "Data/Levels" };
+
+static constexpr ctll::fixed_string s_ColorTextureRule{ ".*_col\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
 
 static constexpr ctll::fixed_string s_OldTextureRule{ "ai\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
 static constexpr std::string_view s_OldTextureTargetPath{ "Data/Textures/OldTextures" };
@@ -48,6 +52,139 @@ static constexpr std::string_view s_MpcTargetPath{ "soundbank/mpc" };
 static constexpr ctll::fixed_string s_MppRule{ ".*\\.mpp" };
 static constexpr std::string_view s_MppTargetPath{ "soundbank/mpp" };
 
+std::optional<std::filesystem::path> GetCorrectPath(const std::filesystem::path& file_path)
+{
+    const auto file_name_path = [&file_path]()
+    {
+        if (algo::is_same_path(file_path.extension(), ".dds"))
+        {
+            return file_path.filename().replace_extension(".DDS");
+        }
+        return file_path.filename();
+    }();
+    const auto file_name = file_name_path.string();
+
+    const auto file_name_lower = algo::to_lower(file_name);
+    const auto file_stem = file_path.stem().string();
+
+    if (ctre::match<s_FontRule>(file_name))
+    {
+        return s_FontTargetPath / file_name_path;
+    }
+    else if (ctre::match<s_ArenaLevelRule>(file_name) || ctre::match<s_ArenaLevelTokRule>(file_name))
+    {
+        return s_ArenaLevelTargetPath / file_name_path;
+    }
+    else if (ctre::match<s_LevelRule>(file_name))
+    {
+        return s_LevelTargetPath / file_name_path;
+    }
+    else if (ctre::match<s_TextureRule>(file_name_lower))
+    {
+        if (ctre::match<s_ColorTextureRule>(file_name_lower))
+        {
+            const auto old_file_name = file_path.filename();
+            const auto old_stem = file_path.stem().string();
+            const auto new_file_name = old_stem.substr(0, old_stem.size() - 4) + file_path.extension().string();
+            if (auto correct_path = GetCorrectPath(std::filesystem::path{ file_path }.replace_filename(new_file_name)))
+            {
+                correct_path.value().replace_filename(old_file_name);
+                return correct_path;
+            }
+            return std::nullopt;
+        }
+        else if (ctre::match<s_OldTextureRule>(file_name_lower))
+        {
+            return s_OldTextureTargetPath / file_name_path;
+        }
+        else if (ctre::match<s_FullTextureRule>(file_name_lower))
+        {
+            return s_FullTextureTargetPath / file_name_path;
+        }
+        else if (algo::contains(s_PetsEntityFiles, file_stem))
+        {
+            return s_FullTextureTargetPath / ("Pets" / file_name_path);
+        }
+        else if (algo::contains(s_MountsEntityFiles, file_stem))
+        {
+            return s_FullTextureTargetPath / ("Mounts" / file_name_path);
+        }
+        else if (algo::contains(s_GhostEntityFiles, file_stem))
+        {
+            return s_FullTextureTargetPath / ("Ghost" / file_name_path);
+        }
+        else if (algo::contains(s_CrittersEntityFiles, file_stem))
+        {
+            return s_FullTextureTargetPath / ("Critters" / file_name_path);
+        }
+        else if (algo::contains(s_MonstersEntityFiles, file_stem))
+        {
+            return s_FullTextureTargetPath / ("Monsters" / file_name_path);
+        }
+        else if (algo::contains(s_BigMonstersEntityFiles, file_stem))
+        {
+            return s_FullTextureTargetPath / ("BigMonsters" / file_name_path);
+        }
+        else if (algo::contains(s_PeopleEntityFiles, file_stem))
+        {
+            return s_FullTextureTargetPath / ("People" / file_name_path);
+        }
+        else if (algo::contains(s_DecorationsEntityFiles, file_stem))
+        {
+            return s_FullTextureTargetPath / ("Decorations" / file_name_path);
+        }
+        else if (algo::contains(s_KnownTextureFiles, file_stem))
+        {
+            return s_TextureTargetPath / file_name_path;
+        }
+    }
+    else if (algo::contains(s_KnownAudioFiles, file_stem))
+    {
+        if (ctre::match<s_WavRule>(file_name))
+        {
+            return s_WavTargetPath / file_name_path;
+        }
+        else if (ctre::match<s_OggRule>(file_name))
+        {
+            return s_OggTargetPath / file_name_path;
+        }
+        else if (ctre::match<s_Mp3Rule>(file_name))
+        {
+            return s_Mp3TargetPath / file_name_path;
+        }
+        else if (ctre::match<s_WvRule>(file_name))
+        {
+            return s_WvTargetPath / file_name_path;
+        }
+        else if (ctre::match<s_OpusRule>(file_name))
+        {
+            return s_OpusTargetPath / file_name_path;
+        }
+        else if (ctre::match<s_FlacRule>(file_name))
+        {
+            return s_FlacTargetPath / file_name_path;
+        }
+        else if (ctre::match<s_MpcRule>(file_name))
+        {
+            return s_MpcTargetPath / file_name_path;
+        }
+        else if (ctre::match<s_MppRule>(file_name))
+        {
+            return s_MppTargetPath / file_name_path;
+        }
+        else if (algo::contains(s_RestKnownFiles, file_name))
+        {
+            return file_name;
+        }
+    }
+    else if (algo::contains(s_RestKnownFiles, file_name))
+    {
+        return file_name;
+    }
+
+    return std::nullopt;
+}
+
 void FixModFolderStructure(const std::filesystem::path& mod_folder)
 {
     namespace fs = std::filesystem;
@@ -64,117 +201,9 @@ void FixModFolderStructure(const std::filesystem::path& mod_folder)
     {
         if (fs::is_regular_file(path) && !algo::is_sub_path(path, db_folder))
         {
-            const auto file_name = [&path]()
+            if (const auto correct_path = GetCorrectPath(path))
             {
-                if (algo::is_same_path(path.path().extension(), ".dds"))
-                {
-                    return path.path().filename().replace_extension(".DDS").string();
-                }
-                return path.path().filename().string();
-            }();
-            const auto file_name_lower = algo::to_lower(file_name);
-            const auto file_stem = path.path().stem().string();
-            if (ctre::match<s_FontRule>(file_name))
-            {
-                path_mappings.push_back({ path, mod_folder / s_FontTargetPath / file_name });
-            }
-            else if (ctre::match<s_ArenaLevelRule>(file_name) || ctre::match<s_ArenaLevelTokRule>(file_name))
-            {
-                path_mappings.push_back({ path, mod_folder / s_ArenaLevelTargetPath / file_name });
-            }
-            else if (ctre::match<s_LevelRule>(file_name))
-            {
-                path_mappings.push_back({ path, mod_folder / s_LevelTargetPath / file_name });
-            }
-            else if (ctre::match<s_TextureRule>(file_name_lower))
-            {
-                if (ctre::match<s_OldTextureRule>(file_name_lower))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_OldTextureTargetPath / file_name });
-                }
-                else if (ctre::match<s_FullTextureRule>(file_name_lower))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / file_name });
-                }
-                else if (algo::contains(s_PetsEntityFiles, file_stem))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Pets" / file_name });
-                }
-                else if (algo::contains(s_MountsEntityFiles, file_stem))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Mounts" / file_name });
-                }
-                else if (algo::contains(s_GhostEntityFiles, file_stem))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Ghost" / file_name });
-                }
-                else if (algo::contains(s_CrittersEntityFiles, file_stem))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Critters" / file_name });
-                }
-                else if (algo::contains(s_MonstersEntityFiles, file_stem))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Monsters" / file_name });
-                }
-                else if (algo::contains(s_BigMonstersEntityFiles, file_stem))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "BigMonsters" / file_name });
-                }
-                else if (algo::contains(s_PeopleEntityFiles, file_stem))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "People" / file_name });
-                }
-                else if (algo::contains(s_DecorationsEntityFiles, file_stem))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_FullTextureTargetPath / "Decorations" / file_name });
-                }
-                else if (algo::contains(s_KnownTextureFiles, file_stem))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_TextureTargetPath / file_name });
-                }
-            }
-            else if (algo::contains(s_KnownAudioFiles, file_stem))
-            {
-                if (ctre::match<s_WavRule>(file_name))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_WavTargetPath / file_name });
-                }
-                else if (ctre::match<s_OggRule>(file_name))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_OggTargetPath / file_name });
-                }
-                else if (ctre::match<s_Mp3Rule>(file_name))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_Mp3TargetPath / file_name });
-                }
-                else if (ctre::match<s_WvRule>(file_name))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_WvTargetPath / file_name });
-                }
-                else if (ctre::match<s_OpusRule>(file_name))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_OpusTargetPath / file_name });
-                }
-                else if (ctre::match<s_FlacRule>(file_name))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_FlacTargetPath / file_name });
-                }
-                else if (ctre::match<s_MpcRule>(file_name))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_MpcTargetPath / file_name });
-                }
-                else if (ctre::match<s_MppRule>(file_name))
-                {
-                    path_mappings.push_back({ path, mod_folder / s_MppTargetPath / file_name });
-                }
-                else if (algo::contains(s_RestKnownFiles, file_name))
-                {
-                    path_mappings.push_back({ path, mod_folder / file_name });
-                }
-            }
-            else if (algo::contains(s_RestKnownFiles, file_name))
-            {
-                path_mappings.push_back({ path, mod_folder / file_name });
+                path_mappings.push_back({ path, mod_folder / std::move(correct_path).value() });
             }
         }
     }

@@ -9,6 +9,7 @@
 #include <vector>
 
 class SpriteHotLoader;
+class SpritePainter;
 class SpriteSheetMerger;
 
 class ModManager
@@ -32,6 +33,7 @@ class ModManager
   private:
     std::vector<class ModInfo> mMods;
     std::unique_ptr<SpriteHotLoader> m_SpriteHotLoader;
+    std::unique_ptr<SpritePainter> m_SpritePainter;
     std::unique_ptr<SpriteSheetMerger> m_SpriteSheetMerger;
     ScriptManager mScriptManager;
     VirtualFilesystem* m_Vfs;
