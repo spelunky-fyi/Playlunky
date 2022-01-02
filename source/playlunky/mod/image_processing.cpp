@@ -389,3 +389,36 @@ Image ColorBlend(Image color_image, Image target_image)
     return {};
 }
 
+Image LuminanceBlend(Image luminance_image, Image target_image)
+{
+    if (luminance_image.GetWidth() != target_image.GetWidth() || luminance_image.GetHeight() != target_image.GetHeight())
+    {
+        luminance_image.Resize(ImageSize{ target_image.GetWidth(), target_image.GetHeight() });
+    }
+
+    std::any luminance_image_backing_handle = luminance_image.GetBackingHandle();
+    std::any target_image_backing_handle = target_image.GetBackingHandle();
+    cv::Mat** luminance_image_cv_image_ptr = std::any_cast<cv::Mat*>(&luminance_image_backing_handle);
+    cv::Mat** target_image_cv_image_ptr = std::any_cast<cv::Mat*>(&target_image_backing_handle);
+
+    if (luminance_image_cv_image_ptr && target_image_cv_image_ptr)
+    {
+        (*target_image_cv_image_ptr)->forEach<cv::Vec4b>([&](cv::Vec4b& pixel, const int position[])
+                                                         {
+                                                             const cv::Vec4b& luminance_pixel = (*luminance_image_cv_image_ptr)->at<cv::Vec4b>(position[0], position[1]);
+                                                             const float luminance = get_lum(luminance_pixel[0] / 255.0f, luminance_pixel[1] / 255.0f, luminance_pixel[2] / 255.0f);
+                                                             const auto [fr, fg, fb] = set_lum(pixel[0] / 255.0f, pixel[1] / 255.0f, pixel[2] / 255.0f, luminance);
+                                                             const auto r = static_cast<uchar>(std::clamp(fr * 255.0f, 0.0f, 255.0f));
+                                                             const auto g = static_cast<uchar>(std::clamp(fg * 255.0f, 0.0f, 255.0f));
+                                                             const auto b = static_cast<uchar>(std::clamp(fb * 255.0f, 0.0f, 255.0f));
+
+                                                             const float luminance_alpha = luminance_pixel[3] / 255.0f;
+                                                             pixel[0] = static_cast<uchar>(pixel[0] * (1.0f - luminance_alpha) + r * luminance_alpha);
+                                                             pixel[1] = static_cast<uchar>(pixel[1] * (1.0f - luminance_alpha) + g * luminance_alpha);
+                                                             pixel[2] = static_cast<uchar>(pixel[2] * (1.0f - luminance_alpha) + b * luminance_alpha);
+                                                         });
+
+        return target_image;
+    }
+    return {};
+}

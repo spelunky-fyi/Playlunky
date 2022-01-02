@@ -104,6 +104,14 @@ bool SpritePainter::RepaintImage(const std::filesystem::path& full_path, const s
         color_mod_image.Load(full_path);
         repainted_image = ColorBlend(std::move(color_mod_image), std::move(repainted_image));
 
+        const auto luminance_image_path = ReplaceColExtension(full_path, "_lumin");
+        if (std::filesystem::exists(luminance_image_path))
+        {
+            Image luminance_mod_image;
+            luminance_mod_image.Load(luminance_image_path);
+            repainted_image = LuminanceBlend(std::move(luminance_mod_image), std::move(repainted_image));
+        }
+
         if (algo::contains(s_KnownTextureFiles, std::filesystem::path{ real_path }.replace_extension("").filename().string()))
         {
             // Save to .DDS
