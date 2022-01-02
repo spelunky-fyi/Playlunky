@@ -342,6 +342,43 @@ Image MakeCombinedMenuPetHeads(std::vector<std::pair<Image, std::filesystem::pat
     return std::move(monty);
 }
 
+inline auto get_lum = [](float r, float g, float b)
+{
+    return 0.3f * r + 0.59f * g + 0.11f * b;
+};
+
+inline auto set_lum = [](float r, float g, float b, float l)
+{
+    static auto clip_color = [](float r, float g, float b)
+    {
+        const float l = get_lum(r, g, b);
+        const float n = std::min(r, std::min(g, b));
+        const float x = std::max(r, std::max(g, b));
+
+        if (n < 0) {
+            r = l + (((r - l) * l) / (l - n));
+            g = l + (((g - l) * l) / (l - n));
+            b = l + (((b - l) * l) / (l - n));
+        }
+
+        if (x > 1) {
+            r = l + (((r - l) * (1 - l)) / (x - l));
+            g = l + (((g - l) * (1 - l)) / (x - l));
+            b = l + (((b - l) * (1 - l)) / (x - l));
+        }
+
+        return std::tuple{ r, g, b };
+    };
+
+    const float d = l - get_lum(r, g, b);
+    r += d;
+    g += d;
+    b += d;
+    std::tie(r, g, b) = clip_color(r, g, b);
+
+    return std::tuple{ r, g, b };
+};
+
 Image ColorBlend(Image color_image, Image target_image)
 {
     if (color_image.GetWidth() != target_image.GetWidth() || color_image.GetHeight() != target_image.GetHeight())
@@ -356,33 +393,21 @@ Image ColorBlend(Image color_image, Image target_image)
 
     if (color_image_cv_image_ptr && target_image_cv_image_ptr)
     {
-        // Convert color image to HSV
-        std::vector<cv::Mat> color_image_channels;
-        cv::split(**color_image_cv_image_ptr, color_image_channels);
-        cv::Mat color_image_only_col;
-        cv::merge(color_image_channels.data(), 3, color_image_only_col);
-        cv::cvtColor(color_image_only_col, color_image_only_col, cv::COLOR_RGB2HSV);
+        (*target_image_cv_image_ptr)->forEach<cv::Vec4b>([&](cv::Vec4b& pixel, const int position[])
+                                                         {
+                                                             const cv::Vec4b& color_pixel = (*color_image_cv_image_ptr)->at<cv::Vec4b>(position[0], position[1]);
 
-        // Convert target image to HSV and blend H and S channels, then convert back
-        std::vector<cv::Mat> target_image_channels;
-        cv::split(**target_image_cv_image_ptr, target_image_channels);
-        cv::Mat target_image_only_col;
-        cv::merge(target_image_channels.data(), 3, target_image_only_col);
-        cv::cvtColor(target_image_only_col, target_image_only_col, cv::COLOR_RGB2HSV);
-        target_image_only_col.forEach<cv::Vec3b>([&](cv::Vec3b& pixel, const int position[])
-                                                 {
-                                                     const cv::Vec3b& color_pixel = color_image_only_col.at<cv::Vec3b>(position[0], position[1]);
-                                                     const float color_alpha = color_image_channels[3].at<uchar>(position[0], position[1]) / 255.0f;
-                                                     pixel[0] = static_cast<uchar>(pixel[0] * (1.0f - color_alpha) + color_pixel[0] * color_alpha);
-                                                     pixel[1] = static_cast<uchar>(pixel[1] * (1.0f - color_alpha) + color_pixel[1] * color_alpha);
-                                                 });
-        cv::cvtColor(target_image_only_col, target_image_only_col, cv::COLOR_HSV2RGB);
+                                                             const float color = get_lum(pixel[0] / 255.0f, pixel[1] / 255.0f, pixel[2] / 255.0f);
+                                                             const auto [fr, fg, fb] = set_lum(color_pixel[0] / 255.0f, color_pixel[1] / 255.0f, color_pixel[2] / 255.0f, color);
+                                                             const auto r = static_cast<uchar>(std::clamp(fr * 255.0f, 0.0f, 255.0f));
+                                                             const auto g = static_cast<uchar>(std::clamp(fg * 255.0f, 0.0f, 255.0f));
+                                                             const auto b = static_cast<uchar>(std::clamp(fb * 255.0f, 0.0f, 255.0f));
 
-        // Readd alpha channel
-        std::vector<cv::Mat> final_image_channels;
-        cv::split(target_image_only_col, final_image_channels);
-        final_image_channels.push_back(target_image_channels.back());
-        cv::merge(final_image_channels, **target_image_cv_image_ptr);
+                                                             const float color_alpha = color_pixel[3] / 255.0f;
+                                                             pixel[0] = static_cast<uchar>(pixel[0] * (1.0f - color_alpha) + r * color_alpha);
+                                                             pixel[1] = static_cast<uchar>(pixel[1] * (1.0f - color_alpha) + g * color_alpha);
+                                                             pixel[2] = static_cast<uchar>(pixel[2] * (1.0f - color_alpha) + b * color_alpha);
+                                                         });
 
         return target_image;
     }
