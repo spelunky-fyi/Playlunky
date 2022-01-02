@@ -102,6 +102,19 @@ bool Image::Write(const std::filesystem::path& file)
     {
         return false;
     }
+
+    {
+        const auto parent_path = file.parent_path();
+        if (std::filesystem::exists(parent_path) && !std::filesystem::is_directory(parent_path))
+        {
+            LogError("Can not write file {}, its parent directory exists and is not a directory...", file.string());
+        }
+        else if (!std::filesystem::exists(parent_path))
+        {
+            std::filesystem::create_directories(parent_path);
+        }
+    }
+
     cv::Mat bgra_image;
     cv::cvtColor(mImpl->Image, bgra_image, cv::COLOR_RGBA2BGRA);
     return cv::imwrite(file.string(), bgra_image);
