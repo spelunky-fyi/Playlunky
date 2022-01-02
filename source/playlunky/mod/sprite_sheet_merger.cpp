@@ -251,7 +251,7 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
         return *m_CachedImages.back().ImageFile;
     };
 
-    std::array allowed_extensions{
+    static const std::array allowed_extensions{
         std::filesystem::path{ ".png" },
         std::filesystem::path{ ".bmp" },
         std::filesystem::path{ ".jpg" },
