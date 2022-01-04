@@ -2,6 +2,7 @@
 
 #include "log.h"
 #include "util/algorithms.h"
+#include "util/color.h"
 #include "util/image.h"
 #include "util/on_scope_exit.h"
 #include "util/span_util.h"
@@ -33,14 +34,6 @@ bool IsSupportedFileType(const std::filesystem::path& extension)
     const std::string ext_string = algo::to_lower(extension.string());
     return algo::contains(supported_extensions, ext_string);
 }
-
-struct ColorRGBA8
-{
-    std::uint8_t R;
-    std::uint8_t G;
-    std::uint8_t B;
-    std::uint8_t A;
-};
 
 bool ConvertRBGAToDds(std::span<const std::uint8_t> source, std::uint32_t width, std::uint32_t height, const std::filesystem::path& destination)
 {
@@ -180,10 +173,10 @@ bool ConvertDdsToPng(std::span<const std::uint8_t> source, const std::filesystem
     for (auto& pixel : image)
     {
         std::uint32_t original_pixel = *reinterpret_cast<std::uint32_t*>(&pixel);
-        pixel.R = static_cast<std::uint8_t>(original_pixel >> rshift);
-        pixel.G = static_cast<std::uint8_t>(original_pixel >> gshift);
-        pixel.B = static_cast<std::uint8_t>(original_pixel >> bshift);
-        pixel.A = static_cast<std::uint8_t>(original_pixel >> ashift);
+        pixel.r = static_cast<std::uint8_t>(original_pixel >> rshift);
+        pixel.g = static_cast<std::uint8_t>(original_pixel >> gshift);
+        pixel.b = static_cast<std::uint8_t>(original_pixel >> bshift);
+        pixel.a = static_cast<std::uint8_t>(original_pixel >> ashift);
     }
 
     Image image_file;
