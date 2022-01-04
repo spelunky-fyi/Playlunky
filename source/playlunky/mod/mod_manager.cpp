@@ -511,7 +511,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             {
                 if (enabled)
                 {
-                    vfs.MountFolder(mod_folder.string(), prio);
+                    vfs.MountFolder(mod_folder.string(), prio, VfsType::User);
                     vfs.MountFolder(mod_db_folder.string(), prio);
                 }
 

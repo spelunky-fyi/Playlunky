@@ -17,14 +17,16 @@ class IVfsMountImpl
     using FileInfo = VirtualFilesystem::FileInfo;
     virtual FileInfo* LoadFile(const char* file_path, void* (*allocator)(std::size_t)) const = 0;
     virtual std::optional<std::filesystem::path> GetFilePath(const std::filesystem::path& path) const = 0;
+    virtual bool IsType(VfsType type) const = 0;
 };
 
 class VfsFolderMount : public IVfsMountImpl
 {
   public:
-    VfsFolderMount(std::filesystem::path mounted_path)
+    VfsFolderMount(std::filesystem::path mounted_path, VfsType type)
         : mMountedPath(std::move(mounted_path))
         , mMountedPathString(mMountedPath.string())
+        , mType(type)
     {
         std::replace(mMountedPathString.begin(), mMountedPathString.end(), '\\', '/');
     }
@@ -113,9 +115,15 @@ class VfsFolderMount : public IVfsMountImpl
         return std::nullopt;
     }
 
+    virtual bool IsType(VfsType type) const override
+    {
+        return type == VfsType::Any || type == mType;
+    }
+
   private:
     std::filesystem::path mMountedPath;
     std::string mMountedPathString;
+    VfsType mType;
 };
 
 struct VirtualFilesystem::VfsMount
@@ -130,7 +138,7 @@ VirtualFilesystem::VirtualFilesystem()
 }
 VirtualFilesystem::~VirtualFilesystem() = default;
 
-void VirtualFilesystem::MountFolder(std::string_view path, std::int64_t priority)
+void VirtualFilesystem::MountFolder(std::string_view path, std::int64_t priority, VfsType type)
 {
     namespace fs = std::filesystem;
 
@@ -138,7 +146,7 @@ void VirtualFilesystem::MountFolder(std::string_view path, std::int64_t priority
 
     auto it = std::upper_bound(mMounts.begin(), mMounts.end(), priority, [](std::int64_t prio, const VfsMount& mount)
                                { return mount.Priority > prio; });
-    mMounts.insert(it, VfsMount{ .Priority = priority, .MountImpl = std::make_unique<VfsFolderMount>(path) });
+    mMounts.insert(it, VfsMount{ .Priority = priority, .MountImpl = std::make_unique<VfsFolderMount>(path, type) });
 }
 
 void VirtualFilesystem::RestrictFiles(std::span<const std::string_view> files)
@@ -210,11 +218,11 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
     return nullptr;
 }
 
-std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::filesystem::path& path) const
+std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const std::filesystem::path& path, VfsType type) const
 {
-    return GetFilePathFilterExt(path, {});
+    return GetFilePathFilterExt(path, {}, type);
 }
-std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const
+std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions, VfsType type) const
 {
     if (mMounts.empty())
     {
@@ -242,7 +250,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(con
             std::filesystem::path bound_path = bound_path_str;
             for (const VfsMount& mount : mMounts)
             {
-                if (mount.Priority < current_file_prio)
+                if (mount.MountImpl->IsType(type) && mount.Priority < current_file_prio)
                 {
                     if (auto bound_file_path = mount.MountImpl->GetFilePath(bound_path)) // TODO: needs to ignore extension
                     {
@@ -307,10 +315,10 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(con
 
     return std::nullopt;
 }
-std::optional<std::filesystem::path> VirtualFilesystem::GetDifferentFilePath(const std::filesystem::path& path) const
+std::optional<std::filesystem::path> VirtualFilesystem::GetDifferentFilePath(const std::filesystem::path& path, VfsType type) const
 {
     namespace fs = std::filesystem;
-    for (const fs::path& found_path : GetAllFilePaths(path))
+    for (const fs::path& found_path : GetAllFilePaths(path, type))
     {
         if (found_path.compare(path) != 0)
         {
@@ -319,11 +327,11 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetDifferentFilePath(con
     }
     return std::nullopt;
 }
-std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePath(const std::filesystem::path& path) const
+std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePath(const std::filesystem::path& path, VfsType type) const
 {
-    return GetRandomFilePathFilterExt(path, {});
+    return GetRandomFilePathFilterExt(path, {}, type);
 }
-std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const
+std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions, VfsType type) const
 {
     if (!m_RestrictedFiles.empty())
     {
@@ -345,11 +353,14 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
             {
                 for (const VfsMount& mount : mMounts)
                 {
-                    if (auto file_path = mount.MountImpl->GetFilePath(bound_path))
+                    if (mount.MountImpl->IsType(type))
                     {
-                        if (FilterPath(file_path.value(), allowed_extensions))
+                        if (auto file_path = mount.MountImpl->GetFilePath(bound_path))
                         {
-                            file_paths.push_back(std::move(file_path).value());
+                            if (FilterPath(file_path.value(), allowed_extensions))
+                            {
+                                file_paths.push_back(std::move(file_path).value());
+                            }
                         }
                     }
                 }
@@ -381,11 +392,14 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
             std::vector<std::filesystem::path> file_paths;
             for (const VfsMount& mount : mMounts)
             {
-                if (auto file_path = mount.MountImpl->GetFilePath(path))
+                if (mount.MountImpl->IsType(type))
                 {
-                    if (FilterPath(file_path.value(), allowed_extensions))
+                    if (auto file_path = mount.MountImpl->GetFilePath(path))
                     {
-                        file_paths.push_back(std::move(file_path).value());
+                        if (FilterPath(file_path.value(), allowed_extensions))
+                        {
+                            file_paths.push_back(std::move(file_path).value());
+                        }
                     }
                 }
             }
@@ -404,7 +418,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
         return cached_file->ResultPath;
     }
 }
-std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std::filesystem::path& path) const
+std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std::filesystem::path& path, VfsType type) const
 {
     std::vector<std::filesystem::path> file_paths;
 
@@ -419,9 +433,12 @@ std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std:
 
     for (const VfsMount& mount : mMounts)
     {
-        if (auto file_path = mount.MountImpl->GetFilePath(path))
+        if (mount.MountImpl->IsType(type))
         {
-            file_paths.push_back(std::move(file_path).value());
+            if (auto file_path = mount.MountImpl->GetFilePath(path))
+            {
+                file_paths.push_back(std::move(file_path).value());
+            }
         }
     }
 

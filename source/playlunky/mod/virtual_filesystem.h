@@ -12,6 +12,13 @@
 
 struct SpelunkyFileInfo;
 
+enum class VfsType
+{
+    Any,
+    Backend,
+    User,
+};
+
 class VirtualFilesystem
 {
   public:
@@ -23,7 +30,7 @@ class VirtualFilesystem
     VirtualFilesystem& operator=(const VirtualFilesystem&) = delete;
     VirtualFilesystem& operator=(VirtualFilesystem&&) = delete;
 
-    void MountFolder(std::string_view path, std::int64_t priority);
+    void MountFolder(std::string_view path, std::int64_t priority, VfsType vfs_type = VfsType::Backend);
 
     // Allow loading only files specified in this list
     void RestrictFiles(std::span<const std::string_view> files);
@@ -40,12 +47,12 @@ class VirtualFilesystem
     FileInfo* LoadFile(const char* path, void* (*allocator)(std::size_t) = nullptr) const;
 
     // Interface for loading during preprocessing
-    std::optional<std::filesystem::path> GetFilePath(const std::filesystem::path& path) const;
-    std::optional<std::filesystem::path> GetFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const;
-    std::optional<std::filesystem::path> GetDifferentFilePath(const std::filesystem::path& path) const;
-    std::optional<std::filesystem::path> GetRandomFilePath(const std::filesystem::path& path) const;
-    std::optional<std::filesystem::path> GetRandomFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const;
-    std::vector<std::filesystem::path> GetAllFilePaths(const std::filesystem::path& path) const;
+    std::optional<std::filesystem::path> GetFilePath(const std::filesystem::path& path, VfsType type = VfsType::Any) const;
+    std::optional<std::filesystem::path> GetFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions, VfsType type = VfsType::Any) const;
+    std::optional<std::filesystem::path> GetDifferentFilePath(const std::filesystem::path& path, VfsType type = VfsType::Any) const;
+    std::optional<std::filesystem::path> GetRandomFilePath(const std::filesystem::path& path, VfsType type = VfsType::Any) const;
+    std::optional<std::filesystem::path> GetRandomFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions, VfsType type = VfsType::Any) const;
+    std::vector<std::filesystem::path> GetAllFilePaths(const std::filesystem::path& path, VfsType type = VfsType::Any) const;
 
   private:
     bool FilterPath(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const;
