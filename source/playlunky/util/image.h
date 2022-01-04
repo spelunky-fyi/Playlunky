@@ -64,8 +64,10 @@ class Image
     Image CloneSubImage(ImageSubRegion region) const;
     Image CloneSubImage(ImageTiling tiling, ImageSubRegion region) const;
 
-    Image GetSubImage(ImageSubRegion region);
-    Image GetSubImage(ImageTiling tiling, ImageSubRegion region);
+    Image GetSubImage(ImageSubRegion region) const;
+    Image GetSubImage(ImageTiling tiling, ImageSubRegion region) const;
+
+    std::pair<Image, ImageSubRegion> GetFirstSprite() const;
 
     void Blit(const Image& source, ImageSubRegion region);
     void Blit(const Image& source, ImageTiling tiling, ImageSubRegion region);

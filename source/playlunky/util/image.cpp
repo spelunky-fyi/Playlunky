@@ -154,7 +154,7 @@ Image Image::CloneSubImage(ImageTiling tiling, ImageSubRegion region) const
     return const_cast<Image*>(this)->GetSubImage(tiling, region).Clone();
 }
 
-Image Image::GetSubImage(ImageSubRegion region)
+Image Image::GetSubImage(ImageSubRegion region) const
 {
     if (mImpl == nullptr)
     {
@@ -169,7 +169,7 @@ Image Image::GetSubImage(ImageSubRegion region)
 
     return sub_image;
 }
-Image Image::GetSubImage(ImageTiling tiling, ImageSubRegion region)
+Image Image::GetSubImage(ImageTiling tiling, ImageSubRegion region) const
 {
     const TileDimensions this_tile_size = tiling.ThisTileSize.value_or(tiling.TileSize);
 
@@ -179,6 +179,50 @@ Image Image::GetSubImage(ImageTiling tiling, ImageSubRegion region)
     region.height *= this_tile_size.y;
 
     return GetSubImage(region);
+}
+
+std::pair<Image, ImageSubRegion> Image::GetFirstSprite() const
+{
+    if (mImpl == nullptr)
+    {
+        return {};
+    }
+
+    std::vector<cv::Mat> channels;
+    cv::split(mImpl->Image, channels);
+
+    cv::Mat binary;
+    cv::threshold(channels[3], binary, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+
+    cv::Mat kernel;
+    cv::getStructuringElement(cv::MORPH_RECT, { 1, 1 });
+    cv::dilate(binary, binary, kernel);
+
+    std::vector<cv::Mat> contours;
+    cv::findContours(binary, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+    if (contours.empty())
+    {
+        return {};
+    }
+
+    ImageSubRegion sub_region{ static_cast<std::int32_t>(mImpl->Width), static_cast<std::int32_t>(mImpl->Height) };
+
+    for (const cv::Mat& contour : contours)
+    {
+        cv::Rect rect = cv::boundingRect(contour);
+        if (rect.x * rect.x + rect.y * rect.y < sub_region.x * sub_region.x + sub_region.y * sub_region.y)
+        {
+            sub_region = ImageSubRegion{
+                .x{ rect.x },
+                .y{ rect.y },
+                .width{ static_cast<std::uint32_t>(rect.width) },
+                .height{ static_cast<std::uint32_t>(rect.height) }
+            };
+        }
+    }
+
+    return { GetSubImage(sub_region), sub_region };
 }
 
 void Image::Resize(ImageSize new_size, ScalingFilter filter)
@@ -301,7 +345,7 @@ std::span<const std::uint8_t> Image::GetData() const
 
 const std::any Image::GetBackingHandle() const
 {
-    return &mImpl->Image;
+    return static_cast<const cv::Mat*>(&mImpl->Image);
 }
 std::any Image::GetBackingHandle()
 {
