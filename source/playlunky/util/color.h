@@ -21,3 +21,7 @@ struct ColorRGBA8
     bool operator==(const ColorRGBA8&) const = default;
 };
 
+// Truly unique colors
+ColorRGB8 GenerateRandomColor();
+// Get a set of unique and distinct colors, only works nicely for small n
+std::vector<ColorRGB8> GenerateDistinctRandomColors(std::size_t n, bool apply_variance = true);
