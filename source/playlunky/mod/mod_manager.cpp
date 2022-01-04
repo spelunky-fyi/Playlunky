@@ -38,6 +38,7 @@
 #include <zip.h>
 
 static constexpr ctll::fixed_string s_ColorTextureRule{ ".*_col\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
+static constexpr ctll::fixed_string s_LuminosityTextureRule{ ".*_lumin\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
 static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
@@ -387,7 +388,8 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                            }
                                            else if (IsSupportedFileType(rel_asset_path.extension()))
                                            {
-                                               if (ctre::match<s_ColorTextureRule>(rel_asset_path.filename().string()))
+                                               const auto rel_asset_file_name = rel_asset_path.filename().string();
+                                               if (ctre::match<s_ColorTextureRule>(rel_asset_file_name))
                                                {
                                                    if (!m_SpritePainter)
                                                    {
@@ -397,6 +399,10 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                                    // Does not necessarily write dds to the db
                                                    const auto db_destination = mod_db_folder / rel_asset_path;
                                                    m_SpritePainter->RegisterSheet(full_asset_path, db_destination, outdated, deleted);
+                                                   return;
+                                               }
+                                               if (ctre::match<s_LuminosityTextureRule>(rel_asset_file_name))
+                                               {
                                                    return;
                                                }
 

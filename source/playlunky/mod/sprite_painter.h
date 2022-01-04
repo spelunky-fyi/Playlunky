@@ -34,6 +34,7 @@ class SpritePainter
         std::filesystem::path db_destination;
     };
     FilePair ConvertToRealFilePair(const std::filesystem::path& full_path, const std::filesystem::path& db_destination);
+    std::optional<std::filesystem::path> GetSourcePath(const std::filesystem::path& relative_path);
     std::filesystem::path ReplaceColExtension(std::filesystem::path path, std::string_view replacement = "");
 
     struct RegisteredColorModSheet

@@ -355,13 +355,15 @@ inline auto set_lum = [](float r, float g, float b, float l)
         const float n = std::min(r, std::min(g, b));
         const float x = std::max(r, std::max(g, b));
 
-        if (n < 0) {
+        if (n < 0)
+        {
             r = l + (((r - l) * l) / (l - n));
             g = l + (((g - l) * l) / (l - n));
             b = l + (((b - l) * l) / (l - n));
         }
 
-        if (x > 1) {
+        if (x > 1)
+        {
             r = l + (((r - l) * (1 - l)) / (x - l));
             g = l + (((g - l) * (1 - l)) / (x - l));
             b = l + (((b - l) * (1 - l)) / (x - l));

@@ -1,14 +1,14 @@
 #include "sprite_painter.h"
 
 #include "dds_conversion.h"
+#include "image_processing.h"
 #include "known_files.h"
 #include "log.h"
 #include "playlunky_settings.h"
 #include "sprite_sheet_merger.h"
-#include "virtual_filesystem.h"
-#include "image_processing.h"
 #include "util/algorithms.h"
 #include "util/on_scope_exit.h"
+#include "virtual_filesystem.h"
 
 #include <spel2.h>
 
@@ -80,22 +80,7 @@ bool SpritePainter::RepaintImage(const std::filesystem::path& full_path, const s
 
     const auto [real_path, real_db_destination] = ConvertToRealFilePair(full_path, db_destination);
 
-    static const std::array allowed_extensions{
-        std::filesystem::path{ ".png" },
-        std::filesystem::path{ ".bmp" },
-        std::filesystem::path{ ".jpg" },
-        std::filesystem::path{ ".jpeg" },
-        std::filesystem::path{ ".jpe" },
-        std::filesystem::path{ ".jp2" },
-        std::filesystem::path{ ".tif" },
-        std::filesystem::path{ ".tiff" },
-        std::filesystem::path{ ".pbm" },
-        std::filesystem::path{ ".pgm" },
-        std::filesystem::path{ ".ppm" },
-        std::filesystem::path{ ".sr" },
-        std::filesystem::path{ ".ras" },
-    };
-    if (const auto source_path = m_Vfs.GetFilePathFilterExt(real_path, allowed_extensions))
+    if (const auto source_path = GetSourcePath(real_path))
     {
         Image repainted_image;
         repainted_image.Load(source_path.value());
@@ -171,7 +156,26 @@ SpritePainter::FilePair SpritePainter::ConvertToRealFilePair(const std::filesyst
 
     return { rel_path, ReplaceColExtension(db_destination) };
 }
-std::filesystem::path  SpritePainter::ReplaceColExtension(std::filesystem::path path, std::string_view replacement)
+std::optional<std::filesystem::path> SpritePainter::GetSourcePath(const std::filesystem::path& relative_path)
+{
+    static const std::array allowed_extensions{
+        std::filesystem::path{ ".png" },
+        std::filesystem::path{ ".bmp" },
+        std::filesystem::path{ ".jpg" },
+        std::filesystem::path{ ".jpeg" },
+        std::filesystem::path{ ".jpe" },
+        std::filesystem::path{ ".jp2" },
+        std::filesystem::path{ ".tif" },
+        std::filesystem::path{ ".tiff" },
+        std::filesystem::path{ ".pbm" },
+        std::filesystem::path{ ".pgm" },
+        std::filesystem::path{ ".ppm" },
+        std::filesystem::path{ ".sr" },
+        std::filesystem::path{ ".ras" },
+    };
+    return m_Vfs.GetFilePathFilterExt(relative_path, allowed_extensions, VfsType::User);
+}
+std::filesystem::path SpritePainter::ReplaceColExtension(std::filesystem::path path, std::string_view replacement)
 {
     const auto old_file_name = path.filename();
     const auto old_stem = path.stem().string();

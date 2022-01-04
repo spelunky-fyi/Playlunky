@@ -18,6 +18,7 @@ static constexpr ctll::fixed_string s_LevelRule{ ".*\\.lvl" };
 static constexpr std::string_view s_LevelTargetPath{ "Data/Levels" };
 
 static constexpr ctll::fixed_string s_ColorTextureRule{ ".*_col\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
+static constexpr ctll::fixed_string s_LuminosityTextureRule{ ".*_lumin\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
 
 static constexpr ctll::fixed_string s_OldTextureRule{ "ai\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
 static constexpr std::string_view s_OldTextureTargetPath{ "Data/Textures/OldTextures" };
@@ -81,11 +82,13 @@ std::optional<std::filesystem::path> GetCorrectPath(const std::filesystem::path&
     }
     else if (ctre::match<s_TextureRule>(file_name_lower))
     {
-        if (ctre::match<s_ColorTextureRule>(file_name_lower))
+        if (ctre::match<s_ColorTextureRule>(file_name_lower) || ctre::match<s_LuminosityTextureRule>(file_name_lower))
         {
+            const auto size = ctre::match<s_ColorTextureRule>(file_name_lower) ? 4 : 5;
+
             const auto old_file_name = file_path.filename();
             const auto old_stem = file_path.stem().string();
-            const auto new_file_name = old_stem.substr(0, old_stem.size() - 4) + file_path.extension().string();
+            const auto new_file_name = old_stem.substr(0, old_stem.size() - size) + file_path.extension().string();
             if (auto correct_path = GetCorrectPath(std::filesystem::path{ file_path }.replace_filename(new_file_name)))
             {
                 correct_path.value().replace_filename(old_file_name);
