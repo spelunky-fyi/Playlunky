@@ -1,5 +1,6 @@
 #pragma once
 
+#include "util/color.h"
 #include "util/image.h"
 
 #include <filesystem>
@@ -11,3 +12,5 @@ Image MakeCombinedMenuPetHeads(std::vector<std::pair<Image, std::filesystem::pat
 // Blending according to Aseprite blend modes
 Image ColorBlend(Image color_image, Image target_image);
 Image LuminanceBlend(Image luminance_image, Image target_image);
+
+std::vector<ColorRGB8> GetUniqueColors(const Image& image, std::size_t max_numbers = 16);
