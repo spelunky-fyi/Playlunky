@@ -43,9 +43,9 @@ static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" 
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
 ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& settings, VirtualFilesystem& vfs)
-    : m_SpriteSheetMerger{ new SpriteSheetMerger{ settings } }
-    , m_Vfs{ &vfs }
-    , m_ModsRoot{ mods_root }
+    : mSpriteSheetMerger{ new SpriteSheetMerger{ settings } }
+    , mVfs{ &vfs }
+    , mModsRoot{ mods_root }
     , mDeveloperMode{ settings.GetBool("settings", "enable_developer_mode", false) || settings.GetBool("script_settings", "enable_developer_mode", false) }
     , mConsoleMode{ settings.GetBool("script_settings", "enable_developer_console", false) }
     , mConsoleKey{ static_cast<std::uint64_t>(settings.GetInt("key_bindings", "console", VK_OEM_3)) }
@@ -75,7 +75,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
     const bool cache_decoded_audio_files = enable_loose_audio_files && (settings.GetBool("settings", "cache_decoded_audio_files", false) || settings.GetBool("audio_settings", "cache_decoded_audio_files", false));
     bool load_order_updated{ false };
 
-    const fs::path mods_root_path{ m_ModsRoot };
+    const fs::path mods_root_path{ mModsRoot };
     if (fs::exists(mods_root_path) && fs::is_directory(mods_root_path))
     {
         const auto db_folder = mods_root_path / ".db";
@@ -301,10 +301,10 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
         const bool enable_sprite_hot_loading = settings.GetBool("sprite_settings", "enable_sprite_hot_loading", false);
         if (enable_sprite_hot_loading)
         {
-            m_SpriteHotLoader = std::make_unique<SpriteHotLoader>(*m_SpriteSheetMerger, settings);
+            mSpriteHotLoader = std::make_unique<SpriteHotLoader>(*mSpriteSheetMerger, settings);
         }
 
-        m_SpriteSheetMerger->GatherSheetData(journal_gen_settings_change, sticker_gen_settings_change);
+        mSpriteSheetMerger->GatherSheetData(journal_gen_settings_change, sticker_gen_settings_change);
         StringMerger string_merger;
         bool has_outdated_shaders{ false };
 
@@ -350,7 +350,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                                    mod_info.ReadExtendedInfoFromJson(full_asset_path_string);
                                                    mod_info.ReadFromDatabase(mod_db);
                                                    mod_db.SetInfo(mod_info.Dump());
-                                                   m_SpriteSheetMerger->RegisterCustomImages(mod_folder, db_original_folder, prio, mod_info.GetCustomImages());
+                                                   mSpriteSheetMerger->RegisterCustomImages(mod_folder, db_original_folder, prio, mod_info.GetCustomImages());
                                                }
                                            });
                     }
@@ -358,7 +358,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                     {
                         mod_info.ReadFromDatabase(mod_db);
                         mod_db.SetInfo("");
-                        m_SpriteSheetMerger->RegisterCustomImages(mod_folder, db_original_folder, prio, mod_info.GetCustomImages());
+                        mSpriteSheetMerger->RegisterCustomImages(mod_folder, db_original_folder, prio, mod_info.GetCustomImages());
                     }
                     mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool outdated, bool deleted, std::optional<bool> new_enabled_state)
                                        {
@@ -391,14 +391,14 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                                const auto rel_asset_file_name = rel_asset_path.filename().string();
                                                if (ctre::match<s_ColorTextureRule>(rel_asset_file_name))
                                                {
-                                                   if (!m_SpritePainter)
+                                                   if (!mSpritePainter)
                                                    {
-                                                       m_SpritePainter = std::make_unique<SpritePainter>(*m_SpriteSheetMerger, vfs, settings);
+                                                       mSpritePainter = std::make_unique<SpritePainter>(*mSpriteSheetMerger, vfs, settings);
                                                    }
 
                                                    // Does not necessarily write dds to the db
                                                    const auto db_destination = mod_db_folder / rel_asset_path;
-                                                   m_SpritePainter->RegisterSheet(full_asset_path, db_destination, outdated, deleted);
+                                                   mSpritePainter->RegisterSheet(full_asset_path, db_destination, outdated, deleted);
                                                    return;
                                                }
                                                if (ctre::match<s_LuminosityTextureRule>(rel_asset_file_name))
@@ -414,15 +414,15 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
                                                Playlunky::Get().RegisterModType(is_character_asset ? ModType::CharacterSprite : ModType::Sprite);
 
-                                               if (m_SpriteHotLoader)
+                                               if (mSpriteHotLoader)
                                                {
                                                    const auto db_destination = (mod_db_folder / rel_asset_path).replace_extension(".dds");
-                                                   m_SpriteHotLoader->RegisterSheet(full_asset_path, db_destination);
+                                                   mSpriteHotLoader->RegisterSheet(full_asset_path, db_destination);
                                                }
 
                                                if (is_entity_asset || is_character_asset || is_custom_image_source)
                                                {
-                                                   m_SpriteSheetMerger->RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);
+                                                   mSpriteSheetMerger->RegisterSheet(rel_asset_path, outdated || load_order_updated, deleted);
                                                    return;
                                                }
 
@@ -565,16 +565,16 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                      });
         }
 
-        if (m_SpritePainter)
+        if (mSpritePainter)
         {
             LogInfo("Setting up sprite painting...");
-            m_SpritePainter->FinalizeSetup(db_original_folder, db_folder);
+            mSpritePainter->FinalizeSetup(db_original_folder, db_folder);
         }
 
         LogInfo("Merging entity sheets... This includes the automatic generating of stickers...");
-        if (m_SpriteSheetMerger->NeedsRegeneration(db_folder))
+        if (mSpriteSheetMerger->NeedsRegeneration(db_folder))
         {
-            if (m_SpriteSheetMerger->GenerateRequiredSheets(db_original_folder, db_folder, vfs))
+            if (mSpriteSheetMerger->GenerateRequiredSheets(db_original_folder, db_folder, vfs))
             {
                 LogInfo("Successfully generated merged sheets from mods...");
             }
@@ -584,14 +584,14 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             }
         }
 
-        if (enable_sprite_hot_loading && m_SpriteHotLoader)
+        if (enable_sprite_hot_loading && mSpriteHotLoader)
         {
             LogInfo("Setting up sprite hot-loading...");
-            m_SpriteHotLoader->FinalizeSetup();
+            mSpriteHotLoader->FinalizeSetup();
         }
         else
         {
-            m_SpriteSheetMerger.reset();
+            mSpriteSheetMerger.reset();
         }
 
         LogInfo("Merging shader mods...");
@@ -683,9 +683,9 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
     Spelunky_RegisterOnLoadFileFunc(FunctionPointer<Spelunky_LoadFileFunc, struct ModManagerLoadFile>(
         [this](const char* file_path, SpelunkyAllocFun alloc_fun) -> SpelunkyFileInfo*
         {
-            if (m_Vfs)
+            if (mVfs)
             {
-                if (auto* file_info = m_Vfs->LoadFile(file_path, alloc_fun))
+                if (auto* file_info = mVfs->LoadFile(file_path, alloc_fun))
                 {
                     return file_info;
                 }
@@ -764,7 +764,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             // Prepare for warning
             if (auto sav_replacement = vfs.GetDifferentFilePath("savegame.sav"))
             {
-                m_ModSaveGameOverride = sav_replacement.value().parent_path().stem().string();
+                mModSaveGameOverride = sav_replacement.value().parent_path().stem().string();
             }
 
             Spelunky_RegisterOnReadFromFileFunc(FunctionPointer<Spelunky_ReadFromFileFunc, struct ModManagerSaveFile>(
@@ -808,7 +808,7 @@ ModManager::~ModManager()
 
 void ModManager::PostGameInit(const class PlaylunkySettings& settings)
 {
-    PatchCharacterDefinitions(*m_Vfs, settings);
+    PatchCharacterDefinitions(*mVfs, settings);
 
     Spelunky_InitSoundManager([](const char* file_path)
                               {
@@ -870,11 +870,11 @@ bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t 
 }
 void ModManager::Update()
 {
-    if (m_SpriteHotLoader && m_Vfs)
+    if (mSpriteHotLoader && mVfs)
     {
-        const auto db_folder = m_ModsRoot / ".db";
+        const auto db_folder = mModsRoot / ".db";
         const auto db_original_folder = db_folder / "Original";
-        m_SpriteHotLoader->Update(db_original_folder, db_folder, *m_Vfs);
+        mSpriteHotLoader->Update(db_original_folder, db_folder, *mVfs);
     }
 
     mScriptManager.Update();
@@ -905,7 +905,7 @@ void ModManager::Draw()
 
     DrawImguiOverlay();
 
-    if (!m_ModSaveGameOverride.empty() && SpelunkyState_GetScreen() <= SpelunkyScreen::Menu)
+    if (!mModSaveGameOverride.empty() && SpelunkyState_GetScreen() <= SpelunkyScreen::Menu)
     {
         ImGui::SetNextWindowSize({ ImGui::GetWindowSize().x, 0 });
         ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, 0.0f), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
@@ -915,7 +915,7 @@ void ModManager::Draw()
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                 ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
                 ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
-        ImGui::TextColored(ImColor(0.3f, 0.0f, 0.0f), "Warning: savegame.sav is overriden by mod \"%s\"", m_ModSaveGameOverride.c_str());
+        ImGui::TextColored(ImColor(0.3f, 0.0f, 0.0f), "Warning: savegame.sav is overriden by mod \"%s\"", mModSaveGameOverride.c_str());
         ImGui::End();
     }
 }

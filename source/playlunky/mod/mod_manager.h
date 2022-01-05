@@ -32,17 +32,17 @@ class ModManager
 
   private:
     std::vector<class ModInfo> mMods;
-    std::unique_ptr<SpriteHotLoader> m_SpriteHotLoader;
-    std::unique_ptr<SpritePainter> m_SpritePainter;
-    std::unique_ptr<SpriteSheetMerger> m_SpriteSheetMerger;
+    std::unique_ptr<SpriteHotLoader> mSpriteHotLoader;
+    std::unique_ptr<SpritePainter> mSpritePainter;
+    std::unique_ptr<SpriteSheetMerger> mSpriteSheetMerger;
     ScriptManager mScriptManager;
-    VirtualFilesystem* m_Vfs;
+    VirtualFilesystem* mVfs;
 
-    std::filesystem::path m_ModsRoot;
+    std::filesystem::path mModsRoot;
 
     bool mDeveloperMode;
     bool mConsoleMode;
-    std::string m_ModSaveGameOverride;
+    std::string mModSaveGameOverride;
     std::uint64_t mConsoleKey;
     std::uint64_t mConsoleAltKey;
     std::uint64_t mConsoleCloseKey;
