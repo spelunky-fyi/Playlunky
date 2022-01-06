@@ -181,7 +181,10 @@ void SpritePainter::WindowDraw()
             const auto full_buttons_width = reset_width + random_width + item_spacing;
             ImGui::SetCursorPosX((window_width - full_buttons_width) * 0.5f);
 
-            if (ImGui::Button("Reset"))
+            const std::string reset_id = "Reset##" + sheet.full_path.string();
+            const std::string random_id = "Random##" + sheet.full_path.string();
+
+            if (ImGui::Button(reset_id.c_str()))
             {
                 if (std::filesystem::exists(sheet.db_destination) && std::filesystem::is_regular_file(sheet.db_destination))
                 {
@@ -191,7 +194,7 @@ void SpritePainter::WindowDraw()
                 trigger_repaint(&sheet);
             }
             ImGui::SameLine();
-            if (ImGui::Button("Random"))
+            if (ImGui::Button(random_id.c_str()))
             {
                 const auto prev_colors = std::move(sheet.chosen_colors);
                 sheet.chosen_colors = GenerateDistinctRandomColors(prev_colors.size());
