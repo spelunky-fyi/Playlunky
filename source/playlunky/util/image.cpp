@@ -132,9 +132,9 @@ Image Image::Clone() const
 {
     Image clone;
     clone.mImpl = std::make_unique<ImageImpl>();
+    mImpl->Image.copyTo(clone.mImpl->Image);
     clone.mImpl->Width = mImpl->Width;
     clone.mImpl->Height = mImpl->Height;
-    clone.mImpl->Image = mImpl->Image.clone();
     return clone;
 }
 

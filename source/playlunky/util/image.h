@@ -56,7 +56,9 @@ class Image
 
     bool Write(const std::filesystem::path& file);
 
+    // Create a shallow copy of the image, shares the data with the original image
     Image Copy();
+    // Create a deep copy of the image, owns its own data
     Image Clone() const;
 
     bool ContainsSubRegion(ImageSubRegion region) const;
