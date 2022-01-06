@@ -74,11 +74,17 @@ std::optional<std::filesystem::path> GetCorrectPath(const std::filesystem::path&
     }
     else if (ctre::match<s_ArenaLevelRule>(file_name) || ctre::match<s_ArenaLevelTokRule>(file_name))
     {
-        return s_ArenaLevelTargetPath / file_name_path;
+        if (algo::contains(s_ArenaLevelFiles, file_stem))
+        {
+            return s_ArenaLevelTargetPath / file_name_path;
+        }
     }
     else if (ctre::match<s_LevelRule>(file_name))
     {
-        return s_LevelTargetPath / file_name_path;
+        if (algo::contains(s_LevelFiles, file_stem))
+        {
+            return s_LevelTargetPath / file_name_path;
+        }
     }
     else if (ctre::match<s_TextureRule>(file_name_lower))
     {
