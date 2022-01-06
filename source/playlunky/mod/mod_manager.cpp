@@ -511,8 +511,8 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             {
                 if (enabled)
                 {
-                    vfs.MountFolder(mod_folder.string(), prio, VfsType::User);
                     vfs.MountFolder(mod_db_folder.string(), prio);
+                    vfs.MountFolder(mod_folder.string(), prio, VfsType::User);
                 }
 
                 mMods.push_back(std::move(mod_info));
@@ -565,12 +565,6 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                      });
         }
 
-        if (mSpritePainter)
-        {
-            LogInfo("Setting up sprite painting...");
-            mSpritePainter->FinalizeSetup(db_original_folder, db_folder);
-        }
-
         LogInfo("Merging entity sheets... This includes the automatic generating of stickers...");
         if (mSpriteSheetMerger->NeedsRegeneration(db_folder))
         {
@@ -589,7 +583,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             LogInfo("Setting up sprite hot-loading...");
             mSpriteHotLoader->FinalizeSetup();
         }
-        else
+        else if (!mSpritePainter)
         {
             mSpriteSheetMerger.reset();
         }
@@ -808,6 +802,14 @@ ModManager::~ModManager()
 
 void ModManager::PostGameInit(const class PlaylunkySettings& settings)
 {
+    if (mSpritePainter)
+    {
+        LogInfo("Setting up sprite painting...");
+        const auto db_folder = mModsRoot / ".db";
+        const auto db_original_folder = db_folder / "Original";
+        mSpritePainter->FinalizeSetup(db_original_folder, db_folder);
+    }
+
     PatchCharacterDefinitions(*mVfs, settings);
 
     Spelunky_InitSoundManager([](const char* file_path)
@@ -870,11 +872,19 @@ bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t 
 }
 void ModManager::Update()
 {
-    if (mSpriteHotLoader && mVfs)
+    if (mSpritePainter || (mSpriteHotLoader && mVfs))
     {
         const auto db_folder = mModsRoot / ".db";
         const auto db_original_folder = db_folder / "Original";
-        mSpriteHotLoader->Update(db_original_folder, db_folder, *mVfs);
+        if (mSpritePainter)
+        {
+            mSpritePainter->Update(db_original_folder, db_folder);
+        }
+
+        if (mSpriteHotLoader && mVfs)
+        {
+            mSpriteHotLoader->Update(db_original_folder, db_folder, *mVfs);
+        }
     }
 
     mScriptManager.Update();
@@ -882,7 +892,7 @@ void ModManager::Update()
 void ModManager::Draw()
 {
     const bool show_options = mForceShowOptions || SpelunkyState_GetScreen() == SpelunkyScreen::Menu;
-    if (show_options mScriptManager.NeedsWindowDraw())
+    if (show_options && (mScriptManager.NeedsWindowDraw() || (mSpritePainter && mSpritePainter->NeedsWindowDraw())))
     {
         if (!mShowCursor)
         {
@@ -905,6 +915,10 @@ void ModManager::Draw()
         if (mScriptManager.NeedsWindowDraw() || show_options)
         {
             mScriptManager.WindowDraw();
+        }
+        if (mSpritePainter && (mSpritePainter->NeedsWindowDraw() || mForceShowOptions))
+        {
+            mSpritePainter->WindowDraw();
         }
 
         ImGui::PopItemWidth();
