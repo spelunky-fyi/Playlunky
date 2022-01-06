@@ -468,6 +468,30 @@ Image ReplaceColor(Image input_image, ColorRGB8 source_color, ColorRGB8 target_c
     }
     return input_image;
 }
+Image ReplaceColors(Image input_image, const std::vector<ColorRGB8>& source_colors, const std::vector<ColorRGB8>& target_colors)
+{
+
+    std::any image_backing_handle = input_image.GetBackingHandle();
+    cv::Mat** image_cv_image_ptr = std::any_cast<cv::Mat*>(&image_backing_handle);
+
+    if (image_cv_image_ptr)
+    {
+        (*image_cv_image_ptr)->forEach<cv::Vec4b>([&](cv::Vec4b& cv_pixel, [[maybe_unused]] const int position[])
+                                                  {
+                                                      ColorRGB8& pixel = reinterpret_cast<ColorRGB8&>(cv_pixel);
+                                                      for (size_t i = 0; i < source_colors.size(); i++)
+                                                      {
+                                                          const ColorRGB8& source_color = source_colors[i];
+                                                          if (pixel == source_color)
+                                                          {
+                                                              pixel = target_colors[i];
+                                                              return;
+                                                          }
+                                                      }
+                                                  });
+    }
+    return input_image;
+}
 
 std::vector<ColorRGB8> GetUniqueColors(const Image& image, std::size_t max_numbers)
 {
