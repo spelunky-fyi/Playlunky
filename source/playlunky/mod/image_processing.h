@@ -13,4 +13,6 @@ Image MakeCombinedMenuPetHeads(std::vector<std::pair<Image, std::filesystem::pat
 Image ColorBlend(Image color_image, Image target_image);
 Image LuminanceBlend(Image luminance_image, Image target_image);
 
+Image ReplaceColor(Image input_image, ColorRGB8 source_color, ColorRGB8 target_color);
+
 std::vector<ColorRGB8> GetUniqueColors(const Image& image, std::size_t max_numbers = 16);
