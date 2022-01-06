@@ -2,6 +2,7 @@
 
 #include <array>
 #include <random>
+#include <span>
 
 std::mt19937& GetRandomColorState()
 {
@@ -33,89 +34,150 @@ ColorRGB8 GenerateRandomColor()
 
 std::vector<ColorRGB8> GenerateDistinctRandomColors(std::size_t n, bool apply_variance)
 {
+    using namespace ColorLiterals;
+
     static constexpr std::array c_DistinctColors{
-        ColorRGB8{ .r{ 0x00 }, .g{ 0x00 }, .b{ 0x00 } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0xFF }, .b{ 0x00 } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0x00 }, .b{ 0xFF } },
-        ColorRGB8{ .r{ 0xFF }, .g{ 0x00 }, .b{ 0x00 } },
-        ColorRGB8{ .r{ 0x01 }, .g{ 0xFF }, .b{ 0xFE } },
-        ColorRGB8{ .r{ 0xFF }, .g{ 0xA6 }, .b{ 0xFE } },
-        ColorRGB8{ .r{ 0xFF }, .g{ 0xDB }, .b{ 0x66 } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0x64 }, .b{ 0x01 } },
-        ColorRGB8{ .r{ 0x01 }, .g{ 0x00 }, .b{ 0x67 } },
-        ColorRGB8{ .r{ 0x95 }, .g{ 0x00 }, .b{ 0x3A } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0x7D }, .b{ 0xB5 } },
-        ColorRGB8{ .r{ 0xFF }, .g{ 0x00 }, .b{ 0xF6 } },
-        ColorRGB8{ .r{ 0xFF }, .g{ 0xEE }, .b{ 0xE8 } },
-        ColorRGB8{ .r{ 0x77 }, .g{ 0x4D }, .b{ 0x00 } },
-        ColorRGB8{ .r{ 0x90 }, .g{ 0xFB }, .b{ 0x92 } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0x76 }, .b{ 0xFF } },
-        ColorRGB8{ .r{ 0xD5 }, .g{ 0xFF }, .b{ 0x00 } },
-        ColorRGB8{ .r{ 0xFF }, .g{ 0x93 }, .b{ 0x7E } },
-        ColorRGB8{ .r{ 0x6A }, .g{ 0x82 }, .b{ 0x6C } },
-        ColorRGB8{ .r{ 0xFF }, .g{ 0x02 }, .b{ 0x9D } },
-        ColorRGB8{ .r{ 0xFE }, .g{ 0x89 }, .b{ 0x00 } },
-        ColorRGB8{ .r{ 0x7A }, .g{ 0x47 }, .b{ 0x82 } },
-        ColorRGB8{ .r{ 0x7E }, .g{ 0x2D }, .b{ 0xD2 } },
-        ColorRGB8{ .r{ 0x85 }, .g{ 0xA9 }, .b{ 0x00 } },
-        ColorRGB8{ .r{ 0xFF }, .g{ 0x00 }, .b{ 0x56 } },
-        ColorRGB8{ .r{ 0xA4 }, .g{ 0x24 }, .b{ 0x00 } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0xAE }, .b{ 0x7E } },
-        ColorRGB8{ .r{ 0x68 }, .g{ 0x3D }, .b{ 0x3B } },
-        ColorRGB8{ .r{ 0xBD }, .g{ 0xC6 }, .b{ 0xFF } },
-        ColorRGB8{ .r{ 0x26 }, .g{ 0x34 }, .b{ 0x00 } },
-        ColorRGB8{ .r{ 0xBD }, .g{ 0xD3 }, .b{ 0x93 } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0xB9 }, .b{ 0x17 } },
-        ColorRGB8{ .r{ 0x9E }, .g{ 0x00 }, .b{ 0x8E } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0x15 }, .b{ 0x44 } },
-        ColorRGB8{ .r{ 0xC2 }, .g{ 0x8C }, .b{ 0x9F } },
-        ColorRGB8{ .r{ 0xFF }, .g{ 0x74 }, .b{ 0xA3 } },
-        ColorRGB8{ .r{ 0x01 }, .g{ 0xD0 }, .b{ 0xFF } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0x47 }, .b{ 0x54 } },
-        ColorRGB8{ .r{ 0xE5 }, .g{ 0x6F }, .b{ 0xFE } },
-        ColorRGB8{ .r{ 0x78 }, .g{ 0x82 }, .b{ 0x31 } },
-        ColorRGB8{ .r{ 0x0E }, .g{ 0x4C }, .b{ 0xA1 } },
-        ColorRGB8{ .r{ 0x91 }, .g{ 0xD0 }, .b{ 0xCB } },
-        ColorRGB8{ .r{ 0xBE }, .g{ 0x99 }, .b{ 0x70 } },
-        ColorRGB8{ .r{ 0x96 }, .g{ 0x8A }, .b{ 0xE8 } },
-        ColorRGB8{ .r{ 0xBB }, .g{ 0x88 }, .b{ 0x00 } },
-        ColorRGB8{ .r{ 0x43 }, .g{ 0x00 }, .b{ 0x2C } },
-        ColorRGB8{ .r{ 0xDE }, .g{ 0xFF }, .b{ 0x74 } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0xFF }, .b{ 0xC6 } },
-        ColorRGB8{ .r{ 0xFF }, .g{ 0xE5 }, .b{ 0x02 } },
-        ColorRGB8{ .r{ 0x62 }, .g{ 0x0E }, .b{ 0x00 } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0x8F }, .b{ 0x9C } },
-        ColorRGB8{ .r{ 0x98 }, .g{ 0xFF }, .b{ 0x52 } },
-        ColorRGB8{ .r{ 0x75 }, .g{ 0x44 }, .b{ 0xB1 } },
-        ColorRGB8{ .r{ 0xB5 }, .g{ 0x00 }, .b{ 0xFF } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0xFF }, .b{ 0x78 } },
-        ColorRGB8{ .r{ 0xFF }, .g{ 0x6E }, .b{ 0x41 } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0x5F }, .b{ 0x39 } },
-        ColorRGB8{ .r{ 0x6B }, .g{ 0x68 }, .b{ 0x82 } },
-        ColorRGB8{ .r{ 0x5F }, .g{ 0xAD }, .b{ 0x4E } },
-        ColorRGB8{ .r{ 0xA7 }, .g{ 0x57 }, .b{ 0x40 } },
-        ColorRGB8{ .r{ 0xA5 }, .g{ 0xFF }, .b{ 0xD2 } },
-        ColorRGB8{ .r{ 0xFF }, .g{ 0xB1 }, .b{ 0x67 } },
-        ColorRGB8{ .r{ 0x00 }, .g{ 0x9B }, .b{ 0xFF } },
-        ColorRGB8{ .r{ 0xE8 }, .g{ 0x5E }, .b{ 0xBE } },
+        0x000000_rgb,
+        0x00FF00_rgb,
+        0x0000FF_rgb,
+        0xFF0000_rgb,
+        0x01FFFE_rgb,
+        0xFFA6FE_rgb,
+        0xFFDB66_rgb,
+        0x006401_rgb,
+        0x010067_rgb,
+        0x95003A_rgb,
+        0x007DB5_rgb,
+        0xFF00F6_rgb,
+        0xFFEEE8_rgb,
+        0x774D00_rgb,
+        0x90FB92_rgb,
+        0x0076FF_rgb,
+        0xD5FF00_rgb,
+        0xFF937E_rgb,
+        0x6A826C_rgb,
+        0xFF029D_rgb,
+        0xFE8900_rgb,
+        0x7A4782_rgb,
+        0x7E2DD2_rgb,
+        0x85A900_rgb,
+        0xFF0056_rgb,
+        0xA42400_rgb,
+        0x00AE7E_rgb,
+        0x683D3B_rgb,
+        0xBDC6FF_rgb,
+        0x263400_rgb,
+        0xBDD393_rgb,
+        0x00B917_rgb,
+        0x9E008E_rgb,
+        0x001544_rgb,
+        0xC28C9F_rgb,
+        0xFF74A3_rgb,
+        0x01D0FF_rgb,
+        0x004754_rgb,
+        0xE56FFE_rgb,
+        0x788231_rgb,
+        0x0E4CA1_rgb,
+        0x91D0CB_rgb,
+        0xBE9970_rgb,
+        0x968AE8_rgb,
+        0xBB8800_rgb,
+        0x43002C_rgb,
+        0xDEFF74_rgb,
+        0x00FFC6_rgb,
+        0xFFE502_rgb,
+        0x620E00_rgb,
+        0x008F9C_rgb,
+        0x98FF52_rgb,
+        0x7544B1_rgb,
+        0xB500FF_rgb,
+        0x00FF78_rgb,
+        0xFF6E41_rgb,
+        0x005F39_rgb,
+        0x6B6882_rgb,
+        0x5FAD4E_rgb,
+        0xA75740_rgb,
+        0xA5FFD2_rgb,
+        0xFFB167_rgb,
+        0x009BFF_rgb,
+        0xE85EBE_rgb,
     };
 
-    std::vector<ColorRGB8> colors{ c_DistinctColors.begin(), c_DistinctColors.end() };
+    std::span<const ColorRGB8> color_table{ c_DistinctColors.begin(), c_DistinctColors.end() };
+
+    static constexpr auto c_GapBetweenPride = 15u;
+    static constexpr auto c_LengthOfPride = 2u;
+    static auto s_NumCalls = c_LengthOfPride;
+    if (++s_NumCalls % c_GapBetweenPride < c_LengthOfPride)
+    {
+        color_table = [](auto i) -> std::span<const ColorRGB8>
+        {
+            switch (i % 4)
+            {
+            default:
+            case 0:
+            {
+                static constexpr std::array pride_colors = {
+                    0xFF0018_rgb,
+                    0xFFA52C_rgb,
+                    0xFFFF41_rgb,
+                    0x008018_rgb,
+                    0x0000F9_rgb,
+                    0x86007D_rgb,
+                };
+                return { pride_colors.begin(), pride_colors.end() };
+            }
+            case 1:
+            {
+                static constexpr std::array trans_colors = {
+                    0x55CDFC_rgb,
+                    0xF7A8B8_rgb,
+                    0xFFFFFF_rgb,
+                    0xF7A8B8_rgb,
+                    0x55CDFC_rgb,
+                };
+                return { trans_colors.begin(), trans_colors.end() };
+            }
+            case 2:
+            {
+                static constexpr std::array enby_colors = {
+                    0xFFF430_rgb,
+                    0xFFFFFF_rgb,
+                    0x9C59D1_rgb,
+                    0x000000_rgb,
+                };
+                return { enby_colors.begin(), enby_colors.end() };
+            }
+            case 3:
+            {
+                static constexpr std::array bi_colors = {
+                    0xD8097E_rgb,
+                    0x8C579C_rgb,
+                    0x24468E_rgb,
+                };
+                return { bi_colors.begin(), bi_colors.end() };
+            }
+            }
+        }(s_NumCalls / c_GapBetweenPride - 1);
+        apply_variance = false;
+    }
+
+    std::vector<ColorRGB8> colors{ color_table.begin(), color_table.end() };
 
     while (n > colors.size())
     {
-        colors.insert(colors.end(), c_DistinctColors.begin(), c_DistinctColors.end());
+        colors.insert(colors.end(), color_table.begin(), color_table.end());
     }
-
-    static auto& state{ GetRandomColorState() };
-    while (colors.size() > n)
-    {
-        colors.erase(colors.begin() + state() % colors.size());
-    }
-    std::shuffle(colors.begin(), colors.end(), state);
 
     if (apply_variance)
     {
+        static auto& state{ GetRandomColorState() };
+        while (colors.size() > n)
+        {
+            colors.erase(colors.begin() + state() % colors.size());
+        }
+        std::shuffle(colors.begin(), colors.end(), state);
+
         std::uniform_real_distribution<float> dist{ 0.95f, 1.05f };
         for (ColorRGB8& color : colors)
         {
@@ -123,6 +185,10 @@ std::vector<ColorRGB8> GenerateDistinctRandomColors(std::size_t n, bool apply_va
             color.g = static_cast<std::uint8_t>(std::clamp(color.g * dist(state), 0.0f, 255.0f));
             color.b = static_cast<std::uint8_t>(std::clamp(color.b * dist(state), 0.0f, 255.0f));
         }
+    }
+    else
+    {
+        colors.erase(colors.begin() + n, colors.end());
     }
 
     return colors;
