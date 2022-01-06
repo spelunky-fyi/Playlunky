@@ -855,7 +855,7 @@ bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t 
         {
             if (GetKeyState(VK_CONTROL))
             {
-                mScriptManager.ToggleForceShowOptions();
+                mForceShowOptions = !mForceShowOptions;
             }
         }
         else if (mDeveloperMode && w_param == VK_F5)
@@ -881,8 +881,15 @@ void ModManager::Update()
 }
 void ModManager::Draw()
 {
-    if (mScriptManager.NeedsWindowDraw())
+    const bool show_options = mForceShowOptions || SpelunkyState_GetScreen() == SpelunkyScreen::Menu;
+    if (show_options mScriptManager.NeedsWindowDraw())
     {
+        if (!mShowCursor)
+        {
+            Spelunky_ShowCursor();
+            mShowCursor = true;
+        }
+
         ImGuiIO& io = ImGui::GetIO();
 
         ImGui::SetNextWindowSize({ io.DisplaySize.x / 4, io.DisplaySize.y });
@@ -895,10 +902,18 @@ void ModManager::Draw()
 
         ImGui::TextUnformatted("Mod Options");
 
-        mScriptManager.WindowDraw();
+        if (mScriptManager.NeedsWindowDraw() || show_options)
+        {
+            mScriptManager.WindowDraw();
+        }
 
         ImGui::PopItemWidth();
         ImGui::End();
+    }
+    else if (mShowCursor)
+    {
+        Spelunky_HideCursor();
+        mShowCursor = false;
     }
 
     mScriptManager.Draw();

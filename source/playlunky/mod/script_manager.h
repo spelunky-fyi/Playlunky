@@ -26,11 +26,6 @@ class ScriptManager
     bool IsConsoleToggled();
     void ToggleConsole();
 
-    void ToggleForceShowOptions()
-    {
-        mForceShowOptions = !mForceShowOptions;
-    }
-
   private:
     struct SpelunkyScriptDeleter
     {
@@ -53,8 +48,6 @@ class ScriptManager
         void TestScriptResult();
     };
     std::vector<RegisteredMainScript> mMods;
-    bool mForceShowOptions{ false };
-    bool mShowCursor{ false };
 
     SpelunkyConsole* mConsole{ nullptr };
 };

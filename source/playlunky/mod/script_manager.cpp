@@ -138,7 +138,7 @@ bool ScriptManager::NeedsWindowDraw()
         return false;
     }
 
-    return mForceShowOptions || SpelunkyState_GetScreen() == SpelunkyScreen::Menu;
+    return true;
 }
 void ScriptManager::WindowDraw()
 {
@@ -147,78 +147,64 @@ void ScriptManager::WindowDraw()
         return;
     }
 
-    if (mForceShowOptions || SpelunkyState_GetScreen() == SpelunkyScreen::Menu)
+    if constexpr (g_DisableScriptMods)
     {
-        if (!mShowCursor)
-        {
-            Spelunky_ShowCursor();
-            mShowCursor = true;
-        }
+        ImGui::Separator();
+        ImGui::TextWrapped("%s", "Script mods are currently unavailable... Wait for version 0.11.0 to get script support back... Thank you for your patience  <3");
+    }
 
-        if constexpr (g_DisableScriptMods)
+    if (mConsole)
+    {
+        ImGui::Separator();
+        ImGui::TextUnformatted("Dev-Console");
+        SpelunkyConsole_DrawOptions(mConsole);
+    }
+
+    for (RegisteredMainScript& mod : mMods)
+    {
+        if ((mod.Script != nullptr) && mod.Enabled)
         {
+            SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script.get());
+
+            const std::string by_author = fmt::format("by {}", meta.author);
+            const auto author_cursor_pos =
+                ImGui::GetCursorPosX() + ImGui::GetWindowWidth() - ImGui::CalcTextSize(by_author.c_str()).x - ImGui::GetScrollX() - 2 * ImGui::GetStyle().ItemSpacing.x;
+
             ImGui::Separator();
-            ImGui::TextWrapped("%s", "Script mods are currently unavailable... Wait for version 0.11.0 to get script support back... Thank you for your patience  <3");
-        }
-
-        if (mConsole)
-        {
-            ImGui::Separator();
-            ImGui::TextUnformatted("Dev-Console");
-            SpelunkyConsole_DrawOptions(mConsole);
-        }
-
-        for (RegisteredMainScript& mod : mMods)
-        {
-            if ((mod.Script != nullptr) && mod.Enabled)
+            if (ImGui::Checkbox(meta.name, &mod.ScriptEnabled))
             {
-                SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script.get());
+                SpelunkyScipt_SetEnabled(mod.Script.get(), mod.ScriptEnabled);
+            }
 
-                const std::string by_author = fmt::format("by {}", meta.author);
-                const auto author_cursor_pos =
-                    ImGui::GetCursorPosX() + ImGui::GetWindowWidth() - ImGui::CalcTextSize(by_author.c_str()).x - ImGui::GetScrollX() - 2 * ImGui::GetStyle().ItemSpacing.x;
-
-                ImGui::Separator();
-                if (ImGui::Checkbox(meta.name, &mod.ScriptEnabled))
-                {
-                    SpelunkyScipt_SetEnabled(mod.Script.get(), mod.ScriptEnabled);
-                }
-
-                if (meta.version != nullptr && std::strlen(meta.version) > 0)
-                {
-                    ImGui::SameLine();
-                    ImGui::TextUnformatted("|");
-                    ImGui::SameLine();
-                    ImGui::Text("Version %s", meta.version);
-                }
-
+            if (meta.version != nullptr && std::strlen(meta.version) > 0)
+            {
                 ImGui::SameLine();
-                ImGui::SetCursorPosX(author_cursor_pos);
-                ImGui::TextUnformatted(by_author.c_str());
+                ImGui::TextUnformatted("|");
+                ImGui::SameLine();
+                ImGui::Text("Version %s", meta.version);
+            }
 
-                if (mod.Unsafe && !mod.ScriptEnabled)
-                {
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
-                    ImGui::TextWrapped("Warning: This mod uses unsafe commands, it could delete your files and download viruses. It probably doesn't, but it could. Only enable this mod if you trust the author.");
-                    ImGui::PopStyleColor();
-                }
+            ImGui::SameLine();
+            ImGui::SetCursorPosX(author_cursor_pos);
+            ImGui::TextUnformatted(by_author.c_str());
 
-                if (meta.description != nullptr && std::strlen(meta.description) > 0)
-                {
-                    ImGui::TextWrapped("%s", meta.description);
-                }
+            if (mod.Unsafe && !mod.ScriptEnabled)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+                ImGui::TextWrapped("Warning: This mod uses unsafe commands, it could delete your files and download viruses. It probably doesn't, but it could. Only enable this mod if you trust the author.");
+                ImGui::PopStyleColor();
+            }
 
-                if (mod.ScriptEnabled)
-                {
-                    SpelunkyScript_DrawOptions(mod.Script.get());
-                }
+            if (meta.description != nullptr && std::strlen(meta.description) > 0)
+            {
+                ImGui::TextWrapped("%s", meta.description);
+            }
+
+            if (mod.ScriptEnabled)
+            {
+                SpelunkyScript_DrawOptions(mod.Script.get());
             }
         }
-    }
-    else if (mShowCursor)
-    {
-        Spelunky_HideCursor();
-        mShowCursor = false;
     }
 }
 void ScriptManager::Draw()

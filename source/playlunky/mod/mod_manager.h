@@ -40,6 +40,9 @@ class ModManager
 
     std::filesystem::path mModsRoot;
 
+    bool mForceShowOptions{ false };
+    bool mShowCursor{ false };
+
     bool mDeveloperMode;
     bool mConsoleMode;
     std::string mModSaveGameOverride;
