@@ -54,14 +54,15 @@ class SpritePainter
         Image source_image;
         Image color_mod_image;
 
-        Image source_sprite;
-        Image color_mod_sprite;
-        Image preview_sprite;
-
-        struct ID3D11Texture2D* texture;
-        struct ID3D11ShaderResourceView* shader_resource_view;
         std::vector<ColorRGB8> unique_colors;
         std::vector<ColorRGB8> chosen_colors;
+
+        std::vector<Image> source_sprites;
+        std::vector<Image> color_mod_sprites;
+        std::vector<Image> preview_sprites;
+
+        std::vector<struct ID3D11Texture2D*> textures;
+        std::vector<struct ID3D11ShaderResourceView*> shader_resource_views;
     };
     struct PendingRepaint
     {

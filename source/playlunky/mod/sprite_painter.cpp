@@ -10,6 +10,8 @@
 #include "util/on_scope_exit.h"
 #include "virtual_filesystem.h"
 
+#include <numeric>
+
 #include <d3d11.h>
 #include <spel2.h>
 
@@ -124,18 +126,37 @@ void SpritePainter::WindowDraw()
             };
             static const auto trigger_texture_upload = [](auto& sheet)
             {
-                sheet.preview_sprite = ColorBlend(sheet.color_mod_sprite.Copy(), sheet.source_sprite.Clone());
-                ChangeD3D11Texture(sheet.texture, sheet.preview_sprite.GetData(), sheet.preview_sprite.GetWidth(), sheet.preview_sprite.GetHeight());
+                for (size_t i = 0; i < sheet.preview_sprites.size(); i++)
+                {
+                    Image& preview_sprite = sheet.preview_sprites[i];
+                    preview_sprite = ColorBlend(sheet.color_mod_sprites[i].Copy(), sheet.source_sprites[i].Clone());
+                    ChangeD3D11Texture(sheet.textures[i], preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
+                }
             };
-
-            const auto window_width = ImGui::GetWindowWidth();
-            ImGui::Separator();
-            ImGui::SetCursorPosX((window_width - static_cast<float>(sheet.preview_sprite.GetWidth())) * 0.5f);
-            ImGui::Image(sheet.shader_resource_view, ImVec2{
-                                                         static_cast<float>(sheet.preview_sprite.GetWidth()),
-                                                         static_cast<float>(sheet.preview_sprite.GetHeight()),
-                                                     });
             const auto item_spacing = ImGui::GetStyle().ItemSpacing.x;
+            const auto window_width = ImGui::GetWindowWidth();
+            const auto total_image_width = std::accumulate(
+                sheet.preview_sprites.begin(),
+                sheet.preview_sprites.end(),
+                0.0f,
+                [item_spacing](const float current, const Image& preview_sprite) -> float
+                {
+                    return current + static_cast<float>(preview_sprite.GetWidth()) + item_spacing;
+                });
+
+            ImGui::Separator();
+            ImGui::SetCursorPosX((window_width - total_image_width + item_spacing) * 0.5f);
+            for (size_t i = 0; i < sheet.shader_resource_views.size(); i++)
+            {
+                if (i != 0)
+                {
+                    ImGui::SameLine();
+                }
+                ImGui::Image(sheet.shader_resource_views[i], ImVec2{
+                                                                 static_cast<float>(sheet.preview_sprites[i].GetWidth()),
+                                                                 static_cast<float>(sheet.preview_sprites[i].GetHeight()),
+                                                             });
+            }
             const auto button_width = ImGui::GetFrameHeight();
             const auto button_plus_spacing = button_width + item_spacing;
             const auto num_pickers_per_row = static_cast<std::size_t>(std::floor(window_width / button_plus_spacing)) - 1;
@@ -168,7 +189,10 @@ void SpritePainter::WindowDraw()
                         static_cast<std::uint8_t>(f_color[1] * 255.0f),
                         static_cast<std::uint8_t>(f_color[2] * 255.0f),
                     };
-                    sheet.color_mod_sprite = ReplaceColor(std::move(sheet.color_mod_sprite), color, new_color);
+                    for (Image& color_mod_sprite : sheet.color_mod_sprites)
+                    {
+                        color_mod_sprite = ReplaceColor(std::move(color_mod_sprite), color, new_color);
+                    }
                     trigger_texture_upload(sheet);
                     color = new_color;
                     trigger_repaint(&sheet);
@@ -198,7 +222,10 @@ void SpritePainter::WindowDraw()
             {
                 const auto prev_colors = std::move(sheet.chosen_colors);
                 sheet.chosen_colors = GenerateDistinctRandomColors(prev_colors.size());
-                sheet.color_mod_sprite = ReplaceColors(std::move(sheet.color_mod_sprite), prev_colors, sheet.chosen_colors);
+                for (Image& color_mod_sprite : sheet.color_mod_sprites)
+                {
+                    color_mod_sprite = ReplaceColors(std::move(color_mod_sprite), prev_colors, sheet.chosen_colors);
+                }
                 trigger_texture_upload(sheet);
                 trigger_repaint(&sheet);
             }
@@ -254,17 +281,52 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
             sheet.color_mod_image.Load(sheet.full_path);
         }
 
-        auto [sub_image, sub_image_region] = sheet.source_image.GetFirstSprite();
-        auto color_mod_sub_image = sheet.color_mod_image.GetSubImage(sub_image_region).Clone();
-        sub_image = ColorBlend(color_mod_sub_image.Copy(), sub_image.Clone());
-
-        sheet.source_sprite = std::move(sub_image);
-        sheet.color_mod_sprite = std::move(color_mod_sub_image);
-        sheet.preview_sprite = sheet.source_sprite.Clone();
-
-        CreateD3D11Texture(&sheet.texture, &sheet.shader_resource_view, sheet.preview_sprite.GetData(), sheet.preview_sprite.GetWidth(), sheet.preview_sprite.GetHeight());
-        sheet.unique_colors = GetUniqueColors(sheet.color_mod_image);
+        sheet.unique_colors = sheet.color_mod_image.GetUniqueColors();
         sheet.chosen_colors = sheet.unique_colors;
+
+        sheet.source_sprites.clear();
+        sheet.color_mod_sprites.clear();
+        sheet.preview_sprites.clear();
+
+        for (size_t i = 0; i < sheet.textures.size(); i++)
+        {
+            sheet.textures[i]->Release();
+            sheet.shader_resource_views[i]->Release();
+        }
+
+        sheet.textures.clear();
+        sheet.shader_resource_views.clear();
+
+        {
+            auto colors = sheet.unique_colors;
+            auto all_sprites = sheet.source_image.GetSprites();
+            for (auto& [sprite, sub_region] : all_sprites)
+            {
+                Image color_mod_sprite = sheet.color_mod_image.GetSubImage(sub_region);
+                const std::vector<ColorRGB8> this_sprite_colors = color_mod_sprite.GetUniqueColors();
+                for (ColorRGB8 color : this_sprite_colors)
+                {
+                    if (algo::contains(colors, color))
+                    {
+                        algo::erase(colors, color);
+                        if (!color_mod_sprite.IsEmpty())
+                        {
+                            sheet.source_sprites.push_back(sprite.Clone());
+                            sheet.color_mod_sprites.push_back(std::move(color_mod_sprite));
+                            sheet.preview_sprites.push_back(ColorBlend(sheet.color_mod_sprites.back().Copy(), sprite.Clone()));
+
+                            const Image& preview_sprite = sheet.preview_sprites.back();
+                            CreateD3D11Texture(&sheet.textures.emplace_back(), &sheet.shader_resource_views.emplace_back(), preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
+                        }
+                    }
+                }
+
+                if (colors.empty())
+                {
+                    break;
+                }
+            }
+        }
     }
 }
 bool SpritePainter::RepaintImage(const std::filesystem::path& full_path, const std::filesystem::path& db_destination)

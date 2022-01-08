@@ -1,6 +1,7 @@
 #include "image.h"
 
 #include "log.h"
+#include "util/algorithms.h"
 #include "util/format.h"
 #include "util/span_util.h"
 
@@ -183,6 +184,15 @@ Image Image::GetSubImage(ImageTiling tiling, ImageSubRegion region) const
 
 std::pair<Image, ImageSubRegion> Image::GetFirstSprite() const
 {
+    std::vector<std::pair<Image, ImageSubRegion>> all_sprites = GetSprites();
+    if (all_sprites.empty())
+    {
+        return {};
+    }
+    return std::move(all_sprites.front());
+}
+std::vector<std::pair<Image, ImageSubRegion>> Image::GetSprites() const
+{
     if (mImpl == nullptr)
     {
         return {};
@@ -194,10 +204,6 @@ std::pair<Image, ImageSubRegion> Image::GetFirstSprite() const
     cv::Mat binary;
     cv::threshold(channels[3], binary, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
 
-    cv::Mat kernel;
-    cv::getStructuringElement(cv::MORPH_RECT, { 1, 1 });
-    cv::dilate(binary, binary, kernel);
-
     std::vector<cv::Mat> contours;
     cv::findContours(binary, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
@@ -206,23 +212,55 @@ std::pair<Image, ImageSubRegion> Image::GetFirstSprite() const
         return {};
     }
 
-    ImageSubRegion sub_region{ static_cast<std::int32_t>(mImpl->Width), static_cast<std::int32_t>(mImpl->Height) };
-
-    for (const cv::Mat& contour : contours)
+    std::vector<std::pair<cv::Mat, ImageSubRegion>> contours_and_regions;
+    for (cv::Mat& contour : contours)
     {
         cv::Rect rect = cv::boundingRect(contour);
-        if (rect.x * rect.x + rect.y * rect.y < sub_region.x * sub_region.x + sub_region.y * sub_region.y)
+        const ImageSubRegion sub_region{
+            .x{ rect.x },
+            .y{ rect.y },
+            .width{ static_cast<std::uint32_t>(rect.width) },
+            .height{ static_cast<std::uint32_t>(rect.height) }
+        };
+        contours_and_regions.push_back({ std::move(contour), sub_region });
+    }
+    std::sort(contours_and_regions.begin(), contours_and_regions.end(), [](const auto& lhs, const auto& rhs)
+              { return lhs.second.x * lhs.second.x + lhs.second.y * lhs.second.y < rhs.second.x * rhs.second.x + rhs.second.y * rhs.second.y; });
+
+    std::vector<std::pair<Image, ImageSubRegion>> images;
+    for (const auto& [contour, sub_region] : contours_and_regions)
+    {
+        Image sub_image = GetSubImage(sub_region);
+        std::vector<ColorRGB8> unique_colors = sub_image.GetUniqueColors();
+        if (sub_image.mImpl != nullptr)
         {
-            sub_region = ImageSubRegion{
-                .x{ rect.x },
-                .y{ rect.y },
-                .width{ static_cast<std::uint32_t>(rect.width) },
-                .height{ static_cast<std::uint32_t>(rect.height) }
-            };
+            images.push_back({ std::move(sub_image), sub_region });
         }
     }
+    return images;
+}
 
-    return { GetSubImage(sub_region), sub_region };
+std::vector<ColorRGB8> Image::GetUniqueColors(std::size_t max_numbers) const
+{
+    if (mImpl == nullptr)
+    {
+        return {};
+    }
+
+    std::vector<ColorRGB8> unique_colors;
+    for (const cv::Vec4b& cv_pixel : cv::Mat_<cv::Vec4b>(mImpl->Image))
+    {
+        const ColorRGB8& pixel = reinterpret_cast<const ColorRGB8&>(cv_pixel);
+        if (cv_pixel[3] == 255 && !algo::contains(unique_colors, pixel))
+        {
+            unique_colors.push_back(pixel);
+            if (unique_colors.size() >= max_numbers)
+            {
+                break;
+            }
+        }
+    }
+    return unique_colors;
 }
 
 void Image::Resize(ImageSize new_size, ScalingFilter filter)
@@ -356,7 +394,9 @@ void Image::DebugShow() const
 {
     try
     {
-        cv::imshow("some", mImpl->Image);
+        cv::Mat bgra_image;
+        cv::cvtColor(mImpl->Image, bgra_image, cv::COLOR_RGBA2BGRA);
+        cv::imshow("some", bgra_image);
         cv::waitKey();
     }
     catch (cv::Exception& e)

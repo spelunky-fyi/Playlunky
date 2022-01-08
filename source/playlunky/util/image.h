@@ -6,6 +6,8 @@
 #include <optional>
 #include <span>
 
+#include "util/color.h"
+
 struct TileDimensions
 {
     std::uint32_t x;
@@ -70,6 +72,9 @@ class Image
     Image GetSubImage(ImageTiling tiling, ImageSubRegion region) const;
 
     std::pair<Image, ImageSubRegion> GetFirstSprite() const;
+    std::vector<std::pair<Image, ImageSubRegion>> GetSprites() const;
+
+    std::vector<ColorRGB8> GetUniqueColors(std::size_t max_numbers = 16) const;
 
     void Blit(const Image& source, ImageSubRegion region);
     void Blit(const Image& source, ImageTiling tiling, ImageSubRegion region);

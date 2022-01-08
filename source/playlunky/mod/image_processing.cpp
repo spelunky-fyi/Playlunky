@@ -492,29 +492,3 @@ Image ReplaceColors(Image input_image, const std::vector<ColorRGB8>& source_colo
     }
     return input_image;
 }
-
-std::vector<ColorRGB8> GetUniqueColors(const Image& image, std::size_t max_numbers)
-{
-    std::vector<ColorRGB8> unique_colors;
-
-    std::any image_backing_handle = image.GetBackingHandle();
-    const cv::Mat** image_cv_image_ptr = std::any_cast<const cv::Mat*>(&image_backing_handle);
-
-    if (image_cv_image_ptr)
-    {
-        for (const cv::Vec4b& cv_pixel : cv::Mat_<cv::Vec4b>(**image_cv_image_ptr))
-        {
-            const ColorRGB8& pixel = reinterpret_cast<const ColorRGB8&>(cv_pixel);
-            if (cv_pixel[3] == 255 && !algo::contains(unique_colors, pixel))
-            {
-                unique_colors.push_back(pixel);
-                if (unique_colors.size() >= max_numbers)
-                {
-                    break;
-                }
-            }
-        }
-    }
-
-    return unique_colors;
-}
