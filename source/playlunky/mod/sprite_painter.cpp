@@ -197,6 +197,25 @@ void SpritePainter::WindowDraw()
                     color = new_color;
                     trigger_repaint(&sheet);
                 }
+                else if (ImGui::IsItemHovered() && !sheet.color_picker_hovered[i])
+                {
+                    for (size_t j = 0; j < sheet.preview_sprites.size(); j++)
+                    {
+                        Image color_only = ExtractColor(sheet.color_mod_sprites[j].Clone(), color);
+                        if (!color_only.IsEmpty())
+                        {
+                            Image& preview_sprite = sheet.preview_sprites[j];
+                            preview_sprite = AlphaBlend(std::move(preview_sprite), std::move(color_only));
+                            ChangeD3D11Texture(sheet.textures[j], preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
+                        }
+                    }
+                    sheet.color_picker_hovered[i] = true;
+                }
+                else if (!ImGui::IsItemHovered() && sheet.color_picker_hovered[i])
+                {
+                    trigger_texture_upload(sheet);
+                    sheet.color_picker_hovered[i] = false;
+                }
             }
 
             const auto frame_padding = ImGui::GetStyle().FramePadding.x;
@@ -370,6 +389,8 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
 
             CreateD3D11Texture(&sheet.textures.emplace_back(), &sheet.shader_resource_views.emplace_back(), preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
         }
+
+        sheet.color_picker_hovered = std::vector<bool>(sheet.chosen_colors.size(), false);
     }
 }
 bool SpritePainter::RepaintImage(const std::filesystem::path& full_path, const std::filesystem::path& db_destination)

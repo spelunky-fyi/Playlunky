@@ -381,6 +381,37 @@ inline auto set_lum = [](float r, float g, float b, float l)
     return std::tuple{ r, g, b };
 };
 
+Image AlphaBlend(Image lhs_image, Image rhs_image)
+{
+
+    if (lhs_image.GetWidth() != rhs_image.GetWidth() || lhs_image.GetHeight() != rhs_image.GetHeight())
+    {
+        lhs_image.Resize(ImageSize{ rhs_image.GetWidth(), rhs_image.GetHeight() });
+    }
+
+    std::any lhs_image_backing_handle = lhs_image.GetBackingHandle();
+    std::any rhs_image_backing_handle = rhs_image.GetBackingHandle();
+    cv::Mat** lhs_image_cv_image_ptr = std::any_cast<cv::Mat*>(&lhs_image_backing_handle);
+    cv::Mat** rhs_image_cv_image_ptr = std::any_cast<cv::Mat*>(&rhs_image_backing_handle);
+
+    if (lhs_image_cv_image_ptr && rhs_image_cv_image_ptr)
+    {
+        std::vector<cv::Mat> rhs_channels;
+        cv::split(**rhs_image_cv_image_ptr, rhs_channels);
+
+        cv::Mat& rhs_alpha_channel = rhs_channels[3];
+
+        cv::Mat rhs_alpha_mask;
+        cv::merge(std::vector<cv::Mat>{ rhs_alpha_channel, rhs_alpha_channel, rhs_alpha_channel, rhs_alpha_channel }, rhs_alpha_mask);
+        cv::multiply(cv::Scalar::all(1.0f / 255.0f), rhs_alpha_mask, rhs_alpha_mask);
+        cv::multiply(cv::Scalar::all(1.0f) - rhs_alpha_mask, **lhs_image_cv_image_ptr, **lhs_image_cv_image_ptr);
+        cv::multiply(rhs_alpha_mask, **rhs_image_cv_image_ptr, **rhs_image_cv_image_ptr);
+        cv::add(**lhs_image_cv_image_ptr, **rhs_image_cv_image_ptr, **lhs_image_cv_image_ptr);
+
+        return lhs_image;
+    }
+    return {};
+}
 Image ColorBlend(Image color_image, Image target_image)
 {
     if (color_image.GetWidth() != target_image.GetWidth() || color_image.GetHeight() != target_image.GetHeight())
@@ -415,7 +446,6 @@ Image ColorBlend(Image color_image, Image target_image)
     }
     return {};
 }
-
 Image LuminanceBlend(Image luminance_image, Image target_image)
 {
     if (luminance_image.GetWidth() != target_image.GetWidth() || luminance_image.GetHeight() != target_image.GetHeight())
@@ -470,7 +500,6 @@ Image ReplaceColor(Image input_image, ColorRGB8 source_color, ColorRGB8 target_c
 }
 Image ReplaceColors(Image input_image, const std::vector<ColorRGB8>& source_colors, const std::vector<ColorRGB8>& target_colors)
 {
-
     std::any image_backing_handle = input_image.GetBackingHandle();
     cv::Mat** image_cv_image_ptr = std::any_cast<cv::Mat*>(&image_backing_handle);
 
@@ -487,6 +516,24 @@ Image ReplaceColors(Image input_image, const std::vector<ColorRGB8>& source_colo
                                                               pixel = target_colors[i];
                                                               return;
                                                           }
+                                                      }
+                                                  });
+    }
+    return input_image;
+}
+Image ExtractColor(Image input_image, ColorRGB8 color)
+{
+    std::any image_backing_handle = input_image.GetBackingHandle();
+    cv::Mat** image_cv_image_ptr = std::any_cast<cv::Mat*>(&image_backing_handle);
+
+    if (image_cv_image_ptr)
+    {
+        (*image_cv_image_ptr)->forEach<cv::Vec4b>([&](cv::Vec4b& cv_pixel, [[maybe_unused]] const int position[])
+                                                  {
+                                                      ColorRGB8& pixel = reinterpret_cast<ColorRGB8&>(cv_pixel);
+                                                      if (pixel != color)
+                                                      {
+                                                          cv_pixel = cv::Vec4b{ 0, 0, 0, 0 };
                                                       }
                                                   });
     }
