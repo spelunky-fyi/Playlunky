@@ -304,16 +304,13 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
             sheet.color_mod_image.Resize(ImageSize{ sheet.source_image.GetWidth(), sheet.source_image.GetHeight() }, ScalingFilter::Nearest);
         }
 
-        sheet.unique_colors = sheet.color_mod_image.GetUniqueColors();
-        sheet.chosen_colors = sheet.unique_colors;
-
         sheet.source_sprites.clear();
         sheet.color_mod_sprites.clear();
         sheet.preview_sprites.clear();
 
         // Get sprites containing all colors for proper preview
         {
-            auto colors = sheet.unique_colors;
+            auto colors = sheet.color_mod_image.GetUniqueColors();
             auto all_sprites = sheet.source_image.GetSprites();
             for (auto& [sprite, sub_region] : all_sprites)
             {
@@ -386,11 +383,25 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
         sheet.shader_resource_views.clear();
         for (const Image& preview_sprite : sheet.preview_sprites)
         {
-
             CreateD3D11Texture(&sheet.textures.emplace_back(), &sheet.shader_resource_views.emplace_back(), preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
         }
 
-        sheet.color_picker_hovered = std::vector<bool>(sheet.chosen_colors.size(), false);
+        // Sort unique colors based on which image they appear in
+        {
+            for (const auto& color_mod_sprite : sheet.color_mod_sprites)
+            {
+                const std::vector<ColorRGB8> this_sprite_colors = color_mod_sprite.GetUniqueColors();
+                for (ColorRGB8 color : this_sprite_colors)
+                {
+                    if (!algo::contains(sheet.unique_colors, color))
+                    {
+                        sheet.unique_colors.push_back(color);
+                    }
+                }
+            }
+            sheet.chosen_colors = sheet.unique_colors;
+            sheet.color_picker_hovered = std::vector<bool>(sheet.chosen_colors.size(), false);
+        }
     }
 }
 bool SpritePainter::RepaintImage(const std::filesystem::path& full_path, const std::filesystem::path& db_destination)
