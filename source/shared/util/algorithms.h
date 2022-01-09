@@ -12,6 +12,31 @@ namespace algo
 {
 template<class ContainerT, class FunT>
 requires range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>
+auto all_of(ContainerT&& container, FunT&& fun)
+{
+    const auto begin_it = get_begin(container);
+    const auto end_it = get_end(container);
+    return std::all_of(begin_it, end_it, std::forward<FunT>(fun));
+}
+template<class ContainerT, class FunT>
+requires range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>
+auto any_of(ContainerT&& container, FunT&& fun)
+{
+    const auto begin_it = get_begin(container);
+    const auto end_it = get_end(container);
+    return std::any_of(begin_it, end_it, std::forward<FunT>(fun));
+}
+template<class ContainerT, class FunT>
+requires range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>
+auto none_of(ContainerT&& container, FunT&& fun)
+{
+    const auto begin_it = get_begin(container);
+    const auto end_it = get_end(container);
+    return std::none_of(begin_it, end_it, std::forward<FunT>(fun));
+}
+
+template<class ContainerT, class FunT>
+requires range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>
 void erase_if(ContainerT&& container, FunT&& fun)
 {
     const auto begin_it = get_begin(container);
@@ -95,6 +120,14 @@ bool contains(ContainerT&& container, ValueT&& value)
     const auto begin_it = get_begin(container);
     const auto end_it = get_end(container);
     return std::find(begin_it, end_it, std::forward<ValueT>(value)) != end_it;
+}
+
+template<class ContainerT>
+requires range<ContainerT>
+bool is_sub_set(ContainerT&& sub_set, ContainerT&& container)
+{
+    return all_of(std::forward<ContainerT>(sub_set), [container = std::forward<ContainerT>(container)](const auto& val)
+                  { return contains(container, val); });
 }
 
 template<class ContainerT, class ValueT>

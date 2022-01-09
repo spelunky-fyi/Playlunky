@@ -260,6 +260,7 @@ std::vector<ColorRGB8> Image::GetUniqueColors(std::size_t max_numbers) const
             }
         }
     }
+    std::sort(unique_colors.begin(), unique_colors.end());
     return unique_colors;
 }
 

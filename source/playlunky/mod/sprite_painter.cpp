@@ -288,15 +288,7 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
         sheet.color_mod_sprites.clear();
         sheet.preview_sprites.clear();
 
-        for (size_t i = 0; i < sheet.textures.size(); i++)
-        {
-            sheet.textures[i]->Release();
-            sheet.shader_resource_views[i]->Release();
-        }
-
-        sheet.textures.clear();
-        sheet.shader_resource_views.clear();
-
+        // Get sprites containing all colors for proper preview
         {
             auto colors = sheet.unique_colors;
             auto all_sprites = sheet.source_image.GetSprites();
@@ -314,9 +306,6 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
                             sheet.source_sprites.push_back(sprite.Clone());
                             sheet.color_mod_sprites.push_back(std::move(color_mod_sprite));
                             sheet.preview_sprites.push_back(ColorBlend(sheet.color_mod_sprites.back().Copy(), sprite.Clone()));
-
-                            const Image& preview_sprite = sheet.preview_sprites.back();
-                            CreateD3D11Texture(&sheet.textures.emplace_back(), &sheet.shader_resource_views.emplace_back(), preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
                         }
                     }
                 }
@@ -326,6 +315,56 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
                     break;
                 }
             }
+        }
+
+        // Reduce the amount of preview sprites to what we actually need
+        for (size_t i = 0; i < sheet.source_sprites.size();)
+        {
+            const std::vector<ColorRGB8> i_colors = sheet.color_mod_sprites[i].GetUniqueColors();
+            bool removed_i_colors = false;
+            for (size_t j = i + 1; j < sheet.source_sprites.size(); j++)
+            {
+                const std::vector<ColorRGB8> j_colors = sheet.color_mod_sprites[j].GetUniqueColors();
+                if (algo::is_sub_set(i_colors, j_colors))
+                {
+                    sheet.source_sprites.erase(sheet.source_sprites.begin() + i);
+                    sheet.color_mod_sprites.erase(sheet.color_mod_sprites.begin() + i);
+                    sheet.preview_sprites.erase(sheet.preview_sprites.begin() + i);
+                    removed_i_colors = true;
+                    break;
+                }
+                else if (algo::is_sub_set(j_colors, i_colors))
+                {
+                    sheet.source_sprites.erase(sheet.source_sprites.begin() + j);
+                    sheet.color_mod_sprites.erase(sheet.color_mod_sprites.begin() + j);
+                    sheet.preview_sprites.erase(sheet.preview_sprites.begin() + j);
+                    continue;
+                }
+                else
+                {
+                    j++;
+                }
+            }
+
+            if (!removed_i_colors)
+            {
+                i++;
+            }
+        }
+
+        // Create actual preview texture
+        for (size_t i = 0; i < sheet.textures.size(); i++)
+        {
+            sheet.textures[i]->Release();
+            sheet.shader_resource_views[i]->Release();
+        }
+
+        sheet.textures.clear();
+        sheet.shader_resource_views.clear();
+        for (const Image& preview_sprite : sheet.preview_sprites)
+        {
+
+            CreateD3D11Texture(&sheet.textures.emplace_back(), &sheet.shader_resource_views.emplace_back(), preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
         }
     }
 }
