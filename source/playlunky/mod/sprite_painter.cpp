@@ -280,6 +280,10 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
         {
             sheet.color_mod_image.Load(sheet.full_path);
         }
+        if (sheet.color_mod_image.GetWidth() != sheet.source_image.GetWidth() || sheet.color_mod_image.GetHeight() != sheet.source_image.GetHeight())
+        {
+            sheet.color_mod_image.Resize(ImageSize{ sheet.source_image.GetWidth(), sheet.source_image.GetHeight() }, ScalingFilter::Nearest);
+        }
 
         sheet.unique_colors = sheet.color_mod_image.GetUniqueColors();
         sheet.chosen_colors = sheet.unique_colors;

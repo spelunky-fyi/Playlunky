@@ -385,7 +385,7 @@ Image ColorBlend(Image color_image, Image target_image)
 {
     if (color_image.GetWidth() != target_image.GetWidth() || color_image.GetHeight() != target_image.GetHeight())
     {
-        color_image.Resize(ImageSize{ target_image.GetWidth(), target_image.GetHeight() });
+        color_image.Resize(ImageSize{ target_image.GetWidth(), target_image.GetHeight() }, ScalingFilter::Nearest);
     }
 
     std::any color_image_backing_handle = color_image.GetBackingHandle();
