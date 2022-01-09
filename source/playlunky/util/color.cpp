@@ -3,6 +3,106 @@
 #include <array>
 #include <random>
 #include <span>
+#include <utility>
+
+ColorHSL8 ConvertRGB2HSL(ColorRGB8 color_rgb)
+{
+    float r = static_cast<float>(color_rgb.r) / 255.0f;
+    float g = static_cast<float>(color_rgb.g) / 255.0f;
+    float b = static_cast<float>(color_rgb.b) / 255.0f;
+
+    float h, s, l;
+    {
+        float K = 0.f;
+        if (g < b)
+        {
+            std::swap(g, b);
+            K = -1.f;
+        }
+        if (r < g)
+        {
+            std::swap(r, g);
+            K = -2.f / 6.f - K;
+        }
+
+        const float chroma = r - (g < b ? g : b);
+        h = std::fabs(K + (g - b) / (6.f * chroma + 1e-20f));
+        s = chroma / (r + 1e-20f);
+        l = r;
+    }
+    return ColorHSL8{
+        static_cast<std::uint8_t>(h * 255.0f),
+        static_cast<std::uint8_t>(s * 255.0f),
+        static_cast<std::uint8_t>(l * 255.0f),
+    };
+}
+ColorRGB8 ConvertHSL2RGB(ColorHSL8 color_hsl)
+{
+    float h = static_cast<float>(color_hsl.r) / 255.0f;
+    float s = static_cast<float>(color_hsl.g) / 255.0f;
+    float l = static_cast<float>(color_hsl.b) / 255.0f;
+
+    float r, g, b;
+    {
+        if (s == 0.0f)
+        {
+            // gray
+            r = g = b = l;
+            return ColorHSL8{
+                static_cast<std::uint8_t>(r * 255.0f),
+                static_cast<std::uint8_t>(g * 255.0f),
+                static_cast<std::uint8_t>(b * 255.0f),
+            };
+        }
+
+        l = std::fmod(h, 1.0f) / (60.0f / 360.0f);
+        int i = (int)h;
+        float f = h - (float)i;
+        float p = l * (1.0f - s);
+        float q = l * (1.0f - s * f);
+        float t = l * (1.0f - s * (1.0f - f));
+
+        switch (i)
+        {
+        case 0:
+            r = l;
+            g = t;
+            b = p;
+            break;
+        case 1:
+            r = q;
+            g = l;
+            b = p;
+            break;
+        case 2:
+            r = p;
+            g = l;
+            b = t;
+            break;
+        case 3:
+            r = p;
+            g = q;
+            b = l;
+            break;
+        case 4:
+            r = t;
+            g = p;
+            b = l;
+            break;
+        case 5:
+        default:
+            r = l;
+            g = p;
+            b = q;
+            break;
+        }
+    }
+    return ColorHSL8{
+        static_cast<std::uint8_t>(r * 255.0f),
+        static_cast<std::uint8_t>(g * 255.0f),
+        static_cast<std::uint8_t>(b * 255.0f),
+    };
+}
 
 std::mt19937& GetRandomColorState()
 {
@@ -30,6 +130,16 @@ ColorRGB8 GenerateRandomColor()
         .g{ static_cast<std::uint8_t>(dist(state)) },
         .b{ static_cast<std::uint8_t>(dist(state)) },
     };
+}
+
+std::vector<ColorRGB8> GenerateRandomColors(std::size_t n)
+{
+    std::vector<ColorRGB8> colors;
+    for (size_t i = 0; i < n; i++)
+    {
+        colors.push_back(ColorRGB8{ static_cast<std::uint8_t>(rand() % 255), static_cast<std::uint8_t>(rand() % 255), static_cast<std::uint8_t>(rand() % 255) });
+    }
+    return colors;
 }
 
 std::vector<ColorRGB8> GenerateDistinctRandomColors(std::size_t n, bool apply_variance)

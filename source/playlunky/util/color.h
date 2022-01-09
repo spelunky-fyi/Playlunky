@@ -1,5 +1,6 @@
 #pragma once
 
+#include <compare>
 #include <vector>
 
 struct ColorRGB8
@@ -8,8 +9,9 @@ struct ColorRGB8
     std::uint8_t g;
     std::uint8_t b;
 
-    bool operator==(const ColorRGB8&) const = default;
+    std::weak_ordering operator<=>(const ColorRGB8&) const = default;
 };
+using ColorHSL8 = ColorRGB8;
 
 struct ColorRGBA8
 {
@@ -18,7 +20,7 @@ struct ColorRGBA8
     std::uint8_t b;
     std::uint8_t a;
 
-    bool operator==(const ColorRGBA8&) const = default;
+    std::weak_ordering operator<=>(const ColorRGBA8&) const = default;
 };
 
 namespace ColorLiterals
@@ -42,7 +44,12 @@ constexpr ColorRGBA8 operator"" _rgba(unsigned long long hex)
 }
 } // namespace ColorLiterals
 
+ColorHSL8 ConvertRGB2HSL(ColorRGB8 color_rgb);
+ColorRGB8 ConvertHSL2RGB(ColorHSL8 color_hsl);
+
 // Truly unique colors
 ColorRGB8 GenerateRandomColor();
+// Generates n truly random colors
+std::vector<ColorRGB8> GenerateRandomColors(std::size_t n);
 // Get a set of unique and distinct colors, only works nicely for small n
 std::vector<ColorRGB8> GenerateDistinctRandomColors(std::size_t n, bool apply_variance = true);
