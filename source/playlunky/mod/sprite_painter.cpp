@@ -388,6 +388,7 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
 
         // Sort unique colors based on which image they appear in
         {
+            sheet.unique_colors.clear();
             for (const auto& color_mod_sprite : sheet.color_mod_sprites)
             {
                 const std::vector<ColorRGB8> this_sprite_colors = color_mod_sprite.GetUniqueColors();
