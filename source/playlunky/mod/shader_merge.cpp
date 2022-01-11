@@ -361,8 +361,8 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
                                     extended_function.FunctionName.size(),
                                     real_name);
 
+                                original_shader_code.insert(newline_pos, fmt::format("{} {}\n", decl, modded_function.Body));
                                 original_shader_code.insert(newline_pos, modded_function.Preamble);
-                                original_shader_code.insert(newline_pos, fmt::format("{} {}", decl, modded_function.Body));
                             }
                         }
                     }
