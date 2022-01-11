@@ -8,14 +8,47 @@
 #include "sprite_sheet_merger.h"
 #include "util/algorithms.h"
 #include "util/on_scope_exit.h"
+#include "util/span_util.h"
 #include "virtual_filesystem.h"
 
 #include <numeric>
 
+#include <Windows.h>
+#include <base64pp.hpp>
 #include <d3d11.h>
 #include <spel2.h>
 
 inline constexpr std::uint32_t c_RepaintDelay = 500;
+
+template<size_t N>
+auto encode_base_64(const std::vector<ColorRGB8>& colors, char (&out)[N])
+{
+    std::string encoding = base64pp::encode(std::span<const std::uint8_t>{
+        reinterpret_cast<const std::uint8_t*>(colors.data()),
+        colors.size() * sizeof(ColorRGB8),
+    });
+    const size_t copy_size = std::min(N - 2, encoding.size());
+    std::memcpy(out, encoding.data(), copy_size);
+    out[copy_size] = '1';
+    out[copy_size + 1] = '\0';
+}
+template<size_t N>
+std::vector<ColorRGB8> decode_base_64(char (&in)[N])
+{
+    std::string_view encoding = in;
+    if (encoding.ends_with('1'))
+    {
+        encoding = encoding.substr(0, encoding.size() - 1);
+
+        if (std::optional<std::vector<std::uint8_t>> data = base64pp::decode(encoding))
+        {
+            std::span<std::uint8_t> data_span{ data->begin(), data->end() };
+            std::span<ColorRGB8> color_span{ span::bit_cast<ColorRGB8>(data_span) };
+            return { color_span.begin(), color_span.end() };
+        }
+    }
+    return {};
+}
 
 void CreateD3D11Texture(ID3D11Texture2D** out_texture, ID3D11ShaderResourceView** out_shader_resource_view, std::span<const std::uint8_t> data, std::uint32_t width, std::uint32_t height)
 {
@@ -111,6 +144,10 @@ bool SpritePainter::NeedsWindowDraw()
 }
 void SpritePainter::WindowDraw()
 {
+    const auto item_spacing = ImGui::GetStyle().ItemSpacing.x;
+    const auto frame_padding = ImGui::GetStyle().FramePadding.x;
+    const auto window_width = ImGui::GetWindowWidth();
+
     for (auto& sheet : m_RegisteredColorModSheets)
     {
         if (sheet.chosen_colors.size() > 0)
@@ -133,8 +170,6 @@ void SpritePainter::WindowDraw()
                     ChangeD3D11Texture(sheet.textures[i], preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
                 }
             };
-            const auto item_spacing = ImGui::GetStyle().ItemSpacing.x;
-            const auto window_width = ImGui::GetWindowWidth();
             const auto total_image_width = std::accumulate(
                 sheet.preview_sprites.begin(),
                 sheet.preview_sprites.end(),
@@ -218,14 +253,15 @@ void SpritePainter::WindowDraw()
                 }
             }
 
-            const auto frame_padding = ImGui::GetStyle().FramePadding.x;
             const auto reset_width = ImGui::CalcTextSize("Reset").x + frame_padding * 2.0f;
             const auto random_width = ImGui::CalcTextSize("Random").x + frame_padding * 2.0f;
-            const auto full_buttons_width = reset_width + random_width + item_spacing;
+            const auto share_width = ImGui::CalcTextSize("Share").x + frame_padding * 2.0f;
+            const auto full_buttons_width = reset_width + item_spacing + random_width + item_spacing + share_width;
             ImGui::SetCursorPosX((window_width - full_buttons_width) * 0.5f);
 
             const std::string reset_id = "Reset##" + sheet.full_path.string();
             const std::string random_id = "Random##" + sheet.full_path.string();
+            const std::string share_id = "Share##" + sheet.full_path.string();
 
             if (ImGui::Button(reset_id.c_str()))
             {
@@ -247,6 +283,75 @@ void SpritePainter::WindowDraw()
                 }
                 trigger_texture_upload(sheet);
                 trigger_repaint(&sheet);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button(share_id.c_str()))
+            {
+                encode_base_64(sheet.chosen_colors, sheet.colors_base64);
+                sheet.share_popup_open = true;
+                ImGui::OpenPopup("SharePopup");
+            }
+
+            if (sheet.share_popup_open && ImGui::BeginPopupModal("SharePopup", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+            {
+                const auto popup_width = 400;
+                ImGui::SetWindowSize(ImVec2{ popup_width, 0 });
+
+                const auto base64_width = ImGui::CalcTextSize(sheet.colors_base64).x + frame_padding * 2.0f;
+                ImGui::SetCursorPosX((popup_width - base64_width) * 0.5f);
+                ImGui::TextWrapped("%s", sheet.colors_base64);
+
+                const auto copy_width = ImGui::CalcTextSize("Copy").x + frame_padding * 2.0f;
+                const auto paste_width = ImGui::CalcTextSize("Paste").x + frame_padding * 2.0f;
+                const auto full_popup_buttons_width = copy_width + item_spacing + paste_width;
+                ImGui::SetCursorPosX((popup_width - full_popup_buttons_width) * 0.5f);
+
+                if (ImGui::Button("Copy"))
+                {
+                    ImGui::SetClipboardText(sheet.colors_base64);
+                    ImGui::CloseCurrentPopup();
+                    sheet.share_popup_open = false;
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Paste"))
+                {
+                    const char* clipboard_data = ImGui::GetClipboardText();
+                    strcpy_s(sheet.colors_base64, clipboard_data);
+
+                    std::vector<ColorRGB8> prev_colors = sheet.chosen_colors;
+                    sheet.chosen_colors = decode_base_64(sheet.colors_base64);
+                    if (sheet.chosen_colors.size() < sheet.unique_colors.size())
+                    {
+                        for (size_t i = sheet.chosen_colors.size(); i < sheet.unique_colors.size(); i++)
+                        {
+                            sheet.chosen_colors.push_back(sheet.unique_colors[i]);
+                        }
+                    }
+                    else
+                    {
+                        while (sheet.chosen_colors.size() > sheet.unique_colors.size())
+                        {
+                            sheet.chosen_colors.pop_back();
+                        }
+                    }
+
+                    for (Image& color_mod_sprite : sheet.color_mod_sprites)
+                    {
+                        color_mod_sprite = ReplaceColors(std::move(color_mod_sprite), prev_colors, sheet.chosen_colors);
+                    }
+
+                    trigger_texture_upload(sheet);
+                    trigger_repaint(&sheet);
+
+                    ImGui::CloseCurrentPopup();
+                    sheet.share_popup_open = false;
+                }
+
+                ImGui::EndPopup();
+            }
+            else
+            {
+                sheet.share_popup_open = false;
             }
         }
     }

@@ -64,6 +64,9 @@ class SpritePainter
         std::vector<ColorRGB8> unique_colors;
         std::vector<ColorRGB8> chosen_colors;
         std::vector<bool> color_picker_hovered;
+
+        char colors_base64[512];
+        bool share_popup_open{ false };
     };
     struct PendingRepaint
     {
