@@ -9,6 +9,7 @@
 #include <string_view>
 #include <vector>
 
+// clang-format off
 namespace
 {
     std::array<char, 64> constexpr encode_table{ 'A', 'B', 'C', 'D', 'E', 'F',
@@ -102,6 +103,7 @@ namespace
         return { byte1, byte2, byte3 };
     }
 } // namespace
+// clang-format on
 
 std::string base64pp::encode(std::span<std::uint8_t const> const input)
 {
