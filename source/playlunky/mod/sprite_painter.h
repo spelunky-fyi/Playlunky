@@ -52,11 +52,11 @@ class SpritePainter
         bool outdated;
 
         Image source_image;
-        Image color_mod_image;
+        std::vector<Image> color_mod_images;
 
         std::vector<Image> source_sprites;
-        std::vector<Image> color_mod_sprites;
         std::vector<Image> preview_sprites;
+        std::vector<std::vector<Image>> color_mod_sprites;
 
         std::vector<struct ID3D11Texture2D*> textures;
         std::vector<struct ID3D11ShaderResourceView*> shader_resource_views;

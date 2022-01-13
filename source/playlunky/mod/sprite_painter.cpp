@@ -18,7 +18,7 @@
 #include <d3d11.h>
 #include <spel2.h>
 
-inline constexpr std::uint32_t c_RepaintDelay = 500;
+inline constexpr std::uint32_t c_RepaintDelay = 1000;
 
 template<size_t N>
 auto encode_base_64(const std::vector<ColorRGB8>& colors, char (&out)[N])
@@ -48,6 +48,13 @@ std::vector<ColorRGB8> decode_base_64(char (&in)[N])
         }
     }
     return {};
+}
+std::filesystem::path append_to_stem(std::filesystem::path path, std::string addage)
+{
+    const auto old_file_name = path.filename();
+    const auto old_stem = path.stem().string();
+    const auto new_file_name = old_stem.substr(0, old_stem.size()) + addage + path.extension().string();
+    return path.replace_filename(new_file_name);
 }
 
 void CreateD3D11Texture(ID3D11Texture2D** out_texture, ID3D11ShaderResourceView** out_shader_resource_view, std::span<const std::uint8_t> data, std::uint32_t width, std::uint32_t height)
@@ -105,6 +112,24 @@ SpritePainter::~SpritePainter() = default;
 
 void SpritePainter::RegisterSheet(std::filesystem::path full_path, std::filesystem::path db_destination, bool outdated, bool deleted)
 {
+    auto remove_helper_files = [=]()
+    {
+        for (size_t i = 0;; i++)
+        {
+            const auto part_path = append_to_stem(db_destination, std::to_string(i));
+            if (std::filesystem::exists(part_path))
+            {
+                std::filesystem::remove(part_path);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        std::filesystem::remove(append_to_stem(std::filesystem::path{ db_destination }.replace_extension(".txt"), "_sprite_coords"));
+    };
+
     if (deleted)
     {
         const auto [real_path, real_db_destination] = ConvertToRealFilePair(full_path, db_destination);
@@ -117,9 +142,16 @@ void SpritePainter::RegisterSheet(std::filesystem::path full_path, std::filesyst
         {
             std::filesystem::remove(real_db_destination);
         }
+
+        remove_helper_files();
     }
     else
     {
+        if (outdated)
+        {
+            remove_helper_files();
+        }
+
         m_RegisteredColorModSheets.push_back({ std::move(full_path), std::move(db_destination), outdated });
     }
 }
@@ -128,7 +160,7 @@ void SpritePainter::FinalizeSetup(const std::filesystem::path& source_folder, co
 {
     for (auto& sheet : m_RegisteredColorModSheets)
     {
-        if (sheet.outdated || true)
+        if (sheet.outdated)
         {
             RepaintImage(sheet.full_path, sheet.db_destination);
         }
@@ -166,7 +198,10 @@ void SpritePainter::WindowDraw()
                 for (size_t i = 0; i < sheet.preview_sprites.size(); i++)
                 {
                     Image& preview_sprite = sheet.preview_sprites[i];
-                    preview_sprite = ColorBlend(sheet.color_mod_sprites[i].Copy(), sheet.source_sprites[i].Clone());
+                    for (Image& color_mod_sprite : sheet.color_mod_sprites[i])
+                    {
+                        preview_sprite = ColorBlend(color_mod_sprite.Copy(), std::move(preview_sprite));
+                    }
                     ChangeD3D11Texture(sheet.textures[i], preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
                 }
             };
@@ -197,6 +232,19 @@ void SpritePainter::WindowDraw()
             const auto num_pickers_per_row = static_cast<std::size_t>(std::floor(window_width / button_plus_spacing)) - 1;
             for (size_t i = 0; i < sheet.chosen_colors.size(); i++)
             {
+                static const auto trigger_partial_texture_upload = [](auto& sheet, auto j, bool do_blend)
+                {
+                    for (size_t i = 0; i < sheet.preview_sprites.size(); i++)
+                    {
+                        Image& preview_sprite = sheet.preview_sprites[i];
+                        if (do_blend)
+                        {
+                            preview_sprite = ColorBlend(sheet.color_mod_sprites[i][j].Copy(), std::move(preview_sprite));
+                        }
+                        ChangeD3D11Texture(sheet.textures[i], preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
+                    }
+                };
+
                 if (i % num_pickers_per_row == 0)
                 {
                     const auto num_pickers_left = sheet.chosen_colors.size() - i;
@@ -224,11 +272,11 @@ void SpritePainter::WindowDraw()
                         static_cast<std::uint8_t>(f_color[1] * 255.0f),
                         static_cast<std::uint8_t>(f_color[2] * 255.0f),
                     };
-                    for (Image& color_mod_sprite : sheet.color_mod_sprites)
+                    for (std::vector<Image>& color_mod_sprites : sheet.color_mod_sprites)
                     {
-                        color_mod_sprite = ReplaceColor(std::move(color_mod_sprite), color, new_color);
+                        color_mod_sprites[i] = ReplaceColor(std::move(color_mod_sprites[i]), color, new_color);
                     }
-                    trigger_texture_upload(sheet);
+                    trigger_partial_texture_upload(sheet, i, true);
                     color = new_color;
                     trigger_repaint(&sheet);
                 }
@@ -236,10 +284,10 @@ void SpritePainter::WindowDraw()
                 {
                     for (size_t j = 0; j < sheet.preview_sprites.size(); j++)
                     {
-                        Image color_only = ExtractColor(sheet.color_mod_sprites[j].Clone(), color);
+                        Image color_only = sheet.color_mod_sprites[j][i].Copy();
                         if (!color_only.IsEmpty())
                         {
-                            Image& preview_sprite = sheet.preview_sprites[j];
+                            Image preview_sprite = sheet.preview_sprites[j].Clone();
                             preview_sprite = AlphaBlend(std::move(preview_sprite), std::move(color_only));
                             ChangeD3D11Texture(sheet.textures[j], preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
                         }
@@ -248,7 +296,7 @@ void SpritePainter::WindowDraw()
                 }
                 else if (!ImGui::IsItemHovered() && sheet.color_picker_hovered[i])
                 {
-                    trigger_texture_upload(sheet);
+                    trigger_partial_texture_upload(sheet, i, false);
                     sheet.color_picker_hovered[i] = false;
                 }
             }
@@ -277,9 +325,12 @@ void SpritePainter::WindowDraw()
             {
                 const auto prev_colors = std::move(sheet.chosen_colors);
                 sheet.chosen_colors = GenerateDistinctRandomColors(prev_colors.size());
-                for (Image& color_mod_sprite : sheet.color_mod_sprites)
+                for (std::vector<Image>& color_mod_sprites : sheet.color_mod_sprites)
                 {
-                    color_mod_sprite = ReplaceColors(std::move(color_mod_sprite), prev_colors, sheet.chosen_colors);
+                    for (size_t i = 0; i < prev_colors.size(); i++)
+                    {
+                        color_mod_sprites[i] = ReplaceColor(std::move(color_mod_sprites[i]), prev_colors[i], sheet.chosen_colors[i]);
+                    }
                 }
                 trigger_texture_upload(sheet);
                 trigger_repaint(&sheet);
@@ -335,9 +386,12 @@ void SpritePainter::WindowDraw()
                         }
                     }
 
-                    for (Image& color_mod_sprite : sheet.color_mod_sprites)
+                    for (std::vector<Image>& color_mod_sprites : sheet.color_mod_sprites)
                     {
-                        color_mod_sprite = ReplaceColors(std::move(color_mod_sprite), prev_colors, sheet.chosen_colors);
+                        for (size_t i = 0; i < prev_colors.size(); i++)
+                        {
+                            color_mod_sprites[i] = ReplaceColor(std::move(color_mod_sprites[i]), prev_colors[i], sheet.chosen_colors[i]);
+                        }
                     }
 
                     trigger_texture_upload(sheet);
@@ -366,8 +420,15 @@ void SpritePainter::Update(const std::filesystem::path& source_folder, const std
         {
             algo::erase_if(m_PendingRepaints, [this](PendingRepaint& pending_repaint)
                            {
-                               Image color_mod = ReplaceColors(pending_repaint.sheet->color_mod_image.Clone(), pending_repaint.sheet->unique_colors, pending_repaint.sheet->chosen_colors);
-                               color_mod.Write(pending_repaint.sheet->db_destination);
+                               Image color_mod_image = ReplaceColor(pending_repaint.sheet->color_mod_images[0].Clone(), pending_repaint.sheet->unique_colors[0], pending_repaint.sheet->chosen_colors[0]);
+                               color_mod_image.Write(append_to_stem(pending_repaint.sheet->db_destination, "0"));
+                               for (size_t i = 1; i < pending_repaint.sheet->color_mod_images.size(); i++)
+                               {
+                                   Image color_mod_blend_image = ReplaceColor(pending_repaint.sheet->color_mod_images[i].Clone(), pending_repaint.sheet->unique_colors[i], pending_repaint.sheet->chosen_colors[i]);
+                                   color_mod_blend_image.Write(append_to_stem(pending_repaint.sheet->db_destination, std::to_string(i)));
+                                   color_mod_image = AlphaBlend(std::move(color_mod_image), std::move(color_mod_blend_image));
+                               }
+                               color_mod_image.Write(pending_repaint.sheet->db_destination);
                                return RepaintImage(pending_repaint.sheet->full_path, pending_repaint.sheet->db_destination);
                            });
             if (m_HasPendingRepaints && m_PendingRepaints.empty())
@@ -396,84 +457,229 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
             }
         }
 
+        sheet.color_mod_images.clear();
+
         if (std::filesystem::exists(sheet.db_destination))
         {
-            sheet.color_mod_image.Load(sheet.db_destination);
+            // Read in all color masks, the order is already correct
+            std::vector<ColorRGB8> all_colors;
+            for (size_t i = 0;; i++)
+            {
+                const auto part_path = append_to_stem(sheet.db_destination, std::to_string(i));
+                if (std::filesystem::exists(part_path))
+                {
+                    Image& partial_image = sheet.color_mod_images.emplace_back();
+                    partial_image.Load(part_path);
+                    all_colors.push_back(partial_image.GetFirstColor().value());
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            // Read the sprite coordinates from file
+            std::vector<ImageSubRegion> sprite_regions;
+            if (auto coord_file = std::ifstream(append_to_stem(std::filesystem::path{ sheet.db_destination }.replace_extension(".txt"), "_sprite_coords")))
+            {
+                size_t num_sprites;
+                coord_file >> num_sprites;
+                sprite_regions.resize(num_sprites);
+                for (ImageSubRegion& region : sprite_regions)
+                {
+                    coord_file >> region.x >> region.y >> region.width >> region.height;
+                }
+            }
+
+            // Fetch the sprites
+            for (auto sub_region : sprite_regions)
+            {
+                sheet.source_sprites.push_back(sheet.source_image.GetSubImage(sub_region));
+                std::vector<Image> color_mod_sprite_split;
+                for (auto& image : sheet.color_mod_images)
+                {
+                    color_mod_sprite_split.push_back(image.GetSubImage(sub_region));
+                }
+                Image preview_sprite = sheet.source_sprites.back().Clone();
+                for (Image& color_mod_sprite : color_mod_sprite_split)
+                {
+                    preview_sprite = ColorBlend(color_mod_sprite.Copy(), std::move(preview_sprite));
+                }
+                sheet.preview_sprites.push_back(std::move(preview_sprite));
+                sheet.color_mod_sprites.push_back(std::move(color_mod_sprite_split));
+            }
+
+            // Setup colors, order is already corresponding to the sprites they appear in
+            sheet.unique_colors = std::move(all_colors);
+            sheet.chosen_colors = sheet.unique_colors;
+            sheet.color_picker_hovered = std::vector<bool>(sheet.chosen_colors.size(), false);
         }
         else
         {
-            sheet.color_mod_image.Load(sheet.full_path);
-        }
-        if (sheet.color_mod_image.GetWidth() != sheet.source_image.GetWidth() || sheet.color_mod_image.GetHeight() != sheet.source_image.GetHeight())
-        {
-            sheet.color_mod_image.Resize(ImageSize{ sheet.source_image.GetWidth(), sheet.source_image.GetHeight() }, ScalingFilter::Nearest);
-        }
-
-        sheet.source_sprites.clear();
-        sheet.color_mod_sprites.clear();
-        sheet.preview_sprites.clear();
-
-        // Get sprites containing all colors for proper preview
-        {
-            auto colors = sheet.color_mod_image.GetUniqueColors();
-            auto all_sprites = sheet.source_image.GetSprites();
-            for (auto& [sprite, sub_region] : all_sprites)
+            std::vector<ColorRGB8> all_colors;
             {
-                Image color_mod_sprite = sheet.color_mod_image.GetSubImage(sub_region);
-                const std::vector<ColorRGB8> this_sprite_colors = color_mod_sprite.GetUniqueColors();
-                for (ColorRGB8 color : this_sprite_colors)
+                Image color_mod_image;
+                color_mod_image.Load(sheet.full_path);
+                if (color_mod_image.GetWidth() != sheet.source_image.GetWidth() || color_mod_image.GetHeight() != sheet.source_image.GetHeight())
                 {
-                    if (algo::contains(colors, color))
+                    color_mod_image.Resize(ImageSize{ sheet.source_image.GetWidth(), sheet.source_image.GetHeight() }, ScalingFilter::Nearest);
+                }
+
+                all_colors = color_mod_image.GetUniqueColors();
+                for (auto color : all_colors)
+                {
+                    sheet.color_mod_images.push_back(ExtractColor(color_mod_image.Clone(), color));
+                }
+            }
+
+            sheet.source_sprites.clear();
+            sheet.preview_sprites.clear();
+            sheet.color_mod_sprites.clear();
+
+            // Get sprites containing all colors for proper preview
+            std::vector<ImageSubRegion> sprite_regions;
+            {
+                auto colors = all_colors;
+                auto all_sprites = sheet.source_image.GetSprites();
+                for (auto& [sprite, sub_region] : all_sprites)
+                {
+                    std::vector<Image> color_mod_sprite_split;
+                    std::vector<ColorRGB8> this_sprite_colors;
+                    for (auto& color_mod_image : sheet.color_mod_images)
                     {
-                        algo::erase(colors, color);
-                        if (!color_mod_sprite.IsEmpty())
+                        auto color_mod_sprite = color_mod_image.GetSubImage(sub_region);
+                        color_mod_sprite_split.push_back(color_mod_sprite.Copy());
+                        if (auto color_mod_sprite_color = color_mod_sprite.GetFirstColor())
                         {
-                            sheet.source_sprites.push_back(sprite.Clone());
-                            sheet.color_mod_sprites.push_back(std::move(color_mod_sprite));
-                            sheet.preview_sprites.push_back(ColorBlend(sheet.color_mod_sprites.back().Copy(), sprite.Clone()));
+                            this_sprite_colors.push_back(color_mod_sprite_color.value());
+                        }
+                    }
+                    for (auto color : this_sprite_colors)
+                    {
+                        if (algo::contains(colors, color))
+                        {
+                            algo::erase(colors, color);
+                            if (!color_mod_sprite_split.empty())
+                            {
+                                sheet.source_sprites.push_back(sprite.Clone());
+                                Image preview_sprite = sprite.Clone();
+                                for (Image& color_mod_sprite : color_mod_sprite_split)
+                                {
+                                    preview_sprite = ColorBlend(color_mod_sprite.Copy(), std::move(preview_sprite));
+                                }
+                                sheet.preview_sprites.push_back(std::move(preview_sprite));
+                                sheet.color_mod_sprites.push_back(std::move(color_mod_sprite_split));
+                                sprite_regions.push_back(sub_region);
+                            }
+                        }
+                    }
+
+                    if (colors.empty())
+                    {
+                        break;
+                    }
+                }
+            }
+
+            // Reduce the amount of preview sprites to what we actually need
+            for (size_t i = 0; i < sheet.source_sprites.size();)
+            {
+                std::vector<ColorRGB8> i_colors;
+                for (const auto& color_mod_sprite : sheet.color_mod_sprites[i])
+                {
+                    if (auto color = color_mod_sprite.GetFirstColor())
+                    {
+                        i_colors.push_back(color.value());
+                    }
+                }
+                bool removed_i_colors = false;
+                for (size_t j = i + 1; j < sheet.source_sprites.size();)
+                {
+                    std::vector<ColorRGB8> j_colors;
+                    for (auto& color_mod_sprite : sheet.color_mod_sprites[j])
+                    {
+                        if (auto color = color_mod_sprite.GetFirstColor())
+                        {
+                            j_colors.push_back(color.value());
+                        }
+                    }
+                    if (algo::is_sub_set(i_colors, j_colors))
+                    {
+                        sheet.source_sprites.erase(sheet.source_sprites.begin() + i);
+                        sheet.preview_sprites.erase(sheet.preview_sprites.begin() + i);
+                        sheet.color_mod_sprites.erase(sheet.color_mod_sprites.begin() + i);
+                        sprite_regions.erase(sprite_regions.begin() + i);
+                        removed_i_colors = true;
+                        break;
+                    }
+                    else if (algo::is_sub_set(j_colors, i_colors))
+                    {
+                        sheet.source_sprites.erase(sheet.source_sprites.begin() + j);
+                        sheet.preview_sprites.erase(sheet.preview_sprites.begin() + j);
+                        sheet.color_mod_sprites.erase(sheet.color_mod_sprites.begin() + j);
+                        sprite_regions.erase(sprite_regions.begin() + j);
+                        continue;
+                    }
+                    else
+                    {
+                        j++;
+                    }
+                }
+
+                if (!removed_i_colors)
+                {
+                    i++;
+                }
+            }
+
+            // Store the sprite coordinates to file
+            if (auto coord_file = std::ofstream(append_to_stem(std::filesystem::path{ sheet.db_destination }.replace_extension(".txt"), "_sprite_coords")))
+            {
+                coord_file << sprite_regions.size() << " ";
+                for (ImageSubRegion region : sprite_regions)
+                {
+                    coord_file << region.x << " " << region.y << " " << region.width << " " << region.height << " ";
+                }
+            }
+
+            // Sort unique colors based on which image they appear in
+            {
+                std::vector<std::ptrdiff_t> color_indices;
+                sheet.unique_colors.clear();
+                for (const auto& color_mod_sprite_split : sheet.color_mod_sprites)
+                {
+                    std::vector<std::ptrdiff_t> this_sprite_color_indices;
+                    for (size_t i = 0; i < color_mod_sprite_split.size(); i++)
+                    {
+                        if (color_mod_sprite_split[i].GetFirstColor())
+                        {
+                            this_sprite_color_indices.push_back(i);
+                        }
+                    }
+                    for (std::ptrdiff_t color_index : this_sprite_color_indices)
+                    {
+                        if (!algo::contains(color_indices, color_index))
+                        {
+                            color_indices.push_back(color_index);
+                            sheet.unique_colors.push_back(all_colors[color_index]);
                         }
                     }
                 }
 
-                if (colors.empty())
+                auto color_mod_images = std::move(sheet.color_mod_images);
+                auto color_mod_sprites = std::move(sheet.color_mod_sprites);
+                sheet.color_mod_sprites.resize(sheet.preview_sprites.size());
+                for (std::ptrdiff_t i : color_indices)
                 {
-                    break;
+                    sheet.color_mod_images.push_back(std::move(color_mod_images[i]));
+                    for (size_t j = 0; j < color_mod_sprites.size(); j++)
+                    {
+                        sheet.color_mod_sprites[j].push_back(std::move(color_mod_sprites[j][i]));
+                    }
                 }
-            }
-        }
 
-        // Reduce the amount of preview sprites to what we actually need
-        for (size_t i = 0; i < sheet.source_sprites.size();)
-        {
-            const std::vector<ColorRGB8> i_colors = sheet.color_mod_sprites[i].GetUniqueColors();
-            bool removed_i_colors = false;
-            for (size_t j = i + 1; j < sheet.source_sprites.size(); j++)
-            {
-                const std::vector<ColorRGB8> j_colors = sheet.color_mod_sprites[j].GetUniqueColors();
-                if (algo::is_sub_set(i_colors, j_colors))
-                {
-                    sheet.source_sprites.erase(sheet.source_sprites.begin() + i);
-                    sheet.color_mod_sprites.erase(sheet.color_mod_sprites.begin() + i);
-                    sheet.preview_sprites.erase(sheet.preview_sprites.begin() + i);
-                    removed_i_colors = true;
-                    break;
-                }
-                else if (algo::is_sub_set(j_colors, i_colors))
-                {
-                    sheet.source_sprites.erase(sheet.source_sprites.begin() + j);
-                    sheet.color_mod_sprites.erase(sheet.color_mod_sprites.begin() + j);
-                    sheet.preview_sprites.erase(sheet.preview_sprites.begin() + j);
-                    continue;
-                }
-                else
-                {
-                    j++;
-                }
-            }
-
-            if (!removed_i_colors)
-            {
-                i++;
+                sheet.chosen_colors = sheet.unique_colors;
+                sheet.color_picker_hovered = std::vector<bool>(sheet.chosen_colors.size(), false);
             }
         }
 
@@ -489,24 +695,6 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
         for (const Image& preview_sprite : sheet.preview_sprites)
         {
             CreateD3D11Texture(&sheet.textures.emplace_back(), &sheet.shader_resource_views.emplace_back(), preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
-        }
-
-        // Sort unique colors based on which image they appear in
-        {
-            sheet.unique_colors.clear();
-            for (const auto& color_mod_sprite : sheet.color_mod_sprites)
-            {
-                const std::vector<ColorRGB8> this_sprite_colors = color_mod_sprite.GetUniqueColors();
-                for (ColorRGB8 color : this_sprite_colors)
-                {
-                    if (!algo::contains(sheet.unique_colors, color))
-                    {
-                        sheet.unique_colors.push_back(color);
-                    }
-                }
-            }
-            sheet.chosen_colors = sheet.unique_colors;
-            sheet.color_picker_hovered = std::vector<bool>(sheet.chosen_colors.size(), false);
         }
     }
 }

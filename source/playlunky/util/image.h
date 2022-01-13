@@ -74,6 +74,7 @@ class Image
     std::pair<Image, ImageSubRegion> GetFirstSprite() const;
     std::vector<std::pair<Image, ImageSubRegion>> GetSprites() const;
 
+    std::optional<ColorRGB8> GetFirstColor() const;
     std::vector<ColorRGB8> GetUniqueColors(std::size_t max_numbers = 16) const;
 
     void Blit(const Image& source, ImageSubRegion region);
@@ -96,6 +97,7 @@ class Image
     std::any GetBackingHandle();
 
     void DebugShow() const;
+    void DebugShowWith(const Image& other) const;
 
   private:
     bool ConvertToRGBA();

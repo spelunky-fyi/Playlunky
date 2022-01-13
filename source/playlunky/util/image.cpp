@@ -240,6 +240,24 @@ std::vector<std::pair<Image, ImageSubRegion>> Image::GetSprites() const
     return images;
 }
 
+std::optional<ColorRGB8> Image::GetFirstColor() const
+{
+    if (mImpl == nullptr)
+    {
+        return std::nullopt;
+    }
+
+    for (const cv::Vec4b& cv_pixel : cv::Mat_<cv::Vec4b>(mImpl->Image))
+    {
+        const ColorRGB8& pixel = reinterpret_cast<const ColorRGB8&>(cv_pixel);
+        if (cv_pixel[3] == 255)
+        {
+            return pixel;
+        }
+    }
+
+    return std::nullopt;
+}
 std::vector<ColorRGB8> Image::GetUniqueColors(std::size_t max_numbers) const
 {
     if (mImpl == nullptr)
@@ -399,6 +417,21 @@ void Image::DebugShow() const
         cv::cvtColor(mImpl->Image, bgra_image, cv::COLOR_RGBA2BGRA);
         cv::imshow("some", bgra_image);
         cv::waitKey();
+    }
+    catch (cv::Exception& e)
+    {
+        fmt::print("{}", e.what());
+    }
+}
+void Image::DebugShowWith(const Image& other) const
+{
+    try
+    {
+        cv::Mat other_bgra_image;
+        cv::cvtColor(other.mImpl->Image, other_bgra_image, cv::COLOR_RGBA2BGRA);
+        cv::imshow("other", other_bgra_image);
+        cv::moveWindow("other", mImpl->Width + 50, 0);
+        DebugShow();
     }
     catch (cv::Exception& e)
     {
