@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <filesystem>
 #include <memory>
 #include <mutex>
@@ -35,6 +36,7 @@ class SpritePainter
     struct RegisteredColorModSheet;
     void SetupSheet(RegisteredColorModSheet& sheet);
     bool RepaintImage(const std::filesystem::path& full_path, const std::filesystem::path& db_destination);
+    bool ReloadSheet(const std::filesystem::path& full_path, const std::filesystem::path& db_destination);
 
     struct FilePair
     {
@@ -50,6 +52,16 @@ class SpritePainter
         std::filesystem::path full_path;
         std::filesystem::path db_destination;
         bool outdated;
+
+        struct SyncState
+        {
+            std::atomic_bool ready{ false };
+            std::atomic_bool needs_repaint{ true };
+            std::atomic_bool doing_repaint{ false };
+            std::atomic_bool needs_reload{ true };
+            std::atomic_bool doing_reload{ false };
+        };
+        std::unique_ptr<SyncState> sync;
 
         Image source_image;
         std::vector<Image> color_mod_images;
@@ -68,17 +80,11 @@ class SpritePainter
         char colors_base64[512];
         bool share_popup_open{ false };
     };
-    struct PendingRepaint
-    {
-        const RegisteredColorModSheet* sheet;
-    };
 
     SpriteSheetMerger& m_Merger;
     VirtualFilesystem& m_Vfs;
 
     std::vector<RegisteredColorModSheet> m_RegisteredColorModSheets;
-
-    std::vector<PendingRepaint> m_PendingRepaints;
     std::size_t m_RepaintTimestamp{ 0 };
     bool m_HasPendingRepaints{ false };
 };

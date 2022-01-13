@@ -152,7 +152,7 @@ void SpritePainter::RegisterSheet(std::filesystem::path full_path, std::filesyst
             remove_helper_files();
         }
 
-        m_RegisteredColorModSheets.push_back({ std::move(full_path), std::move(db_destination), outdated });
+        m_RegisteredColorModSheets.push_back({ std::move(full_path), std::move(db_destination), outdated, std::make_unique<RegisteredColorModSheet::SyncState>() });
     }
 }
 
@@ -184,14 +184,11 @@ void SpritePainter::WindowDraw()
     {
         if (sheet.chosen_colors.size() > 0)
         {
-            static const auto trigger_repaint = [this](auto* sheet)
+            static const auto trigger_repaint = [this](auto& sheet)
             {
                 m_HasPendingRepaints = true;
                 m_RepaintTimestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-                if (!algo::contains(m_PendingRepaints, &PendingRepaint::sheet, sheet))
-                {
-                    m_PendingRepaints.push_back(PendingRepaint{ sheet });
-                }
+                sheet.sync->needs_repaint = true;
             };
             static const auto trigger_texture_upload = [](auto& sheet)
             {
@@ -278,7 +275,7 @@ void SpritePainter::WindowDraw()
                     }
                     trigger_partial_texture_upload(sheet, i, true);
                     color = new_color;
-                    trigger_repaint(&sheet);
+                    trigger_repaint(sheet);
                 }
                 else if (ImGui::IsItemHovered() && !sheet.color_picker_hovered[i])
                 {
@@ -318,7 +315,7 @@ void SpritePainter::WindowDraw()
                     std::filesystem::remove(sheet.db_destination);
                 }
                 SetupSheet(sheet);
-                trigger_repaint(&sheet);
+                trigger_repaint(sheet);
             }
             ImGui::SameLine();
             if (ImGui::Button(random_id.c_str()))
@@ -333,7 +330,7 @@ void SpritePainter::WindowDraw()
                     }
                 }
                 trigger_texture_upload(sheet);
-                trigger_repaint(&sheet);
+                trigger_repaint(sheet);
             }
             ImGui::SameLine();
             if (ImGui::Button(share_id.c_str()))
@@ -395,7 +392,7 @@ void SpritePainter::WindowDraw()
                     }
 
                     trigger_texture_upload(sheet);
-                    trigger_repaint(&sheet);
+                    trigger_repaint(sheet);
 
                     ImGui::CloseCurrentPopup();
                     sheet.share_popup_open = false;
@@ -418,21 +415,33 @@ void SpritePainter::Update(const std::filesystem::path& source_folder, const std
         const std::size_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         if (now - m_RepaintTimestamp > c_RepaintDelay)
         {
-            algo::erase_if(m_PendingRepaints, [this](PendingRepaint& pending_repaint)
-                           {
-                               Image color_mod_image = ReplaceColor(pending_repaint.sheet->color_mod_images[0].Clone(), pending_repaint.sheet->unique_colors[0], pending_repaint.sheet->chosen_colors[0]);
-                               color_mod_image.Write(append_to_stem(pending_repaint.sheet->db_destination, "0"));
-                               for (size_t i = 1; i < pending_repaint.sheet->color_mod_images.size(); i++)
-                               {
-                                   Image color_mod_blend_image = ReplaceColor(pending_repaint.sheet->color_mod_images[i].Clone(), pending_repaint.sheet->unique_colors[i], pending_repaint.sheet->chosen_colors[i]);
-                                   color_mod_blend_image.Write(append_to_stem(pending_repaint.sheet->db_destination, std::to_string(i)));
-                                   color_mod_image = AlphaBlend(std::move(color_mod_image), std::move(color_mod_blend_image));
-                               }
-                               color_mod_image.Write(pending_repaint.sheet->db_destination);
-                               return RepaintImage(pending_repaint.sheet->full_path, pending_repaint.sheet->db_destination);
-                           });
-            if (m_HasPendingRepaints && m_PendingRepaints.empty())
+            for (auto& sheet : m_RegisteredColorModSheets)
             {
+                if (sheet.sync->ready && sheet.sync->needs_repaint && !sheet.sync->doing_repaint)
+                {
+                    sheet.sync->needs_repaint = false;
+                    sheet.sync->doing_repaint = true;
+                    std::thread([&sheet, this]() {
+                        Image color_mod_image = ReplaceColor(sheet.color_mod_images[0].Clone(), sheet.unique_colors[0], sheet.chosen_colors[0]);
+                        color_mod_image.Write(append_to_stem(sheet.db_destination, "0"));
+                        for (size_t i = 1; i < sheet.color_mod_images.size(); i++)
+                        {
+                            Image color_mod_blend_image = ReplaceColor(sheet.color_mod_images[i].Clone(), sheet.unique_colors[i], sheet.chosen_colors[i]);
+                            color_mod_blend_image.Write(append_to_stem(sheet.db_destination, std::to_string(i)));
+                            color_mod_image = AlphaBlend(std::move(color_mod_image), std::move(color_mod_blend_image));
+                        }
+                        color_mod_image.Write(sheet.db_destination);
+                        RepaintImage(sheet.full_path, sheet.db_destination);
+                        sheet.sync->doing_repaint = false;
+                    }).detach();
+                }
+            }
+            if (m_HasPendingRepaints && algo::all_of(m_RegisteredColorModSheets, [](auto& sheet) -> bool { return !(sheet.sync->needs_repaint || sheet.sync->doing_repaint); }))
+            {
+                for (auto& sheet : m_RegisteredColorModSheets)
+                {
+                    ReloadSheet(sheet.full_path, sheet.db_destination);
+                }
                 m_Merger.GenerateRequiredSheets(source_folder, destination_folder, m_Vfs, true);
                 m_HasPendingRepaints = false;
             }
@@ -696,12 +705,12 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
         {
             CreateD3D11Texture(&sheet.textures.emplace_back(), &sheet.shader_resource_views.emplace_back(), preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
         }
+
+        sheet.sync->ready = true;
     }
 }
 bool SpritePainter::RepaintImage(const std::filesystem::path& full_path, const std::filesystem::path& db_destination)
 {
-    LogInfo("Repainting image {}...", full_path.string());
-
     const auto [real_path, real_db_destination] = ConvertToRealFilePair(full_path, db_destination);
 
     if (const auto source_path = GetSourcePath(real_path))
@@ -733,25 +742,40 @@ bool SpritePainter::RepaintImage(const std::filesystem::path& full_path, const s
             // Save to .DDS
             const auto dds_db_destination = std::filesystem::path{ real_db_destination }.replace_extension(".DDS");
             ConvertRBGAToDds(repainted_image.GetData(), repainted_image.GetWidth(), repainted_image.GetHeight(), dds_db_destination);
-
-            // Make game reload
-            std::string dds_path = std::filesystem::path{ real_path }.replace_extension(".DDS").string();
-            std::replace(dds_path.begin(), dds_path.end(), '\\', '/');
-            Spelunky_ReloadTexture(dds_path.c_str());
         }
         else
         {
             // Save to .png (or possibly other source format, should work too)
             repainted_image.Write(real_db_destination);
-
-            m_Merger.RegisterSheet(real_path, true, false);
         }
-
-        LogInfo("File {} was successfully repainted...", full_path.string());
     }
 
     return true;
 }
+bool SpritePainter::ReloadSheet(const std::filesystem::path& full_path, const std::filesystem::path& db_destination)
+{
+    LogInfo("Repainting image {}...", full_path.string());
+
+    const auto [real_path, real_db_destination] = ConvertToRealFilePair(full_path, db_destination);
+
+    if (algo::contains(s_KnownTextureFiles, std::filesystem::path{ real_path }.replace_extension("").filename().string()))
+    {
+        // Make game reload directly
+        std::string dds_path = std::filesystem::path{ real_path }.replace_extension(".DDS").string();
+        std::replace(dds_path.begin(), dds_path.end(), '\\', '/');
+        Spelunky_ReloadTexture(dds_path.c_str());
+    }
+    else
+    {
+        // Do the reload through the sprite sheet merger
+        m_Merger.RegisterSheet(real_path, true, false);
+    }
+
+    LogInfo("File {} was successfully repainted...", full_path.string());
+
+    return true;
+}
+
 SpritePainter::FilePair SpritePainter::ConvertToRealFilePair(const std::filesystem::path& full_path, const std::filesystem::path& db_destination)
 {
     auto rel_path = [&]()
