@@ -303,11 +303,14 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(con
     {
         for (const VfsMount& mount : mMounts)
         {
-            if (auto file_path = mount.MountImpl->GetFilePath(path))
+            if (mount.MountImpl->IsType(type))
             {
-                if (FilterPath(file_path.value(), allowed_extensions))
+                if (auto file_path = mount.MountImpl->GetFilePath(path))
                 {
-                    return file_path;
+                    if (FilterPath(file_path.value(), allowed_extensions))
+                    {
+                        return file_path;
+                    }
                 }
             }
         }
