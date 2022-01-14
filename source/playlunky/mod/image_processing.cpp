@@ -342,45 +342,6 @@ Image MakeCombinedMenuPetHeads(std::vector<std::pair<Image, std::filesystem::pat
     return std::move(monty);
 }
 
-inline auto get_lum = [](float r, float g, float b)
-{
-    return 0.3f * r + 0.59f * g + 0.11f * b;
-};
-
-inline auto set_lum = [](float r, float g, float b, float l)
-{
-    static auto clip_color = [](float r, float g, float b)
-    {
-        const float l = get_lum(r, g, b);
-        const float n = std::min(r, std::min(g, b));
-        const float x = std::max(r, std::max(g, b));
-
-        if (n < 0)
-        {
-            r = l + (((r - l) * l) / (l - n));
-            g = l + (((g - l) * l) / (l - n));
-            b = l + (((b - l) * l) / (l - n));
-        }
-
-        if (x > 1)
-        {
-            r = l + (((r - l) * (1 - l)) / (x - l));
-            g = l + (((g - l) * (1 - l)) / (x - l));
-            b = l + (((b - l) * (1 - l)) / (x - l));
-        }
-
-        return std::tuple{ r, g, b };
-    };
-
-    const float d = l - get_lum(r, g, b);
-    r += d;
-    g += d;
-    b += d;
-    std::tie(r, g, b) = clip_color(r, g, b);
-
-    return std::tuple{ r, g, b };
-};
-
 Image AlphaBlend(Image lhs_image, Image rhs_image)
 {
 
@@ -430,8 +391,8 @@ Image ColorBlend(Image color_image, Image target_image)
                                                          {
                                                              const cv::Vec4b& color_pixel = (*color_image_cv_image_ptr)->at<cv::Vec4b>(position[0], position[1]);
 
-                                                             const float color = get_lum(pixel[0] / 255.0f, pixel[1] / 255.0f, pixel[2] / 255.0f);
-                                                             const auto [fr, fg, fb] = set_lum(color_pixel[0] / 255.0f, color_pixel[1] / 255.0f, color_pixel[2] / 255.0f, color);
+                                                             const float color = GetLuminance(pixel[0] / 255.0f, pixel[1] / 255.0f, pixel[2] / 255.0f);
+                                                             const auto [fr, fg, fb] = SetLuminance(color_pixel[0] / 255.0f, color_pixel[1] / 255.0f, color_pixel[2] / 255.0f, color);
                                                              const auto r = static_cast<uchar>(std::clamp(fr * 255.0f, 0.0f, 255.0f));
                                                              const auto g = static_cast<uchar>(std::clamp(fg * 255.0f, 0.0f, 255.0f));
                                                              const auto b = static_cast<uchar>(std::clamp(fb * 255.0f, 0.0f, 255.0f));
@@ -463,8 +424,8 @@ Image LuminanceBlend(Image luminance_image, Image target_image)
         (*target_image_cv_image_ptr)->forEach<cv::Vec4b>([&](cv::Vec4b& pixel, const int position[])
                                                          {
                                                              const cv::Vec4b& luminance_pixel = (*luminance_image_cv_image_ptr)->at<cv::Vec4b>(position[0], position[1]);
-                                                             const float luminance = get_lum(luminance_pixel[0] / 255.0f, luminance_pixel[1] / 255.0f, luminance_pixel[2] / 255.0f);
-                                                             const auto [fr, fg, fb] = set_lum(pixel[0] / 255.0f, pixel[1] / 255.0f, pixel[2] / 255.0f, luminance);
+                                                             const float luminance = GetLuminance(luminance_pixel[0] / 255.0f, luminance_pixel[1] / 255.0f, luminance_pixel[2] / 255.0f);
+                                                             const auto [fr, fg, fb] = SetLuminance(pixel[0] / 255.0f, pixel[1] / 255.0f, pixel[2] / 255.0f, luminance);
                                                              const auto r = static_cast<uchar>(std::clamp(fr * 255.0f, 0.0f, 255.0f));
                                                              const auto g = static_cast<uchar>(std::clamp(fg * 255.0f, 0.0f, 255.0f));
                                                              const auto b = static_cast<uchar>(std::clamp(fb * 255.0f, 0.0f, 255.0f));

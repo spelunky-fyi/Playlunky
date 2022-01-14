@@ -5,6 +5,44 @@
 #include <span>
 #include <utility>
 
+float GetLuminance(float r, float g, float b)
+{
+    return 0.3f * r + 0.59f * g + 0.11f * b;
+}
+std::tuple<float, float, float> SetLuminance(float r, float g, float b, float l)
+{
+    static auto clip_color = [](float r, float g, float b)
+    {
+        const float l = GetLuminance(r, g, b);
+        const float n = std::min(r, std::min(g, b));
+        const float x = std::max(r, std::max(g, b));
+
+        if (n < 0)
+        {
+            r = l + (((r - l) * l) / (l - n));
+            g = l + (((g - l) * l) / (l - n));
+            b = l + (((b - l) * l) / (l - n));
+        }
+
+        if (x > 1)
+        {
+            r = l + (((r - l) * (1 - l)) / (x - l));
+            g = l + (((g - l) * (1 - l)) / (x - l));
+            b = l + (((b - l) * (1 - l)) / (x - l));
+        }
+
+        return std::tuple{ r, g, b };
+    };
+
+    const float d = l - GetLuminance(r, g, b);
+    r += d;
+    g += d;
+    b += d;
+    std::tie(r, g, b) = clip_color(r, g, b);
+
+    return std::tuple{ r, g, b };
+}
+
 ColorHSL8 ConvertRGB2HSL(ColorRGB8 color_rgb)
 {
     float r = static_cast<float>(color_rgb.r) / 255.0f;

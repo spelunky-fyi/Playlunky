@@ -44,6 +44,9 @@ constexpr ColorRGBA8 operator"" _rgba(unsigned long long hex)
 }
 } // namespace ColorLiterals
 
+float GetLuminance(float r, float g, float b);
+std::tuple<float, float, float> SetLuminance(float r, float g, float b, float l);
+
 ColorHSL8 ConvertRGB2HSL(ColorRGB8 color_rgb);
 ColorRGB8 ConvertHSL2RGB(ColorHSL8 color_hsl);
 
