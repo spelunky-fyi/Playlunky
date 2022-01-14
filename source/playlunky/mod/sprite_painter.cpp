@@ -16,6 +16,8 @@
 #include <Windows.h>
 #include <base64pp.hpp>
 #include <d3d11.h>
+#include <imgui.h>
+#include <imgui_internal.h>
 #include <spel2.h>
 
 inline constexpr std::uint32_t c_RepaintDelay = 1000;
@@ -143,17 +145,20 @@ void SpritePainter::RegisterSheet(std::filesystem::path full_path, std::filesyst
 
         std::filesystem::remove(append_to_stem(std::filesystem::path{ db_destination }.replace_extension(".txt"), "_sprite_coords"));
     }
-    
+
     if (!deleted)
     {
-        m_RegisteredColorModSheets.push_back({ std::move(full_path), std::move(db_destination), outdated, std::make_unique<RegisteredColorModSheet::SyncState>() });
+        std::lock_guard lock{ m_RegisteredColorModSheetsMutex }; // Not really necessary but doesn't hurt to be sure
+        m_RegisteredColorModSheets.emplace_back(new RegisteredColorModSheet{ std::move(full_path), std::move(db_destination), outdated });
     }
 }
 
 void SpritePainter::FinalizeSetup(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder)
 {
-    for (auto& sheet : m_RegisteredColorModSheets)
+    std::lock_guard lock{ m_RegisteredColorModSheetsMutex }; // Not really necessary but doesn't hurt to be sure
+    for (auto& sheet_ptr : m_RegisteredColorModSheets)
     {
+        auto& sheet = *sheet_ptr;
         if (sheet.outdated)
         {
             RepaintImage(sheet.full_path, sheet.db_destination);
@@ -174,15 +179,17 @@ void SpritePainter::WindowDraw()
     const auto frame_padding = ImGui::GetStyle().FramePadding.x;
     const auto window_width = ImGui::GetWindowWidth();
 
-    for (auto& sheet : m_RegisteredColorModSheets)
+    for (auto& sheet_ptr : m_RegisteredColorModSheets)
     {
+        std::lock_guard lock{ m_RegisteredColorModSheetsMutex };
+        auto& sheet = *sheet_ptr;
         if (sheet.chosen_colors.size() > 0)
         {
             static const auto trigger_repaint = [this](auto& sheet)
             {
                 m_HasPendingRepaints = true;
                 m_RepaintTimestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-                sheet.sync->needs_repaint = true;
+                sheet.needs_repaint = true;
             };
             static const auto trigger_texture_upload = [](auto& sheet, bool do_luminance_scale)
             {
@@ -223,6 +230,14 @@ void SpritePainter::WindowDraw()
                                                                  static_cast<float>(sheet.preview_sprites[i].GetHeight()),
                                                              });
             }
+
+            const bool reloading = sheet.needs_reload || sheet.doing_reload;
+            if (reloading)
+            {
+                ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+                ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+            }
+
             const auto button_width = ImGui::GetFrameHeight();
             const auto button_plus_spacing = button_width + item_spacing;
             const auto num_pickers_per_row = static_cast<std::size_t>(std::floor(window_width / button_plus_spacing)) - 1;
@@ -319,7 +334,8 @@ void SpritePainter::WindowDraw()
                 {
                     std::filesystem::remove(sheet.db_destination);
                 }
-                SetupSheet(sheet);
+                m_HasPendingReloads = true;
+                sheet.needs_reload = true;
                 trigger_repaint(sheet);
             }
             ImGui::SameLine();
@@ -343,6 +359,12 @@ void SpritePainter::WindowDraw()
                 encode_base_64(sheet.chosen_colors, sheet.colors_base64);
                 sheet.share_popup_open = true;
                 ImGui::OpenPopup("SharePopup");
+            }
+
+            if (reloading)
+            {
+                ImGui::PopItemFlag();
+                ImGui::PopStyleVar();
             }
 
             if (sheet.share_popup_open && ImGui::BeginPopupModal("SharePopup", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
@@ -415,40 +437,70 @@ void SpritePainter::WindowDraw()
 
 void SpritePainter::Update(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder)
 {
-    if (m_HasPendingRepaints)
+    if (m_HasPendingReloads)
     {
+        for (auto& sheet : m_RegisteredColorModSheets)
+        {
+            std::lock_guard lock{ m_RegisteredColorModSheetsMutex };
+            if (sheet->needs_reload && !sheet->doing_reload && !sheet->doing_repaint)
+            {
+                sheet->needs_reload = false;
+                sheet->doing_reload = true;
+                std::thread([&sheet, this]()
+                            {
+                                std::unique_ptr<RegisteredColorModSheet> new_sheet{ new RegisteredColorModSheet{ sheet->full_path, sheet->db_destination, true } };
+                                new_sheet->needs_repaint = sheet->needs_repaint.load();
+                                SetupSheet(*new_sheet);
+
+                                std::lock_guard lock{ m_RegisteredColorModSheetsMutex };
+                                std::swap(new_sheet, sheet);
+                            })
+                    .detach();
+            }
+        }
+
+        std::lock_guard lock{ m_RegisteredColorModSheetsMutex };
+        if (algo::all_of(m_RegisteredColorModSheets, [](auto& sheet) -> bool
+                         { return !(sheet->needs_reload || sheet->doing_reload); }))
+        {
+            m_HasPendingReloads = false;
+        }
+    }
+    else if (m_HasPendingRepaints)
+    {
+        // In here we don't need to lock m_RegisteredColorModSheetsMutex since we can't get here while another thread touches the sheets
         const std::size_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         if (now - m_RepaintTimestamp > c_RepaintDelay)
         {
             for (auto& sheet : m_RegisteredColorModSheets)
             {
-                if (sheet.sync->ready && sheet.sync->needs_repaint && !sheet.sync->doing_repaint)
+                if (sheet->needs_repaint && !sheet->doing_repaint)
                 {
-                    sheet.sync->needs_repaint = false;
-                    sheet.sync->doing_repaint = true;
+                    sheet->needs_repaint = false;
+                    sheet->doing_repaint = true;
                     std::thread([&sheet, this]()
                                 {
-                                    Image color_mod_image = ReplaceColor(sheet.color_mod_images[0].Clone(), sheet.unique_colors[0], sheet.chosen_colors[0]);
-                                    color_mod_image.Write(append_to_stem(sheet.db_destination, "0"));
-                                    for (size_t i = 1; i < sheet.color_mod_images.size(); i++)
+                                    Image color_mod_image = ReplaceColor(sheet->color_mod_images[0].Clone(), sheet->unique_colors[0], sheet->chosen_colors[0]);
+                                    color_mod_image.Write(append_to_stem(sheet->db_destination, "0"));
+                                    for (size_t i = 1; i < sheet->color_mod_images.size(); i++)
                                     {
-                                        Image color_mod_blend_image = ReplaceColor(sheet.color_mod_images[i].Clone(), sheet.unique_colors[i], sheet.chosen_colors[i]);
-                                        color_mod_blend_image.Write(append_to_stem(sheet.db_destination, std::to_string(i)));
+                                        Image color_mod_blend_image = ReplaceColor(sheet->color_mod_images[i].Clone(), sheet->unique_colors[i], sheet->chosen_colors[i]);
+                                        color_mod_blend_image.Write(append_to_stem(sheet->db_destination, std::to_string(i)));
                                         color_mod_image = AlphaBlend(std::move(color_mod_image), std::move(color_mod_blend_image));
                                     }
-                                    color_mod_image.Write(sheet.db_destination);
-                                    RepaintImage(sheet.full_path, sheet.db_destination);
-                                    sheet.sync->doing_repaint = false;
+                                    color_mod_image.Write(sheet->db_destination);
+                                    RepaintImage(sheet->full_path, sheet->db_destination);
+                                    sheet->doing_repaint = false;
                                 })
                         .detach();
                 }
             }
-            if (m_HasPendingRepaints && algo::all_of(m_RegisteredColorModSheets, [](auto& sheet) -> bool
-                                                     { return !(sheet.sync->needs_repaint || sheet.sync->doing_repaint); }))
+            if (algo::all_of(m_RegisteredColorModSheets, [](auto& sheet) -> bool
+                             { return !(sheet->needs_repaint || sheet->doing_repaint); }))
             {
                 for (auto& sheet : m_RegisteredColorModSheets)
                 {
-                    ReloadSheet(sheet.full_path, sheet.db_destination);
+                    ReloadSheet(sheet->full_path, sheet->db_destination);
                 }
                 m_Merger.GenerateRequiredSheets(source_folder, destination_folder, m_Vfs, true);
                 m_HasPendingRepaints = false;
@@ -725,8 +777,6 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
         {
             CreateD3D11Texture(&sheet.textures.emplace_back(), &sheet.shader_resource_views.emplace_back(), preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
         }
-
-        sheet.sync->ready = true;
     }
 }
 bool SpritePainter::RepaintImage(const std::filesystem::path& full_path, const std::filesystem::path& db_destination)

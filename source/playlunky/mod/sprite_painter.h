@@ -53,15 +53,10 @@ class SpritePainter
         std::filesystem::path db_destination;
         bool outdated;
 
-        struct SyncState
-        {
-            std::atomic_bool ready{ false };
-            std::atomic_bool needs_repaint{ false };
-            std::atomic_bool doing_repaint{ false };
-            std::atomic_bool needs_reload{ false };
-            std::atomic_bool doing_reload{ false };
-        };
-        std::unique_ptr<SyncState> sync;
+        std::atomic_bool needs_repaint{ false };
+        std::atomic_bool doing_repaint{ false };
+        bool needs_reload{ false };
+        bool doing_reload{ false };
 
         Image source_image;
         std::vector<Image> color_mod_images;
@@ -85,7 +80,11 @@ class SpritePainter
     VirtualFilesystem& m_Vfs;
     const bool m_EnableLuminanceScaling;
 
-    std::vector<RegisteredColorModSheet> m_RegisteredColorModSheets;
+    std::mutex m_RegisteredColorModSheetsMutex;
+    std::vector<std::unique_ptr<RegisteredColorModSheet>> m_RegisteredColorModSheets;
+
     std::size_t m_RepaintTimestamp{ 0 };
     bool m_HasPendingRepaints{ false };
+
+    std::atomic_bool m_HasPendingReloads{ false };
 };
