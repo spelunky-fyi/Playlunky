@@ -414,22 +414,25 @@ void SpritePainter::Update(const std::filesystem::path& source_folder, const std
                 {
                     sheet.sync->needs_repaint = false;
                     sheet.sync->doing_repaint = true;
-                    std::thread([&sheet, this]() {
-                        Image color_mod_image = ReplaceColor(sheet.color_mod_images[0].Clone(), sheet.unique_colors[0], sheet.chosen_colors[0]);
-                        color_mod_image.Write(append_to_stem(sheet.db_destination, "0"));
-                        for (size_t i = 1; i < sheet.color_mod_images.size(); i++)
-                        {
-                            Image color_mod_blend_image = ReplaceColor(sheet.color_mod_images[i].Clone(), sheet.unique_colors[i], sheet.chosen_colors[i]);
-                            color_mod_blend_image.Write(append_to_stem(sheet.db_destination, std::to_string(i)));
-                            color_mod_image = AlphaBlend(std::move(color_mod_image), std::move(color_mod_blend_image));
-                        }
-                        color_mod_image.Write(sheet.db_destination);
-                        RepaintImage(sheet.full_path, sheet.db_destination);
-                        sheet.sync->doing_repaint = false;
-                    }).detach();
+                    std::thread([&sheet, this]()
+                                {
+                                    Image color_mod_image = ReplaceColor(sheet.color_mod_images[0].Clone(), sheet.unique_colors[0], sheet.chosen_colors[0]);
+                                    color_mod_image.Write(append_to_stem(sheet.db_destination, "0"));
+                                    for (size_t i = 1; i < sheet.color_mod_images.size(); i++)
+                                    {
+                                        Image color_mod_blend_image = ReplaceColor(sheet.color_mod_images[i].Clone(), sheet.unique_colors[i], sheet.chosen_colors[i]);
+                                        color_mod_blend_image.Write(append_to_stem(sheet.db_destination, std::to_string(i)));
+                                        color_mod_image = AlphaBlend(std::move(color_mod_image), std::move(color_mod_blend_image));
+                                    }
+                                    color_mod_image.Write(sheet.db_destination);
+                                    RepaintImage(sheet.full_path, sheet.db_destination);
+                                    sheet.sync->doing_repaint = false;
+                                })
+                        .detach();
                 }
             }
-            if (m_HasPendingRepaints && algo::all_of(m_RegisteredColorModSheets, [](auto& sheet) -> bool { return !(sheet.sync->needs_repaint || sheet.sync->doing_repaint); }))
+            if (m_HasPendingRepaints && algo::all_of(m_RegisteredColorModSheets, [](auto& sheet) -> bool
+                                                     { return !(sheet.sync->needs_repaint || sheet.sync->doing_repaint); }))
             {
                 for (auto& sheet : m_RegisteredColorModSheets)
                 {
