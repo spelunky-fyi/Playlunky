@@ -598,17 +598,6 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
                 for (auto& color : all_colors)
                 {
                     Image extracted_image = ExtractColor(color_mod_image.Clone(), color);
-                    const float r = color.r / 255.0f;
-                    const float g = color.g / 255.0f;
-                    const float b = color.b / 255.0f;
-                    const auto [fr, fg, fb] = SetLuminance(r, g, b, 0.5f);
-                    const ColorRGB8 fixed_color{
-                        .r{ static_cast<std::uint8_t>(std::clamp(fr * 255.0f, 0.0f, 255.0f)) },
-                        .g{ static_cast<std::uint8_t>(std::clamp(fg * 255.0f, 0.0f, 255.0f)) },
-                        .b{ static_cast<std::uint8_t>(std::clamp(fb * 255.0f, 0.0f, 255.0f)) },
-                    };
-                    extracted_image = ReplaceColor(std::move(extracted_image), color, fixed_color);
-                    color = fixed_color;
                     sheet.color_mod_images.push_back(std::move(extracted_image));
                 }
             }
@@ -646,7 +635,7 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
                                 Image preview_sprite = sprite.Clone();
                                 for (Image& color_mod_sprite : color_mod_sprite_split)
                                 {
-                                    preview_sprite = ColorBlend(color_mod_sprite.Copy(), std::move(preview_sprite));
+                                    preview_sprite = ColorBlend(color_mod_sprite.Clone(), std::move(preview_sprite));
                                 }
                                 sheet.preview_sprites.push_back(std::move(preview_sprite));
                                 sheet.color_mod_sprites.push_back(std::move(color_mod_sprite_split));
@@ -758,10 +747,31 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
                         sheet.color_mod_sprites[j].push_back(std::move(color_mod_sprites[j][i]));
                     }
                 }
-
-                sheet.chosen_colors = sheet.unique_colors;
-                sheet.color_picker_hovered = std::vector<bool>(sheet.chosen_colors.size(), false);
             }
+
+            // Flatten luminance of all colors
+            for (size_t i = 0; i < sheet.unique_colors.size(); i++)
+            {
+                auto& color = sheet.unique_colors[i];
+                const float r = color.r / 255.0f;
+                const float g = color.g / 255.0f;
+                const float b = color.b / 255.0f;
+                const auto [fr, fg, fb] = SetLuminance(r, g, b, 0.5f);
+                const ColorRGB8 fixed_color{
+                    .r{ static_cast<std::uint8_t>(std::clamp(fr * 255.0f, 0.0f, 255.0f)) },
+                    .g{ static_cast<std::uint8_t>(std::clamp(fg * 255.0f, 0.0f, 255.0f)) },
+                    .b{ static_cast<std::uint8_t>(std::clamp(fb * 255.0f, 0.0f, 255.0f)) },
+                };
+                sheet.color_mod_images[i] = ReplaceColor(std::move(sheet.color_mod_images[i]), color, fixed_color);
+                for (auto& images : sheet.color_mod_sprites)
+                {
+                    images[i] = ReplaceColor(std::move(images[i]), color, fixed_color);
+                }
+                color = fixed_color;
+            }
+
+            sheet.chosen_colors = sheet.unique_colors;
+            sheet.color_picker_hovered = std::vector<bool>(sheet.chosen_colors.size(), false);
         }
 
         // Create actual preview texture
