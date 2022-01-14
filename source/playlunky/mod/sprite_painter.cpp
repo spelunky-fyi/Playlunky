@@ -196,12 +196,12 @@ void SpritePainter::WindowDraw()
                 for (size_t i = 0; i < sheet.preview_sprites.size(); i++)
                 {
                     Image& preview_sprite = sheet.preview_sprites[i];
+                    preview_sprite = LuminanceBlend(sheet.source_sprites[i].Copy(), std::move(preview_sprite));
                     for (Image& color_mod_sprite : sheet.color_mod_sprites[i])
                     {
                         preview_sprite = ColorBlend(color_mod_sprite.Copy(), std::move(preview_sprite));
                         if (do_luminance_scale)
                         {
-                            preview_sprite = LuminanceBlend(sheet.source_sprites[i].Copy(), std::move(preview_sprite));
                             preview_sprite = LuminanceScale(color_mod_sprite.Copy(), std::move(preview_sprite));
                         }
                     }
@@ -254,8 +254,7 @@ void SpritePainter::WindowDraw()
                             preview_sprite = ColorBlend(color_mod_sprite.Copy(), std::move(preview_sprite));
                             if (do_luminance_scale)
                             {
-                                preview_sprite = LuminanceBlend(sheet.source_sprites[i].Copy(), std::move(preview_sprite));
-                                preview_sprite = LuminanceScale(color_mod_sprite.Copy(), std::move(preview_sprite));
+                                preview_sprite = LuminanceScale(color_mod_sprite.Copy(), sheet.source_sprites[i].Copy(), std::move(preview_sprite));
                             }
                         }
                         ChangeD3D11Texture(sheet.textures[i], preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());

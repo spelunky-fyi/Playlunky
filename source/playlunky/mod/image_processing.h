@@ -14,6 +14,7 @@ Image AlphaBlend(Image lhs_image, Image rhs_image);
 Image ColorBlend(Image color_image, Image target_image);
 Image LuminanceBlend(Image luminance_image, Image target_image);
 Image LuminanceScale(Image luminance_scale_image, Image target_image);
+Image LuminanceScale(Image luminance_scale_image, Image base_luminance_image, Image target_image);
 
 Image ReplaceColor(Image input_image, ColorRGB8 source_color, ColorRGB8 target_color);
 Image ReplaceColors(Image input_image, const std::vector<ColorRGB8>& source_colors, const std::vector<ColorRGB8>& target_colors);
