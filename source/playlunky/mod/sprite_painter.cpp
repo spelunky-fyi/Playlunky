@@ -191,6 +191,8 @@ void SpritePainter::WindowDraw()
                     for (Image& color_mod_sprite : sheet.color_mod_sprites[i])
                     {
                         preview_sprite = ColorBlend(color_mod_sprite.Copy(), std::move(preview_sprite));
+                        preview_sprite = LuminanceBlend(sheet.source_sprites[i].Copy(), std::move(preview_sprite));
+                        preview_sprite = LuminanceScale(color_mod_sprite.Copy(), std::move(preview_sprite));
                     }
                     ChangeD3D11Texture(sheet.textures[i], preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
                 }
@@ -229,7 +231,10 @@ void SpritePainter::WindowDraw()
                         Image& preview_sprite = sheet.preview_sprites[i];
                         if (do_blend)
                         {
-                            preview_sprite = ColorBlend(sheet.color_mod_sprites[i][j].Copy(), std::move(preview_sprite));
+                            Image& color_mod_sprite = sheet.color_mod_sprites[i][j];
+                            preview_sprite = ColorBlend(color_mod_sprite.Copy(), std::move(preview_sprite));
+                            preview_sprite = LuminanceBlend(sheet.source_sprites[i].Copy(), std::move(preview_sprite));
+                            preview_sprite = LuminanceScale(color_mod_sprite.Copy(), std::move(preview_sprite));
                         }
                         ChangeD3D11Texture(sheet.textures[i], preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
                     }
@@ -531,9 +536,21 @@ void SpritePainter::SetupSheet(RegisteredColorModSheet& sheet)
                 }
 
                 all_colors = color_mod_image.GetUniqueColors();
-                for (auto color : all_colors)
+                for (auto& color : all_colors)
                 {
-                    sheet.color_mod_images.push_back(ExtractColor(color_mod_image.Clone(), color));
+                    Image extracted_image = ExtractColor(color_mod_image.Clone(), color);
+                    const float r = color.r / 255.0f;
+                    const float g = color.g / 255.0f;
+                    const float b = color.b / 255.0f;
+                    const auto [fr, fg, fb] = SetLuminance(r, g, b, 0.5f);
+                    const ColorRGB8 fixed_color{
+                        .r{ static_cast<std::uint8_t>(std::clamp(fr * 255.0f, 0.0f, 255.0f)) },
+                        .g{ static_cast<std::uint8_t>(std::clamp(fg * 255.0f, 0.0f, 255.0f)) },
+                        .b{ static_cast<std::uint8_t>(std::clamp(fb * 255.0f, 0.0f, 255.0f)) },
+                    };
+                    extracted_image = ReplaceColor(std::move(extracted_image), color, fixed_color);
+                    color = fixed_color;
+                    sheet.color_mod_images.push_back(std::move(extracted_image));
                 }
             }
 
@@ -715,15 +732,18 @@ bool SpritePainter::RepaintImage(const std::filesystem::path& full_path, const s
         repainted_image.Load(source_path.value());
 
         Image color_mod_image;
+        bool do_luminance_scale = false;
         if (std::filesystem::exists(db_destination))
         {
             color_mod_image.Load(db_destination);
+            do_luminance_scale = true;
         }
         else
         {
             color_mod_image.Load(full_path);
         }
-        repainted_image = ColorBlend(std::move(color_mod_image), std::move(repainted_image));
+
+        repainted_image = ColorBlend(color_mod_image.Copy(), std::move(repainted_image));
 
         const auto luminance_image_path = ReplaceColExtension(full_path, "_lumin");
         if (std::filesystem::exists(luminance_image_path))
@@ -731,6 +751,11 @@ bool SpritePainter::RepaintImage(const std::filesystem::path& full_path, const s
             Image luminance_mod_image;
             luminance_mod_image.Load(luminance_image_path);
             repainted_image = LuminanceBlend(std::move(luminance_mod_image), std::move(repainted_image));
+        }
+
+        if (do_luminance_scale)
+        {
+            repainted_image = LuminanceScale(color_mod_image.Copy(), std::move(repainted_image));
         }
 
         if (algo::contains(s_KnownTextureFiles, std::filesystem::path{ real_path }.replace_extension("").filename().string()))
