@@ -112,8 +112,21 @@ SpritePainter::~SpritePainter() = default;
 
 void SpritePainter::RegisterSheet(std::filesystem::path full_path, std::filesystem::path db_destination, bool outdated, bool deleted)
 {
-    auto remove_helper_files = [=]()
+    if (outdated || deleted)
     {
+        const auto [real_path, real_db_destination] = ConvertToRealFilePair(full_path, db_destination);
+        if (algo::contains(s_KnownTextureFiles, std::filesystem::path{ real_path }.replace_extension("").filename().string()))
+        {
+            const auto dds_db_destination = std::filesystem::path{ real_db_destination }.replace_extension(".DDS");
+            std::filesystem::remove(dds_db_destination);
+        }
+        else
+        {
+            std::filesystem::remove(real_db_destination);
+        }
+
+        std::filesystem::remove(db_destination);
+
         for (size_t i = 0;; i++)
         {
             const auto part_path = append_to_stem(db_destination, std::to_string(i));
@@ -128,30 +141,10 @@ void SpritePainter::RegisterSheet(std::filesystem::path full_path, std::filesyst
         }
 
         std::filesystem::remove(append_to_stem(std::filesystem::path{ db_destination }.replace_extension(".txt"), "_sprite_coords"));
-    };
-
-    if (deleted)
-    {
-        const auto [real_path, real_db_destination] = ConvertToRealFilePair(full_path, db_destination);
-        if (algo::contains(s_KnownTextureFiles, std::filesystem::path{ real_path }.replace_extension("").filename().string()))
-        {
-            const auto dds_db_destination = std::filesystem::path{ real_db_destination }.replace_extension(".DDS");
-            std::filesystem::remove(dds_db_destination);
-        }
-        else
-        {
-            std::filesystem::remove(real_db_destination);
-        }
-
-        remove_helper_files();
     }
-    else
+    
+    if (!deleted)
     {
-        if (outdated)
-        {
-            remove_helper_files();
-        }
-
         m_RegisteredColorModSheets.push_back({ std::move(full_path), std::move(db_destination), outdated, std::make_unique<RegisteredColorModSheet::SyncState>() });
     }
 }
