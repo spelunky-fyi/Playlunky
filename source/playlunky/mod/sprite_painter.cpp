@@ -103,9 +103,10 @@ void ChangeD3D11Texture(ID3D11Texture2D* texture, std::span<const std::uint8_t> 
     device_context->Unmap(texture, 0);
 }
 
-SpritePainter::SpritePainter(SpriteSheetMerger& merger, VirtualFilesystem& vfs, const PlaylunkySettings& /*settings*/)
+SpritePainter::SpritePainter(SpriteSheetMerger& merger, VirtualFilesystem& vfs, const PlaylunkySettings& settings)
     : m_Merger{ merger }
     , m_Vfs{ vfs }
+    , m_EnableLuminanceScaling{ settings.GetBool("sprite_settings", "enable_luminance_scaling", true) }
 {
 }
 SpritePainter::~SpritePainter() = default;
@@ -183,7 +184,7 @@ void SpritePainter::WindowDraw()
                 m_RepaintTimestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
                 sheet.sync->needs_repaint = true;
             };
-            static const auto trigger_texture_upload = [](auto& sheet)
+            static const auto trigger_texture_upload = [](auto& sheet, bool do_luminance_scale)
             {
                 for (size_t i = 0; i < sheet.preview_sprites.size(); i++)
                 {
@@ -191,8 +192,11 @@ void SpritePainter::WindowDraw()
                     for (Image& color_mod_sprite : sheet.color_mod_sprites[i])
                     {
                         preview_sprite = ColorBlend(color_mod_sprite.Copy(), std::move(preview_sprite));
-                        preview_sprite = LuminanceBlend(sheet.source_sprites[i].Copy(), std::move(preview_sprite));
-                        preview_sprite = LuminanceScale(color_mod_sprite.Copy(), std::move(preview_sprite));
+                        if (do_luminance_scale)
+                        {
+                            preview_sprite = LuminanceBlend(sheet.source_sprites[i].Copy(), std::move(preview_sprite));
+                            preview_sprite = LuminanceScale(color_mod_sprite.Copy(), std::move(preview_sprite));
+                        }
                     }
                     ChangeD3D11Texture(sheet.textures[i], preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
                 }
@@ -224,7 +228,7 @@ void SpritePainter::WindowDraw()
             const auto num_pickers_per_row = static_cast<std::size_t>(std::floor(window_width / button_plus_spacing)) - 1;
             for (size_t i = 0; i < sheet.chosen_colors.size(); i++)
             {
-                static const auto trigger_partial_texture_upload = [](auto& sheet, auto j, bool do_blend)
+                static const auto trigger_partial_texture_upload = [](auto& sheet, auto j, bool do_blend, bool do_luminance_scale)
                 {
                     for (size_t i = 0; i < sheet.preview_sprites.size(); i++)
                     {
@@ -233,8 +237,11 @@ void SpritePainter::WindowDraw()
                         {
                             Image& color_mod_sprite = sheet.color_mod_sprites[i][j];
                             preview_sprite = ColorBlend(color_mod_sprite.Copy(), std::move(preview_sprite));
-                            preview_sprite = LuminanceBlend(sheet.source_sprites[i].Copy(), std::move(preview_sprite));
-                            preview_sprite = LuminanceScale(color_mod_sprite.Copy(), std::move(preview_sprite));
+                            if (do_luminance_scale)
+                            {
+                                preview_sprite = LuminanceBlend(sheet.source_sprites[i].Copy(), std::move(preview_sprite));
+                                preview_sprite = LuminanceScale(color_mod_sprite.Copy(), std::move(preview_sprite));
+                            }
                         }
                         ChangeD3D11Texture(sheet.textures[i], preview_sprite.GetData(), preview_sprite.GetWidth(), preview_sprite.GetHeight());
                     }
@@ -271,7 +278,7 @@ void SpritePainter::WindowDraw()
                     {
                         color_mod_sprites[i] = ReplaceColor(std::move(color_mod_sprites[i]), color, new_color);
                     }
-                    trigger_partial_texture_upload(sheet, i, true);
+                    trigger_partial_texture_upload(sheet, i, true, m_EnableLuminanceScaling);
                     color = new_color;
                     trigger_repaint(sheet);
                 }
@@ -291,7 +298,7 @@ void SpritePainter::WindowDraw()
                 }
                 else if (!ImGui::IsItemHovered() && sheet.color_picker_hovered[i])
                 {
-                    trigger_partial_texture_upload(sheet, i, false);
+                    trigger_partial_texture_upload(sheet, i, false, m_EnableLuminanceScaling);
                     sheet.color_picker_hovered[i] = false;
                 }
             }
@@ -327,7 +334,7 @@ void SpritePainter::WindowDraw()
                         color_mod_sprites[i] = ReplaceColor(std::move(color_mod_sprites[i]), prev_colors[i], sheet.chosen_colors[i]);
                     }
                 }
-                trigger_texture_upload(sheet);
+                trigger_texture_upload(sheet, m_EnableLuminanceScaling);
                 trigger_repaint(sheet);
             }
             ImGui::SameLine();
@@ -389,7 +396,7 @@ void SpritePainter::WindowDraw()
                         }
                     }
 
-                    trigger_texture_upload(sheet);
+                    trigger_texture_upload(sheet, m_EnableLuminanceScaling);
                     trigger_repaint(sheet);
 
                     ImGui::CloseCurrentPopup();
@@ -753,7 +760,7 @@ bool SpritePainter::RepaintImage(const std::filesystem::path& full_path, const s
             repainted_image = LuminanceBlend(std::move(luminance_mod_image), std::move(repainted_image));
         }
 
-        if (do_luminance_scale)
+        if (m_EnableLuminanceScaling && do_luminance_scale)
         {
             repainted_image = LuminanceScale(color_mod_image.Copy(), std::move(repainted_image));
         }

@@ -65,6 +65,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 
     const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
     const bool enable_raw_string_loading = !speedrun_mode && settings.GetBool("script_settings", "enable_raw_string_loading", false);
+    const bool enable_customizable_sheets = !speedrun_mode && settings.GetBool("sprite_settings", "enable_customizable_sheets", true);
 
     if (speedrun_mode)
     {
@@ -396,6 +397,11 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                                        mSpritePainter = std::make_unique<SpritePainter>(*mSpriteSheetMerger, vfs, settings);
                                                    }
 
+                                                   if (!enable_customizable_sheets)
+                                                   {
+                                                       deleted = true;
+                                                   }
+
                                                    // Does not necessarily write dds to the db
                                                    const auto db_destination = mod_db_folder / rel_asset_path;
                                                    mSpritePainter->RegisterSheet(full_asset_path, db_destination, outdated, deleted);
@@ -586,6 +592,11 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
         else if (!mSpritePainter)
         {
             mSpriteSheetMerger.reset();
+        }
+
+        if (!enable_customizable_sheets && mSpritePainter)
+        {
+            mSpritePainter.reset();
         }
 
         LogInfo("Merging shader mods...");

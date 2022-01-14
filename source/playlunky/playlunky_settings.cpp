@@ -57,6 +57,8 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
                                                   KnownSetting{ .Name{ "generate_sticker_pixel_art" }, .DefaultValue{ "on" } },
                                                   KnownSetting{ .Name{ "enable_sprite_hot_loading" }, .DefaultValue{ "off" } },
                                                   KnownSetting{ .Name{ "sprite_hot_load_delay" }, .DefaultValue{ "400" }, .Comment{ "Increase this value if you experience crashes when a sprite is reloaded" } },
+                                                  KnownSetting{ .Name{ "enable_customizable_sheets" }, .DefaultValue{ "on" }, .Comment{ "Enables the customizable sprite sheets feature, does not work in speedrun mode" } },
+                                                  KnownSetting{ .Name{ "enable_luminance_scaling" }, .DefaultValue{ "on" }, .Comment{ "Scales luminance of customized images based on the color" } },
                                               } },
         KnownCategory{ { "key_bindings" }, {
                                                KnownSetting{ .Name{ "console" }, .DefaultValue{ "0xc0" }, .Comment{ "Default 0xc0 == ~ for US" } },

@@ -83,6 +83,7 @@ class SpritePainter
 
     SpriteSheetMerger& m_Merger;
     VirtualFilesystem& m_Vfs;
+    const bool m_EnableLuminanceScaling;
 
     std::vector<RegisteredColorModSheet> m_RegisteredColorModSheets;
     std::size_t m_RepaintTimestamp{ 0 };
