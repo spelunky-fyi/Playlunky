@@ -56,9 +56,9 @@ class SpritePainter
         struct SyncState
         {
             std::atomic_bool ready{ false };
-            std::atomic_bool needs_repaint{ true };
+            std::atomic_bool needs_repaint{ false };
             std::atomic_bool doing_repaint{ false };
-            std::atomic_bool needs_reload{ true };
+            std::atomic_bool needs_reload{ false };
             std::atomic_bool doing_reload{ false };
         };
         std::unique_ptr<SyncState> sync;
