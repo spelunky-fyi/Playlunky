@@ -273,6 +273,11 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
         }
     }
 
+    for (ExtendedFunction& extended_function : extended_functions)
+    {
+        std::reverse(extended_function.Extensions.begin(), extended_function.Extensions.end());
+    }
+
     for (const ExtendedFunction& extended_function : extended_functions)
     {
         const auto name_pos = original_shader_code.find(extended_function.FunctionName);
