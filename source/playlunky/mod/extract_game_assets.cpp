@@ -95,6 +95,7 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
 
         const ChaCha::bytes_t empty_hash{ unsigned char('\xDE'), unsigned char('\xAD'), unsigned char('\xBE'), unsigned char('\xEF') };
 
+        std::vector<std::string> file_path_strings(files.size());
         std::vector<ChaCha::bytes_t> hashes(files.size());
         for (std::size_t i = 0; i < files.size(); i++)
         {
@@ -104,7 +105,9 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
             }
             else
             {
-                const auto file_string = files[i].string();
+                auto& file_string = file_path_strings[i];
+                file_string = files[i].string();
+                std::replace(file_string.begin(), file_string.end(), '\\', '/');
                 hashes[i] = ChaCha::hash_filepath(file_string, key.Current);
             }
         }
@@ -121,8 +124,7 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
             {
                 if (match_hash(hashes[i], asset.AssetNameHash))
                 {
-                    const auto& file = files[i];
-                    const auto& file_path = file.string();
+                    const auto& file_path = file_path_strings[i];
                     ChaCha::bytes_t decryped_data;
                     std::span<const std::uint8_t> asset_data{ (std::uint8_t*)asset.Data, asset.DataSize };
                     if (asset.Encrypted)
@@ -155,6 +157,7 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
                         out_file.write(reinterpret_cast<const char*>(asset_data.data()), asset_data.size());
                     }
 
+                    const auto& file = files[i];
                     if (file.extension() == ".DDS")
                     {
                         auto converted_file = full_destination;
