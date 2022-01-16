@@ -16,7 +16,7 @@ class VirtualFilesystem;
 class SpritePainter
 {
   public:
-    SpritePainter(SpriteSheetMerger& merger, VirtualFilesystem& vfs, const PlaylunkySettings& settings);
+    SpritePainter(SpriteSheetMerger& merger, VirtualFilesystem& vfs, const PlaylunkySettings& settings, const std::filesystem::path& original_data_folder);
     SpritePainter(const SpritePainter&) = delete;
     SpritePainter(SpritePainter&&) = delete;
     SpritePainter& operator=(const SpritePainter&) = delete;
@@ -79,6 +79,7 @@ class SpritePainter
     SpriteSheetMerger& m_Merger;
     VirtualFilesystem& m_Vfs;
     const bool m_EnableLuminanceScaling;
+    const std::filesystem::path m_OriginalDataFolder;
 
     std::mutex m_RegisteredColorModSheetsMutex;
     std::vector<std::unique_ptr<RegisteredColorModSheet>> m_RegisteredColorModSheets;

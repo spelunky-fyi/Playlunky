@@ -394,7 +394,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                                {
                                                    if (!mSpritePainter)
                                                    {
-                                                       mSpritePainter = std::make_unique<SpritePainter>(*mSpriteSheetMerger, vfs, settings);
+                                                       mSpritePainter = std::make_unique<SpritePainter>(*mSpriteSheetMerger, vfs, settings, db_original_folder);
                                                    }
 
                                                    if (!enable_customizable_sheets)

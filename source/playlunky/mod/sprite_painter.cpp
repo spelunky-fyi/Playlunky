@@ -1,6 +1,7 @@
 #include "sprite_painter.h"
 
 #include "dds_conversion.h"
+#include "extract_game_assets.h"
 #include "image_processing.h"
 #include "known_files.h"
 #include "log.h"
@@ -105,10 +106,11 @@ void ChangeD3D11Texture(ID3D11Texture2D* texture, std::span<const std::uint8_t> 
     device_context->Unmap(texture, 0);
 }
 
-SpritePainter::SpritePainter(SpriteSheetMerger& merger, VirtualFilesystem& vfs, const PlaylunkySettings& settings)
+SpritePainter::SpritePainter(SpriteSheetMerger& merger, VirtualFilesystem& vfs, const PlaylunkySettings& settings, const std::filesystem::path& original_data_folder)
     : m_Merger{ merger }
     , m_Vfs{ vfs }
     , m_EnableLuminanceScaling{ settings.GetBool("sprite_settings", "enable_luminance_scaling", true) }
+    , m_OriginalDataFolder{ original_data_folder }
 {
 }
 SpritePainter::~SpritePainter() = default;
@@ -148,6 +150,13 @@ void SpritePainter::RegisterSheet(std::filesystem::path full_path, std::filesyst
 
     if (!deleted)
     {
+        const auto [real_path, real_db_destination] = ConvertToRealFilePair(full_path, db_destination);
+        if (algo::contains(s_KnownTextureFiles, std::filesystem::path{ real_path }.replace_extension("").filename().string()))
+        {
+            const auto target_sheet_dds = std::filesystem::path{ real_path }.replace_extension(".DDS");
+            ExtractGameAssets(std::array{ target_sheet_dds }, m_OriginalDataFolder);
+        }
+
         std::lock_guard lock{ m_RegisteredColorModSheetsMutex }; // Not really necessary but doesn't hurt to be sure
         m_RegisteredColorModSheets.emplace_back(new RegisteredColorModSheet{ std::move(full_path), std::move(db_destination), outdated });
     }
@@ -915,7 +924,16 @@ std::optional<std::filesystem::path> SpritePainter::GetSourcePath(const std::fil
         std::filesystem::path{ ".sr" },
         std::filesystem::path{ ".ras" },
     };
-    return m_Vfs.GetFilePathFilterExt(relative_path, allowed_extensions, VfsType::User);
+    std::optional<std::filesystem::path> vfs_path = m_Vfs.GetFilePathFilterExt(relative_path, allowed_extensions, VfsType::User);
+    if (!vfs_path && algo::contains(s_KnownTextureFiles, std::filesystem::path{ relative_path }.replace_extension("").filename().string()))
+    {
+        vfs_path = m_OriginalDataFolder / relative_path;
+        if (!std::filesystem::exists(vfs_path.value()))
+        {
+            vfs_path.reset();
+        }
+    }
+    return vfs_path;
 }
 std::filesystem::path SpritePainter::ReplaceColExtension(std::filesystem::path path, std::string_view replacement)
 {
