@@ -42,7 +42,7 @@ struct DetourGetGameApi
 struct DetourInitGameManager
 {
     inline static SigScan::Function<void*(__stdcall*)(void*, void*, void*, void*)> Trampoline{
-        .Signature = "\x48\xc7\x85\x18\x04\x00\x00\xfe\xff\xff\xff\x48\x89\x8d\xd0\x03\x00\x00"_sig
+        .Signature = "\x48\xc7\x85\x28\x04\x00\x00\xfe\xff\xff\xff\x48\x89\x8d\xe0\x03\x00\x00"_sig
     };
     static void* Detour(void* game_ptr, void* other_ptr, void* more_ptr, void* some_func_ptr)
     {
