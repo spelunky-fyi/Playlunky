@@ -30,7 +30,7 @@ struct TileMapping
 struct SourceSheet
 {
     std::filesystem::path Path;
-    std::optional<std::filesystem::path> RootPath;
+    std::vector<std::filesystem::path> LoadPaths;
     std::int64_t Priority{ std::numeric_limits<std::int64_t>::max() };
     SheetSize Size;
     std::vector<TileMapping> TileMap;

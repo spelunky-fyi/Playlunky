@@ -91,7 +91,7 @@ void SpriteSheetMerger::RegisterSheet(const std::filesystem::path& full_sheet, b
         .Outdated = outdated,
         .Deleted = deleted });
 }
-void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_path, const std::filesystem::path& original_data_folder, std::int64_t priority, const CustomImages& custom_images)
+void SpriteSheetMerger::RegisterCustomImages(std::string_view mod_name, std::vector<std::filesystem::path> load_paths, const std::filesystem::path& original_data_folder, std::int64_t priority, const CustomImages& custom_images)
 {
     namespace fs = std::filesystem;
 
@@ -110,14 +110,24 @@ void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_p
 
     for (const auto& [relative_path, custom_image] : custom_images)
     {
-        const auto absolute_path = base_path / relative_path;
-        if (!fs::exists(absolute_path))
+        const auto absolute_path = [&]() -> std::optional<fs::path> {
+            for (const fs::path& load_path : load_paths)
+            {
+                const fs::path absolute_path = load_path / relative_path;
+                if (fs::exists(absolute_path))
+                {
+                    return absolute_path;
+                }
+            }
+            return std::nullopt;
+        }();
+        if (!absolute_path.has_value())
         {
-            LogError("Custom image mapping from file {} is registered for mod {}, but the file does not exist in the mod...", relative_path, base_path.filename().string());
+            LogError("Custom image mapping from file {} is registered for mod {}, but the file does not exist in the mod...", relative_path, mod_name);
             continue;
         }
 
-        const Image& source_image = get_image(absolute_path);
+        const Image& source_image = get_image(absolute_path.value());
 
         for (const auto& [target_sheet, custom_image_map] : custom_image.ImageMap)
         {
@@ -130,7 +140,7 @@ void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_p
                     it,
                     SourceSheet{
                         .Path{ relative_path },
-                        .RootPath{ base_path },
+                        .LoadPaths{ std::move(load_paths) },
                         .Size{ .Width{ source_image.GetWidth() }, .Height{ source_image.GetHeight() } },
                         .TileMap{ custom_image_map } });
                 existing_target_sheet->ForceRegen = existing_target_sheet->ForceRegen || custom_image.Outdated;
@@ -143,10 +153,10 @@ void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_p
                     const auto target_file_path = original_data_folder / fs::path{ target_sheet_no_ext }.replace_extension(".png");
                     const Image& target_image = get_image(target_file_path);
 
-                    const auto source_sheets = std::vector<SourceSheet>{
+                    auto source_sheets = std::vector<SourceSheet>{
                         SourceSheet{
                             .Path{ relative_path },
-                            .RootPath{ base_path },
+                            .LoadPaths{ std::move(load_paths) },
                             .Priority{ priority },
                             .Size{ .Width{ source_image.GetWidth() }, .Height{ source_image.GetHeight() } },
                             .TileMap{ custom_image_map } }
@@ -160,7 +170,7 @@ void SpriteSheetMerger::RegisterCustomImages(const std::filesystem::path& base_p
                 }
                 else
                 {
-                    LogError("Failed extracting game asset {} required by mod {}...", target_sheet, base_path.filename().string());
+                    LogError("Failed extracting game asset {} required by mod {}...", target_sheet, mod_name);
                 }
             }
         }
@@ -291,11 +301,16 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
             {
                 auto source_file_path = [&, random_select = target_sheet.RandomSelect]() -> std::optional<fs::path>
                 {
-                    if (source_sheet.RootPath)
+                    for (const fs::path& load_path : source_sheet.LoadPaths)
                     {
-                        return source_sheet.RootPath.value() / source_sheet.Path;
+                        const fs::path absolute_path = load_path / source_sheet.Path;
+                        if (fs::exists(absolute_path))
+                        {
+                            return absolute_path;
+                        }
                     }
-                    else if (!random_select)
+
+                    if (!random_select)
                     {
                         return vfs.GetFilePathFilterExt(source_sheet.Path, allowed_extensions);
                     }
