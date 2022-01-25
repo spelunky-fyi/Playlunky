@@ -21,7 +21,8 @@
 //		0x0CABBA6E -- v0.10.0
 //		0xFEEDFACE -- v0.11.0
 //		0xFEEDFACE -- v0.12.0 (had no breaking asset changes)
-static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xFEEDFACE };
+//		0xFACECA2E -- v0.13.0
+static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xFACECA2E };
 
 ModDatabase::ModDatabase(std::filesystem::path database_folder, std::filesystem::path mod_folder, ModDatabaseFlags flags)
     : mDatabaseFolder(std::move(database_folder))
