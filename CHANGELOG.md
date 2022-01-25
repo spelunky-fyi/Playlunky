@@ -6,6 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2021-01-25
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.25.2-orange">
+
+### Changed
+- Bumped the supported version of Spelunky
+- Relaxed some speedrun mode rules to align with some stuff that has recently been allowed.
+- Move only known .lvl files to `Data/Levels`
+
+### Added
+- Added `udjat_wall_heads` as an entity sheet.
+- Option `disable_steam_achievements` to disable receiving any achievements.
+- Option `use_playunky_save` to create a separate save file from the vanilla game and use that instead. Potentially overridden by `allow_save_game_mods` or `block_save_game`.
+- Composable shader mods via `#extends`, check the Wiki for more details.
+- Sprite sheet customization via e.g. `_col.png` images.
+
+### Fixed
+- Crash on shutdown
+- Issue with sprite conversion when mods use unexpected casing in folder structure
+
 ## [0.12.0] - 2021-12-18
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.25.0b-orange">
