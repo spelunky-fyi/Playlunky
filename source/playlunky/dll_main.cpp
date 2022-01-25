@@ -13,7 +13,7 @@ __declspec(dllexport) int __stdcall _(void)
     return 0;
 }
 
-inline constexpr std::string_view s_SupportedSpelunkyVersion = "1.25.0b";
+inline constexpr std::string_view s_SupportedSpelunkyVersion = "1.25.2";
 
 BOOL WINAPI DllMain([[maybe_unused]] HINSTANCE hinst, DWORD dwReason, [[maybe_unused]] LPVOID reserved)
 {
@@ -34,7 +34,7 @@ BOOL WINAPI DllMain([[maybe_unused]] HINSTANCE hinst, DWORD dwReason, [[maybe_un
                                            "Press OK to start without Playlunky or Cancel to yolo.",
                                            version_string,
                                            s_SupportedSpelunkyVersion);
-                if (MessageBox(NULL, message.data(), NULL, MB_OKCANCEL) == IDOK)
+                if (MessageBox(NULL, message.c_str(), NULL, MB_OKCANCEL) == IDOK)
                 {
                     return TRUE;
                 }
