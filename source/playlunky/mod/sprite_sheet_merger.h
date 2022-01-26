@@ -26,7 +26,7 @@ class SpriteSheetMerger
     void GatherSheetData(bool force_regen_char_journal, bool force_regen_char_stickers);
 
     void RegisterSheet(const std::filesystem::path& full_sheet, bool outdated, bool deleted);
-    void RegisterCustomImages(std::string_view mod_name, std::vector<std::filesystem::path> load_paths, const std::filesystem::path& original_data_folder, std::int64_t priority, const CustomImages& custom_images);
+    void RegisterCustomImages(std::string_view mod_name, std::span<const std::filesystem::path> load_paths, const std::filesystem::path& original_data_folder, std::int64_t priority, const CustomImages& custom_images);
 
     bool NeedsRegeneration(const std::filesystem::path& destination_folder) const;
 

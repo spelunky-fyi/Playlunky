@@ -340,6 +340,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                 if (mod_db.IsEnabled() || mod_db.WasEnabled())
                 {
                     mod_db.UpdateDatabase();
+                    const std::vector<fs::path> mod_load_paths{ mod_db_folder, mod_folder };
                     if (mod_db.IsEnabled())
                     {
                         mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool, bool, std::optional<bool>)
@@ -351,7 +352,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                                                    mod_info.ReadExtendedInfoFromJson(full_asset_path_string);
                                                    mod_info.ReadFromDatabase(mod_db);
                                                    mod_db.SetInfo(mod_info.Dump());
-                                                   mSpriteSheetMerger->RegisterCustomImages(mod_name, { mod_db_folder, mod_folder }, db_original_folder, prio, mod_info.GetCustomImages());
+                                                   mSpriteSheetMerger->RegisterCustomImages(mod_name, mod_load_paths, db_original_folder, prio, mod_info.GetCustomImages());
                                                }
                                            });
                     }
@@ -359,7 +360,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                     {
                         mod_info.ReadFromDatabase(mod_db);
                         mod_db.SetInfo("");
-                        mSpriteSheetMerger->RegisterCustomImages(mod_name, { mod_db_folder, mod_folder }, db_original_folder, prio, mod_info.GetCustomImages());
+                        mSpriteSheetMerger->RegisterCustomImages(mod_name, mod_load_paths, db_original_folder, prio, mod_info.GetCustomImages());
                     }
                     mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool outdated, bool deleted, std::optional<bool> new_enabled_state)
                                        {

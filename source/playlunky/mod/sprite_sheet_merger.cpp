@@ -91,7 +91,7 @@ void SpriteSheetMerger::RegisterSheet(const std::filesystem::path& full_sheet, b
         .Outdated = outdated,
         .Deleted = deleted });
 }
-void SpriteSheetMerger::RegisterCustomImages(std::string_view mod_name, std::vector<std::filesystem::path> load_paths, const std::filesystem::path& original_data_folder, std::int64_t priority, const CustomImages& custom_images)
+void SpriteSheetMerger::RegisterCustomImages(std::string_view mod_name, std::span<const std::filesystem::path> load_paths, const std::filesystem::path& original_data_folder, std::int64_t priority, const CustomImages& custom_images)
 {
     namespace fs = std::filesystem;
 
@@ -140,7 +140,7 @@ void SpriteSheetMerger::RegisterCustomImages(std::string_view mod_name, std::vec
                     it,
                     SourceSheet{
                         .Path{ relative_path },
-                        .LoadPaths{ std::move(load_paths) },
+                        .LoadPaths{ load_paths.begin(), load_paths.end() },
                         .Size{ .Width{ source_image.GetWidth() }, .Height{ source_image.GetHeight() } },
                         .TileMap{ custom_image_map } });
                 existing_target_sheet->ForceRegen = existing_target_sheet->ForceRegen || custom_image.Outdated;
@@ -156,7 +156,7 @@ void SpriteSheetMerger::RegisterCustomImages(std::string_view mod_name, std::vec
                     auto source_sheets = std::vector<SourceSheet>{
                         SourceSheet{
                             .Path{ relative_path },
-                            .LoadPaths{ std::move(load_paths) },
+                            .LoadPaths{ load_paths.begin(), load_paths.end() },
                             .Priority{ priority },
                             .Size{ .Width{ source_image.GetWidth() }, .Height{ source_image.GetHeight() } },
                             .TileMap{ custom_image_map } }
