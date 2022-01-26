@@ -110,7 +110,8 @@ void SpriteSheetMerger::RegisterCustomImages(std::string_view mod_name, std::spa
 
     for (const auto& [relative_path, custom_image] : custom_images)
     {
-        const auto absolute_path = [&]() -> std::optional<fs::path> {
+        const auto absolute_path = [&]() -> std::optional<fs::path>
+        {
             for (const fs::path& load_path : load_paths)
             {
                 const fs::path absolute_path = load_path / relative_path;
