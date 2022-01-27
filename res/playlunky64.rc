@@ -3,3 +3,4 @@
 ENTITIES_JSON JSON_FILE "entities.json"
 TEXTURES_JSON JSON_FILE "textures.json"
 PET_HEADS PNG_FILE "pet_heads.png"
+EXTRA_THORNS PNG_FILE "extra_thorns.png"

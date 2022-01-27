@@ -60,6 +60,9 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
                                                   KnownSetting{ .Name{ "enable_customizable_sheets" }, .DefaultValue{ "on" }, .Comment{ "Enables the customizable sprite sheets feature, does not work in speedrun mode" } },
                                                   KnownSetting{ .Name{ "enable_luminance_scaling" }, .DefaultValue{ "on" }, .Comment{ "Scales luminance of customized images based on the color" } },
                                               } },
+        KnownCategory{ { "bug_fixes" }, {
+                                            KnownSetting{ .Name{ "missing_thorns" }, .DefaultValue{ "on" }, .Comment{ "Adds textures for the missing jungle thorns configurations" } },
+                                        } },
         KnownCategory{ { "key_bindings" }, {
                                                KnownSetting{ .Name{ "console" }, .DefaultValue{ "0xc0" }, .Comment{ "Default 0xc0 == ~ for US" } },
                                                KnownSetting{ .Name{ "console_alt" }, .DefaultValue{ "0xdc" }, .Comment{ "Default 0xdc == \\ for US" } },

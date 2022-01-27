@@ -19,3 +19,4 @@
 #define TEXTURES_JSON 103
 #define PNG_FILE 104
 #define PET_HEADS 105
+#define EXTRA_THORNS 106

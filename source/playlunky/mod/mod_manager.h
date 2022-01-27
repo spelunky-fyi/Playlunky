@@ -36,7 +36,7 @@ class ModManager
     std::unique_ptr<SpritePainter> mSpritePainter;
     std::unique_ptr<SpriteSheetMerger> mSpriteSheetMerger;
     ScriptManager mScriptManager;
-    VirtualFilesystem* mVfs;
+    VirtualFilesystem& mVfs;
 
     std::filesystem::path mModsRoot;
 

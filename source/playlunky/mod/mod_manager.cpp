@@ -1,5 +1,6 @@
 #include "mod_manager.h"
 
+#include "bug_fixes.h"
 #include "cache_audio_file.h"
 #include "dds_conversion.h"
 #include "decode_audio_file.h"
@@ -44,7 +45,7 @@ static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\
 
 ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& settings, VirtualFilesystem& vfs)
     : mSpriteSheetMerger{ new SpriteSheetMerger{ settings } }
-    , mVfs{ &vfs }
+    , mVfs{ vfs }
     , mModsRoot{ mods_root }
     , mDeveloperMode{ settings.GetBool("settings", "enable_developer_mode", false) || settings.GetBool("script_settings", "enable_developer_mode", false) }
     , mConsoleMode{ settings.GetBool("script_settings", "enable_developer_console", false) }
@@ -689,12 +690,9 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
     Spelunky_RegisterOnLoadFileFunc(FunctionPointer<Spelunky_LoadFileFunc, struct ModManagerLoadFile>(
         [this](const char* file_path, SpelunkyAllocFun alloc_fun) -> SpelunkyFileInfo*
         {
-            if (mVfs)
+            if (auto* file_info = mVfs.LoadFile(file_path, alloc_fun))
             {
-                if (auto* file_info = mVfs->LoadFile(file_path, alloc_fun))
-                {
-                    return file_info;
-                }
+                return file_info;
             }
             return nullptr;
         }));
@@ -814,15 +812,18 @@ ModManager::~ModManager()
 
 void ModManager::PostGameInit(const class PlaylunkySettings& settings)
 {
+    const auto db_folder = mModsRoot / ".db";
+    const auto db_original_folder = db_folder / "Original";
+
     if (mSpritePainter)
     {
         LogInfo("Setting up sprite painting...");
-        const auto db_folder = mModsRoot / ".db";
-        const auto db_original_folder = db_folder / "Original";
         mSpritePainter->FinalizeSetup(db_original_folder, db_folder);
     }
 
-    PatchCharacterDefinitions(*mVfs, settings);
+    PatchCharacterDefinitions(mVfs, settings);
+
+    InitBugFixes(mVfs, settings, db_folder, db_original_folder);
 
     Spelunky_InitSoundManager([](const char* file_path)
                               {
@@ -884,7 +885,7 @@ bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t 
 }
 void ModManager::Update()
 {
-    if (mSpritePainter || (mSpriteHotLoader && mVfs))
+    if (mSpritePainter || mSpriteHotLoader)
     {
         const auto db_folder = mModsRoot / ".db";
         const auto db_original_folder = db_folder / "Original";
@@ -893,9 +894,9 @@ void ModManager::Update()
             mSpritePainter->Update(db_original_folder, db_folder);
         }
 
-        if (mSpriteHotLoader && mVfs)
+        if (mSpriteHotLoader)
         {
-            mSpriteHotLoader->Update(db_original_folder, db_folder, *mVfs);
+            mSpriteHotLoader->Update(db_original_folder, db_folder, mVfs);
         }
     }
 
