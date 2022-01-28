@@ -6,9 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.13.0] - 2021-01-25
+## [0.13.0] - 2021-01-28
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.25.2-orange">
+
+### Added
+- Bugfix for vines that have 0, 3 or 4 connecting vines (thanks Omelette)
 
 ### Changed
 - Bumped the supported version of Spelunky

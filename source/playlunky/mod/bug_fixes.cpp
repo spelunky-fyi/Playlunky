@@ -94,7 +94,6 @@ bool InitBugFixes(VirtualFilesystem& /*vfs*/,
                 const auto right = g_GetNeighbouringThorns(thorns, 0.0f, -1.0f) & 0x1;
                 const auto top = g_GetNeighbouringThorns(thorns, 1.0f, 0.0f) & 0x1;
                 const auto bottom = g_GetNeighbouringThorns(thorns, -1.0f, 0.0f) & 0x1;
-                //const auto mask = top | (bottom << 1) | (left << 2) | (right << 3);
                 const auto mask = left | (right << 1) | (top << 2) | (bottom << 3);
                 const auto texture_tile = [mask]() -> uint16_t
                 {
