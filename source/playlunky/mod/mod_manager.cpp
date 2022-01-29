@@ -823,7 +823,11 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
 
     PatchCharacterDefinitions(mVfs, settings);
 
-    InitBugFixes(mVfs, settings, db_folder, db_original_folder);
+    const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
+    if (!speedrun_mode)
+    {
+        InitBugFixes(mVfs, settings, db_folder, db_original_folder);
+    }
 
     Spelunky_InitSoundManager([](const char* file_path)
                               {
