@@ -119,46 +119,42 @@ void SetupMissingThorns(Entity* thorns)
 void SetupMissingPipes(Entity* pipe)
 {
     g_SetupPipesTrampoline(pipe);
-    const auto current_texture_tile = SpelunkyEntity_GetTextureTile(pipe);
-    if (current_texture_tile == 127)
+    if (SpelunkyEntity_GetTexture(pipe) == g_ExtraPipesTextureId)
     {
-        if (SpelunkyEntity_GetTexture(pipe) == g_ExtraPipesTextureId)
+        SpelunkyEntity_SetTextureTile(pipe, 3);
+    }
+    else if (SpelunkyEntity_GetTextureTile(pipe) == 127)
+    {
+        const auto left = g_GetNeighbouringGridEntityOfSameType(pipe, 0.0f, 1.0f) & 0x1;
+        const auto right = g_GetNeighbouringGridEntityOfSameType(pipe, 0.0f, -1.0f) & 0x1;
+        const auto top = g_GetNeighbouringGridEntityOfSameType(pipe, 1.0f, 0.0f) & 0x1;
+        const auto bottom = g_GetNeighbouringGridEntityOfSameType(pipe, -1.0f, 0.0f) & 0x1;
+        const auto mask = left | (right << 1) | (top << 2) | (bottom << 3);
+        const auto texture_tile = [mask]() -> uint16_t
         {
-            SpelunkyEntity_SetTextureTile(pipe, 3);
-        }
-        else
-        {
-            const auto left = g_GetNeighbouringGridEntityOfSameType(pipe, 0.0f, 1.0f) & 0x1;
-            const auto right = g_GetNeighbouringGridEntityOfSameType(pipe, 0.0f, -1.0f) & 0x1;
-            const auto top = g_GetNeighbouringGridEntityOfSameType(pipe, 1.0f, 0.0f) & 0x1;
-            const auto bottom = g_GetNeighbouringGridEntityOfSameType(pipe, -1.0f, 0.0f) & 0x1;
-            const auto mask = left | (right << 1) | (top << 2) | (bottom << 3);
-            const auto texture_tile = [mask]() -> uint16_t
+            switch (mask)
             {
-                switch (mask)
-                {
-                case 0b1111:
-                    return 0;
-                case 0b0111:
-                    return 1;
-                case 0b1011:
-                    return 2;
-                case 0b1101:
-                    return 4;
-                case 0b1110:
-                    return 5;
-                default:
-                    LogError("Pipes have missing textures but valid setup... why?");
-                    [[fallthrough]];
-                case 0b0000:
-                    return 127;
-                }
-            }();
-            if (texture_tile != 127)
-            {
-                SpelunkyEntity_SetTexture(pipe, g_ExtraPipesTextureId);
-                SpelunkyEntity_SetTextureTile(pipe, texture_tile);
+            case 0b1111:
+                return 0;
+            case 0b0111:
+                return 1;
+            case 0b1011:
+                return 2;
+            case 0b1101:
+                return 4;
+            case 0b1110:
+                return 5;
+            default:
+                LogError("Pipes have missing textures but valid setup... why?");
+                [[fallthrough]];
+            case 0b0000:
+                return 127;
             }
+        }();
+        if (texture_tile != 127)
+        {
+            SpelunkyEntity_SetTexture(pipe, g_ExtraPipesTextureId);
+            SpelunkyEntity_SetTextureTile(pipe, texture_tile);
         }
     }
 }
