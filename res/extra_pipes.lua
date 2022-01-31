@@ -22,7 +22,7 @@ do
 end
 
 -- map player input to a direction
-function get_to_from_input(pipe, player, from)
+local function get_to_from_input(pipe, player, from)
     if player.inventory ~= nil and player.inventory.player_slot ~= -1 and pipe.animation_frame ~= 0 then
         local input = state.player_inputs.player_slots[player.inventory.player_slot].buttons
         for i, v in pairs(dirs) do
@@ -35,7 +35,7 @@ function get_to_from_input(pipe, player, from)
 end
 
 -- adjust direction if the current direction is blocked
-function adjust_to_if_blocked(pipe, from, to)
+local function adjust_to_if_blocked(pipe, from, to)
     local real_to = (function()
         if to > 0 then
             return to
@@ -74,12 +74,12 @@ end
 -- - 4 == bottom-blocked 3-way (defaults straight, unless bottom, allows input)
 -- - 5 == top-blocked 3-way (defaults straight, unless top, allows input)
 
-define_tile_code("pipe_intersection")
-set_pre_tile_code_callback(function(x, y, layer)
+local function spawn_4_way_pipe_with_decos(x, y, layer)
     local uid = spawn_grid_entity(ENT_TYPE.FLOOR_PIPE, x, y, layer)
     do
         local pipe = get_entity(uid)
         pipe:set_texture(extra_pipes_texture_id)
+        pipe.animation_frame = 3
     end
 
     set_timeout(function()
@@ -98,10 +98,26 @@ set_pre_tile_code_callback(function(x, y, layer)
             end
         end
     end, 1)
+
+    return get_entity(uid)
+end
+
+define_tile_code("pipe_intersection")
+define_tile_code("pipe_crossing")
+set_pre_tile_code_callback(function(x, y, layer)
+    local pipe = spawn_4_way_pipe_with_decos(x, y, layer)
+    pipe:set_texture(extra_pipes_texture_id)
 end, "pipe_intersection")
+set_pre_tile_code_callback(function(x, y, layer)
+    local pipe = spawn_4_way_pipe_with_decos(x, y, layer)
+    pipe:set_texture(extra_pipes_texture_id)
+    set_timeout(function()
+        pipe.animation_frame = 0
+    end, 1)
+end, "pipe_crossing")
 
 -- handling any of the dynamic direction switching
-function setup_pipe(ent)
+local function setup_pipe(ent)
     local pre_collision2 = set_pre_collision2(ent.uid, function(pipe, collider)
         -- only care about players colliding with the modified pipes
         if (collider.type.search_flags & MASK.PLAYER) ~= 0 and pipe:get_texture() == extra_pipes_texture_id then
