@@ -432,6 +432,8 @@ inline constexpr std::string_view s_KnownTextureFiles[]{
     "splash0",
     "splash1",
     "splash2",
+    "extra_thorns",
+    "extra_pipes",
 };
 inline constexpr std::string_view s_KnownAudioFiles[]{
     "AMB_Beehive",
