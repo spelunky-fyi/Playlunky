@@ -62,6 +62,7 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
                                               } },
         KnownCategory{ { "bug_fixes" }, {
                                             KnownSetting{ .Name{ "missing_thorns" }, .DefaultValue{ "on" }, .Comment{ "Adds textures for the missing jungle thorns configurations" } },
+                                            KnownSetting{ .Name{ "missing_pipes" }, .DefaultValue{ "on" }, .Comment{ "Adds textures for the missing sunken city pipes configurations and makes those pipes work, some requiring user input" } },
                                         } },
         KnownCategory{ { "key_bindings" }, {
                                                KnownSetting{ .Name{ "console" }, .DefaultValue{ "0xc0" }, .Comment{ "Default 0xc0 == ~ for US" } },

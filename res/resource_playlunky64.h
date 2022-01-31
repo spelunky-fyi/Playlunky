@@ -14,9 +14,12 @@
 #endif
 #endif
 
-#define JSON_FILE 101
-#define ENTITIES_JSON 102
-#define TEXTURES_JSON 103
-#define PNG_FILE 104
+#define TEXT_FILE 101
+#define PNG_FILE 102
+
+#define ENTITIES_JSON 103
+#define TEXTURES_JSON 104
 #define PET_HEADS 105
 #define EXTRA_THORNS 106
+#define EXTRA_PIPES 107
+#define EXTRA_PIPES_SCRIPT 108

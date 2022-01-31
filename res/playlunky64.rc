@@ -1,6 +1,8 @@
 #include "resource_playlunky64.h"
 
-ENTITIES_JSON JSON_FILE "entities.json"
-TEXTURES_JSON JSON_FILE "textures.json"
+ENTITIES_JSON TEXT_FILE "entities.json"
+TEXTURES_JSON TEXT_FILE "textures.json"
 PET_HEADS PNG_FILE "pet_heads.png"
 EXTRA_THORNS PNG_FILE "extra_thorns.png"
+EXTRA_PIPES PNG_FILE "extra_pipes.png"
+EXTRA_PIPES_SCRIPT TEXT_FILE "extra_pipes.lua"

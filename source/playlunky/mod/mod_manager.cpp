@@ -808,6 +808,8 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
 }
 ModManager::~ModManager()
 {
+    BugFixesCleanup();
+
     Spelunky_DestroySoundManager();
 
     Spelunky_RegisterOnLoadFileFunc(nullptr);
@@ -838,7 +840,7 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
     const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
     if (!speedrun_mode)
     {
-        InitBugFixes(mVfs, settings, db_folder, db_original_folder);
+        BugFixesInit(mVfs, settings, db_folder, db_original_folder);
     }
 
     Spelunky_InitSoundManager([](const char* file_path)
@@ -915,6 +917,8 @@ void ModManager::Update()
             mSpriteHotLoader->Update(db_original_folder, db_folder, mVfs);
         }
     }
+
+    BugFixesUpdate();
 
     mScriptManager.Update();
 }

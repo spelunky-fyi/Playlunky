@@ -84,7 +84,7 @@ void EntityDataExtractor::PreloadEntityMappings()
             auto acquire_json_resource = [](LPSTR resource)
             {
                 HMODULE this_module = GetModuleHandle("playlunky64.dll");
-                if (HRSRC entities_json_resource = FindResource(this_module, resource, MAKEINTRESOURCE(JSON_FILE)))
+                if (HRSRC entities_json_resource = FindResource(this_module, resource, MAKEINTRESOURCE(TEXT_FILE)))
                 {
                     if (HGLOBAL entities_json_data = LoadResource(this_module, entities_json_resource))
                     {
