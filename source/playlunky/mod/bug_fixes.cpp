@@ -250,7 +250,7 @@ bool BugFixesInit(VirtualFilesystem& vfs,
                 out << extra_pipes_png.text;
             }
         }
-        //g_ExtraPipesScript = Spelunky_CreateScript(extra_pipes_script_path.string().c_str(), true);
+        g_ExtraPipesScript = Spelunky_CreateScript(extra_pipes_script_path.string().c_str(), true);
 
         constexpr std::string_view g_SetupPipesFuncPattern{ "\x88\x86\xa1\x00\x00\x00\x8d\x48\xfd" };
         g_SetupPipesTrampoline = static_cast<SetupPipes*>(SigScan::FindFunctionStart(SigScan::FindPattern("Spel2.exe", g_SetupPipesFuncPattern, true)));
