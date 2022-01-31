@@ -699,7 +699,19 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
     Spelunky_RegisterGetImagePathFunc(FunctionPointer<Spelunky_GetImageFilePathFunc, struct ModManagerGetImagePath>(
         [this](const char* root_path, const char* relative_path, char* out_buffer, size_t out_buffer_size) -> bool
         {
-            auto dds_relative_path = std::filesystem::path(relative_path).replace_extension(".dds").string();
+            auto dds_relative_path = std::filesystem::path(relative_path).replace_extension(".DDS");
+            auto dds_relative_path_str = dds_relative_path.string();
+            if (algo::contains(s_KnownTextureFiles, dds_relative_path.stem().string()))
+            {
+                auto fmt_res = fmt::format_to_n(
+                    out_buffer,
+                    out_buffer_size - 1,
+                    "{}",
+                    dds_relative_path_str);
+                out_buffer[fmt_res.size] = '\0';
+                return fmt_res.size < out_buffer_size;
+            }
+
             auto [mod_name, mod_rel_path] = [](std::filesystem::path root)
             {
                 std::string mod_name;
@@ -735,7 +747,7 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                 mod_name,
                 mod_rel_path.empty() ? "" : "/",
                 mod_rel_path,
-                dds_relative_path);
+                dds_relative_path_str);
             out_buffer[fmt_res.size] = '\0';
             return fmt_res.size < out_buffer_size;
         }));
