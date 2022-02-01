@@ -837,12 +837,7 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
 
     PatchCharacterDefinitions(mVfs, settings);
 
-    const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
-    if (!speedrun_mode)
-    {
-        BugFixesInit(mVfs, settings, db_folder, db_original_folder);
-    }
-
+    // Sound manager has to be initialized before any scripts
     Spelunky_InitSoundManager([](const char* file_path)
                               {
                                   DecodedAudioBuffer buffer = DecodeAudioFile(std::filesystem::path{ file_path });
@@ -854,6 +849,14 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
                                       .data_size{ buffer.DataSize }
                                   };
                               });
+
+    const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
+    if (!speedrun_mode)
+    {
+        // Bugfixes may use scripts for some functionality
+        BugFixesInit(mVfs, settings, db_folder, db_original_folder);
+    }
+
     mScriptManager.CommitScripts(settings);
 
     Spelunky_RegisterOnInputFunc(FunctionPointer<OnInputFunc, struct ModManagerOnInput>(&ModManager::OnInput, this));
