@@ -159,8 +159,13 @@ void SetupMissingPipes(Entity* pipe)
     }
 }
 
-bool BugFixesInit(VirtualFilesystem& vfs,
-                  const PlaylunkySettings& settings,
+void BugFixesMount(VirtualFilesystem& vfs,
+    const std::filesystem::path& db_folder)
+{
+    const auto bug_fixes_folder = db_folder / "Mods/BugFixes";
+    vfs.MountFolder(bug_fixes_folder.string(), std::numeric_limits<int64_t>::max(), VfsType::Backend);
+}
+bool BugFixesInit(const PlaylunkySettings& settings,
                   const std::filesystem::path& db_folder,
                   const std::filesystem::path& original_data_folder)
 {
@@ -171,7 +176,6 @@ bool BugFixesInit(VirtualFilesystem& vfs,
     };
 
     const auto bug_fixes_folder = db_folder / "Mods/BugFixes";
-    vfs.MountFolder(bug_fixes_folder.string(), std::numeric_limits<int64_t>::max(), VfsType::Backend);
 
     if (settings.GetBool("bug_fixes", "missing_thorns", true))
     {

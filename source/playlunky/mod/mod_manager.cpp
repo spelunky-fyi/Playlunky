@@ -627,6 +627,9 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             }
         }
 
+        // Mounting early to maintain guarantees about VFS immutability
+        BugFixesMount(vfs, db_folder);
+
         vfs.MountFolder(db_folder.string(), -1);
         vfs.MountFolder("", -2);
 
@@ -854,7 +857,7 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
     if (!speedrun_mode)
     {
         // Bugfixes may use scripts for some functionality
-        BugFixesInit(mVfs, settings, db_folder, db_original_folder);
+        BugFixesInit(settings, db_folder, db_original_folder);
     }
 
     mScriptManager.CommitScripts(settings);
