@@ -57,8 +57,15 @@ Build artifacts are found in the `publish` folder.
     - conan
 - clang-format
 
-### Debugging
-If you have installed Spelunky 2 then the install folder should be found during configuration of the project and starting a debugging session will launch Spelunky 2 with the `playlunky64.dll` injected. If you want to debug the game itself as well as the `playlunky64.dll` it is highly recommended to get the [Microsoft Child Process Debugging Power Tool](https://marketplace.visualstudio.com/items?itemName=vsdbgplat.MicrosoftChildProcessDebuggingPowerTool) extension and enable child process debugging in `Debug` &rarr; `Other Debug Targets` &rarr; `Child Process Debugging Settings...`
+### Debugging with Visual Studio
+If you have installed Spelunky 2 then the install folder should be found during configuration of the project. When CMake can't find the installation directory please make an issue explaining your setup. In that case or when you have a copy of the game outside the actual installation directory that you want to work with you can pass the directory to CMake during configure:
+```sh
+cmake .. -DSPELUNKY_INSTALL_DIR='C:/Path/To/Install/Folder/Spelunky 2'
+cmake --build . --config Release
+```
+Now the Visual Studio solution should be setup to start the game with `playlunky64.dll` injected when starting a debugging session.
+
+If you want to debug the game itself as well as the `playlunky64.dll` it is highly recommended to get the [Microsoft Child Process Debugging Power Tool](https://marketplace.visualstudio.com/items?itemName=vsdbgplat.MicrosoftChildProcessDebuggingPowerTool) extension and enable child process debugging in `Debug` &rarr; `Other Debug Targets` &rarr; `Child Process Debugging Settings...`
 
 #### Anti-Debugging Prevention
 This section can be ignored for Spelunky 2 versions newer than 1.20.0j, perhaps even some older versions.
