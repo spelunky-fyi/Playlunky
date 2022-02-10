@@ -210,6 +210,11 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
                 fs::path{ "strings05.str" },
                 fs::path{ "strings06.str" },
                 fs::path{ "strings07.str" },
+                fs::path{ "strings08.str" },
+                fs::path{ "strings09.str" },
+                fs::path{ "strings10.str" },
+                fs::path{ "strings11.str" },
+                fs::path{ "strings12.str" },
             };
             if (ExtractGameAssets(files, db_original_folder))
             {

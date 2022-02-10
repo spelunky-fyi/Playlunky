@@ -19,7 +19,7 @@ bool StringMerger::RegisterOutdatedStringTable(std::string_view table)
     {
         return false;
     }
-    if (string_table > 8)
+    if (string_table > 12)
     {
         return false;
     }
@@ -41,7 +41,7 @@ bool StringMerger::RegisterModdedStringTable(std::string_view table)
     {
         return false;
     }
-    if (string_table > 8)
+    if (string_table > 12)
     {
         return false;
     }
@@ -68,7 +68,7 @@ bool StringMerger::MergeStrings(
     {
         {
             std::vector<std::uint8_t> forced_string_tables{};
-            std::vector<std::uint8_t> all_string_tables{ 0, 1, 2, 3, 4, 5, 6, 7 };
+            std::vector<std::uint8_t> all_string_tables{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
 
             for (auto outdated_string_table : mOutdatedStringTables)
             {
