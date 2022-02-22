@@ -61,6 +61,7 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
                                                   KnownSetting{ .Name{ "enable_luminance_scaling" }, .DefaultValue{ "on" }, .Comment{ "Scales luminance of customized images based on the color" } },
                                               } },
         KnownCategory{ { "bug_fixes" }, {
+                                            KnownSetting{ .Name{ "out_of_bounds_liquids" }, .DefaultValue{ "on" }, .Comment{ "Removes liquids that go out of bounds, otherwise the game would crash" } },
                                             KnownSetting{ .Name{ "missing_thorns" }, .DefaultValue{ "on" }, .Comment{ "Adds textures for the missing jungle thorns configurations" } },
                                             KnownSetting{ .Name{ "missing_pipes" }, .DefaultValue{ "on" }, .Comment{ "Adds textures for the missing sunken city pipes configurations and makes those pipes work, some requiring user input" } },
                                         } },

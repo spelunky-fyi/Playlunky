@@ -26,6 +26,8 @@ SpelunkyScript* g_ExtraPipesScript{ nullptr };
 using GetNeighbouringGridEntityOfSameType = uint32_t(Entity* thorns, float offset_x, float offset_y);
 GetNeighbouringGridEntityOfSameType* g_GetNeighbouringGridEntityOfSameType{ nullptr };
 
+bool g_OutOfBoundsLiquids{ false };
+
 struct PackedResource
 {
     PackedResource(LPSTR resource, LPSTR resource_type)
@@ -171,7 +173,8 @@ bool BugFixesInit(const PlaylunkySettings& settings,
 {
     namespace fs = std::filesystem;
 
-    static constexpr auto decode_call = [](void* addr) -> void* {
+    static constexpr auto decode_call = [](void* addr) -> void*
+    {
         return (char*)addr + (*(int32_t*)((char*)addr + 1)) + 5;
     };
 
@@ -274,6 +277,8 @@ bool BugFixesInit(const PlaylunkySettings& settings,
         }
     }
 
+    g_OutOfBoundsLiquids = settings.GetBool("bug_fixes", "out_of_bounds_liquids", true);
+
     return true;
 }
 void BugFixesUpdate()
@@ -281,6 +286,11 @@ void BugFixesUpdate()
     if (g_ExtraPipesScript)
     {
         SpelunkyScript_Update(g_ExtraPipesScript);
+    }
+
+    if (g_OutOfBoundsLiquids)
+    {
+        Spelunky_UpdateLiquidOutOfBoundsBugfix();
     }
 }
 void BugFixesCleanup()
