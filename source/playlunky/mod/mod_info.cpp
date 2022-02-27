@@ -74,55 +74,69 @@ std::string ModInfo::Dump() const
 
 void ModInfo::ReadExtendedInfoFromJson(std::string_view path)
 {
-    if (auto json_file = std::ifstream(path))
+    try
     {
-        mExtendedVersionAvailable = true;
-
-        auto json = nlohmann::json::parse(json_file);
-        auto get_if_contained = [&json]<class T>(T& value, auto name)
+        if (auto json_file = std::ifstream(path))
         {
-            if (json.contains(name))
+            mExtendedVersionAvailable = true;
+
+            auto json = nlohmann::json::parse(json_file);
+            auto get_if_contained = [&json]<class T>(T& value, auto name)
             {
-                json[name].get_to(value);
-            }
-        };
+                if (json.contains(name))
+                {
+                    json[name].get_to(value);
+                }
+            };
 
-        get_if_contained(mName, "name");
-        get_if_contained(mDescription, "description");
-        get_if_contained(mAuthor, "author");
-        get_if_contained(mVersion, "version");
+            get_if_contained(mName, "name");
+            get_if_contained(mDescription, "description");
+            get_if_contained(mAuthor, "author");
+            get_if_contained(mVersion, "version");
 
-        get_if_contained(mCustomImages, "image_map");
+            get_if_contained(mCustomImages, "image_map");
+        }
+    }
+    catch (const std::exception& e)
+    {
+        LogError("Failed loading mod_info.json: {}", e.what());
     }
 }
 
 void ModInfo::ReadFromDatabase(const ModDatabase& mod_db)
 {
-    const auto& mod_info = mod_db.GetModInfo();
-    if (!mod_info.empty())
+    try
     {
-        auto json = nlohmann::json::parse(mod_info);
-
-        CustomImages old_custom_images;
-        if (json.contains("image_map"))
+        const auto& mod_info = mod_db.GetModInfo();
+        if (!mod_info.empty())
         {
-            json["image_map"].get_to(old_custom_images);
-        }
+            auto json = nlohmann::json::parse(mod_info);
 
-        for (const auto& [old_path, old_image] : old_custom_images)
-        {
-            auto& new_image = mCustomImages[old_path];
-            if (new_image.ImageMap != old_image.ImageMap)
+            CustomImages old_custom_images;
+            if (json.contains("image_map"))
             {
-                new_image.Outdated = true;
-                for (auto& [target_path, image_map] : old_image.ImageMap)
+                json["image_map"].get_to(old_custom_images);
+            }
+
+            for (const auto& [old_path, old_image] : old_custom_images)
+            {
+                auto& new_image = mCustomImages[old_path];
+                if (new_image.ImageMap != old_image.ImageMap)
                 {
-                    if (!new_image.ImageMap.contains(target_path))
+                    new_image.Outdated = true;
+                    for (auto& [target_path, image_map] : old_image.ImageMap)
                     {
-                        new_image.ImageMap.insert(std::pair{ target_path, CustomImageMap{} });
+                        if (!new_image.ImageMap.contains(target_path))
+                        {
+                            new_image.ImageMap.insert(std::pair{ target_path, CustomImageMap{} });
+                        }
                     }
                 }
             }
         }
+    }
+    catch (const std::exception& e)
+    {
+        LogError("Failed loading mod .db: {}", e.what());
     }
 }
