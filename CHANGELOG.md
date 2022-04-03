@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.2] - 2021-04-03
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.25.2-orange">
+
+### Changed
+- Huge bump of OL features
+
+### Added
+- Support for crossing pipes, including a `pipe_intersection` and `pipe_crossing` tilecode 
+- Enabled OL's fix for out-of-bounds liquids
+
+### Fixed
+- An issue that would not allow scripts to define textures based on vanilla texture files
+- A rare crash caused from loading files off the main thread
+
 ## [0.13.1] - 2021-01-29
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.25.2-orange">
