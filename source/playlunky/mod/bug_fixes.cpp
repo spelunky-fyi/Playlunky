@@ -173,8 +173,7 @@ bool BugFixesInit(const PlaylunkySettings& settings,
 {
     namespace fs = std::filesystem;
 
-    static constexpr auto decode_call = [](void* addr) -> void*
-    {
+    static constexpr auto decode_call = [](void* addr) -> void* {
         return (char*)addr + (*(int32_t*)((char*)addr + 1)) + 5;
     };
 
