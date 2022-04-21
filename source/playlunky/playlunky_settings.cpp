@@ -63,7 +63,7 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
         KnownCategory{ { "bug_fixes" }, {
                                             KnownSetting{ .Name{ "out_of_bounds_liquids" }, .DefaultValue{ "on" }, .Comment{ "Removes liquids that go out of bounds, otherwise the game would crash" } },
                                             KnownSetting{ .Name{ "missing_thorns" }, .DefaultValue{ "on" }, .Comment{ "Adds textures for the missing jungle thorns configurations" } },
-                                            KnownSetting{ .Name{ "missing_pipes" }, .DefaultValue{ "on" }, .Comment{ "Adds textures for the missing sunken city pipes configurations and makes those pipes work, some requiring user input" } },
+                                            KnownSetting{ .Name{ "missing_pipes" }, .DefaultValue{ "off" }, .Comment{ "Adds textures for the missing sunken city pipes configurations and makes those pipes work, some requiring user input" } },
                                         } },
         KnownCategory{ { "key_bindings" }, {
                                                KnownSetting{ .Name{ "console" }, .DefaultValue{ "0xc0" }, .Comment{ "Default 0xc0 == ~ for US" } },
