@@ -41,6 +41,7 @@ class ScriptManager
         bool Enabled;
         bool ScriptEnabled;
         bool Unsafe;
+        bool OnlineSafe;
         std::size_t MessageTime;
         std::string LastResult;
         SpelunkyScriptPointer Script;

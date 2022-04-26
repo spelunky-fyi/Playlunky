@@ -67,6 +67,7 @@ void ScriptManager::CommitScripts(const class PlaylunkySettings& settings)
 
                     SpelunkyScriptMeta meta = SpelunkyScript_GetMeta(mod.Script.get());
                     mod.Unsafe = meta.unsafe;
+                    mod.OnlineSafe = meta.online_safe;
                     if (meta.unsafe)
                     {
                         mod.ScriptEnabled = false;
@@ -216,7 +217,9 @@ void ScriptManager::Draw()
 
     ImGuiIO& io = ImGui::GetIO();
 
-    if (SpelunkyState_GetScreen() == SpelunkyScreen::Online && algo::contains(mMods, &RegisteredMainScript::ScriptEnabled, true))
+    if (SpelunkyState_GetScreen() == SpelunkyScreen::Online &&
+        algo::contains(mMods, &RegisteredMainScript::ScriptEnabled, true) &&
+        algo::contains(mMods, &RegisteredMainScript::OnlineSafe, false))
     {
         ImGui::SetNextWindowSize({ -1, -1 });
         ImGui::Begin(
