@@ -28,8 +28,11 @@ endif()
 
 execute_process(
     COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty=-modified
+	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     OUTPUT_VARIABLE PLAYLUNKY_GIT_VERSION
-	OUTPUT_STRIP_TRAILING_WHITESPACE)
+	OUTPUT_STRIP_TRAILING_WHITESPACE
+	ECHO_ERROR_VARIABLE
+    COMMAND_ERROR_IS_FATAL ANY)
 
 
 # --------------------------------------------------
