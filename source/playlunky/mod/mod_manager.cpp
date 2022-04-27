@@ -43,7 +43,7 @@ static constexpr ctll::fixed_string s_LuminosityTextureRule{ ".*_lumin\\.(dds|bm
 static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
 static constexpr ctll::fixed_string s_StringModFileRule{ "strings([0-9]{2})_mod\\.str" };
 
-ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& settings, VirtualFilesystem& vfs)
+ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, VirtualFilesystem& vfs)
     : mSpriteSheetMerger{ new SpriteSheetMerger{ settings } }
     , mVfs{ vfs }
     , mModsRoot{ mods_root }
@@ -90,6 +90,11 @@ ModManager::ModManager(std::string_view mods_root, const PlaylunkySettings& sett
             bool has_loose_files{ false };
 
             ModDatabase mod_db{ db_folder, mods_root, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Folders) };
+
+            if (mod_db.WasOutdated())
+            {
+                settings.SetBool("bug_fixes", "missing_pipes", false);
+            }
 
             const bool journal_gen = settings.GetBool("sprite_settings", "generate_character_journal_entries", true);
             const bool sticker_gen = settings.GetBool("sprite_settings", "generate_character_journal_stickers", true);

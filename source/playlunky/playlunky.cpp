@@ -74,6 +74,7 @@ void Playlunky::Init()
 
     mImpl->Vfs = std::make_unique<VirtualFilesystem>();
     mImpl->Manager = std::make_unique<ModManager>("Mods/Packs", mImpl->Settings, *mImpl->Vfs);
+    mImpl->Settings.WriteToFile("playlunky.ini");
 
     SetFmodVfs(mImpl->Vfs.get());
     SetSaveGameVfs(mImpl->Vfs.get());

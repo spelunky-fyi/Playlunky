@@ -17,6 +17,32 @@
 PlaylunkySettings::PlaylunkySettings(std::string settings_file)
     : mSettings{ new INIReader{ std::move(settings_file) } }
 {
+}
+PlaylunkySettings::~PlaylunkySettings() = default;
+
+bool PlaylunkySettings::GetBool(std::string category, std::string setting, bool default_value) const
+{
+    return mSettings->GetBoolean(std::move(category), std::move(setting), default_value);
+}
+int PlaylunkySettings::GetInt(std::string category, std::string setting, int default_value) const
+{
+    return mSettings->GetInteger(std::move(category), std::move(setting), default_value);
+}
+
+void PlaylunkySettings::SetBool(std::string category, std::string setting, bool value)
+{
+    OverriddenSetting new_setting{
+        .Category{ std::move(category) },
+        .Setting{ std::move(setting) },
+        .Value{ value },
+    };
+    algo::erase_if(mOverriddenSettings, [&](const OverriddenSetting& overridden)
+                   { return overridden.Category == new_setting.Category && overridden.Setting == new_setting.Setting; });
+    mOverriddenSettings.push_back(std::move(new_setting));
+}
+
+void PlaylunkySettings::WriteToFile(std::string settings_file) const
+{
     struct KnownSetting
     {
         std::string_view Name;
@@ -63,7 +89,7 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
         KnownCategory{ { "bug_fixes" }, {
                                             KnownSetting{ .Name{ "out_of_bounds_liquids" }, .DefaultValue{ "on" }, .Comment{ "Removes liquids that go out of bounds, otherwise the game would crash" } },
                                             KnownSetting{ .Name{ "missing_thorns" }, .DefaultValue{ "on" }, .Comment{ "Adds textures for the missing jungle thorns configurations" } },
-                                            KnownSetting{ .Name{ "missing_pipes" }, .DefaultValue{ "off" }, .Comment{ "Adds textures for the missing sunken city pipes configurations and makes those pipes work, some requiring user input" } },
+                                            KnownSetting{ .Name{ "missing_pipes" }, .DefaultValue{ "off" }, .Comment{ "May cause issues in multiplayer. Adds textures for the missing sunken city pipes configurations and makes those pipes work, some requiring user input" } },
                                         } },
         KnownCategory{ { "key_bindings" }, {
                                                KnownSetting{ .Name{ "console" }, .DefaultValue{ "0xc0" }, .Comment{ "Default 0xc0 == ~ for US" } },
@@ -87,6 +113,12 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
             {
                 value = std::string{ known_setting.DefaultValue };
             }
+            if (const OverriddenSetting* overridden = algo::find_if(mOverriddenSettings, [&](const OverriddenSetting& overridden)
+                                                                    { return overridden.Category == known_category.Name && overridden.Setting == known_setting.Name; }))
+            {
+                value = overridden->Value ? "on" : "off";
+            }
+
             if (const char* comment = algo::find(value, '#'))
             {
                 value.erase(value.begin() + (comment - value.data()), value.end());
@@ -101,18 +133,8 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
         ini_output += '\n';
     }
 
-    if (auto playlunky_ini_output = std::ofstream{ "playlunky.ini", std::ios::trunc })
+    if (auto playlunky_ini_output = std::ofstream{ settings_file, std::ios::trunc })
     {
         playlunky_ini_output.write(ini_output.data(), ini_output.size());
     }
-}
-PlaylunkySettings::~PlaylunkySettings() = default;
-
-bool PlaylunkySettings::GetBool(std::string category, std::string setting, bool default_value) const
-{
-    return mSettings->GetBoolean(std::move(category), std::move(setting), default_value);
-}
-int PlaylunkySettings::GetInt(std::string category, std::string setting, int default_value) const
-{
-    return mSettings->GetInteger(std::move(category), std::move(setting), default_value);
 }

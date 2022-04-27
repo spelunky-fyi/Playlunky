@@ -22,6 +22,7 @@
 //		0xFEEDFACE -- v0.11.0
 //		0xFEEDFACE -- v0.12.0 (had no breaking asset changes)
 //		0xFACECA2E -- v0.13.0
+//		0x0CA4EDA1 -- v0.14.0
 static constexpr std::uint32_t s_ModDatabaseMagicNumber{ 0xFACECA2E };
 
 ModDatabase::ModDatabase(std::filesystem::path database_folder, std::filesystem::path mod_folder, ModDatabaseFlags flags)
@@ -55,6 +56,7 @@ ModDatabase::ModDatabase(std::filesystem::path database_folder, std::filesystem:
                 {
                     db_file.close();
                     fs::remove_all(mDatabaseFolder);
+                    mWasOutdated = true;
                     return;
                 }
             }

@@ -32,6 +32,11 @@ class ModDatabase
         return mWasEnabled;
     }
 
+    bool WasOutdated() const
+    {
+        return mWasOutdated;
+    }
+
     void SetInfo(std::string mod_info)
     {
         mModInfo = std::move(mod_info);
@@ -121,6 +126,7 @@ class ModDatabase
 
     bool mWasEnabled{ false };
     bool mIsEnabled{ true };
+    bool mWasOutdated{ false };
 
     std::string mModInfo;
 };

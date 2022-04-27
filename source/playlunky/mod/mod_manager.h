@@ -8,6 +8,7 @@
 #include <string_view>
 #include <vector>
 
+class PlaylunkySettings;
 class SpriteHotLoader;
 class SpritePainter;
 class SpriteSheetMerger;
@@ -15,7 +16,7 @@ class SpriteSheetMerger;
 class ModManager
 {
   public:
-    ModManager(std::string_view mods_root, const class PlaylunkySettings& settings, class VirtualFilesystem& vfs);
+    ModManager(std::string_view mods_root, PlaylunkySettings& settings, class VirtualFilesystem& vfs);
     ~ModManager();
 
     ModManager() = delete;
@@ -24,7 +25,7 @@ class ModManager
     ModManager& operator=(const ModManager&) = delete;
     ModManager& operator=(ModManager&&) = delete;
 
-    void PostGameInit(const class PlaylunkySettings& settings);
+    void PostGameInit(const PlaylunkySettings& settings);
 
     bool OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t l_param);
     void Update();
