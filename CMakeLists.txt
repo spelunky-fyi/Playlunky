@@ -27,12 +27,12 @@ if (NOT GIT_FOUND)
 endif()
 
 execute_process(
-    COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty=-modified
+	COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty=-modified
 	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    OUTPUT_VARIABLE PLAYLUNKY_GIT_VERSION
+	OUTPUT_VARIABLE PLAYLUNKY_GIT_VERSION
 	OUTPUT_STRIP_TRAILING_WHITESPACE
 	ECHO_ERROR_VARIABLE
-    COMMAND_ERROR_IS_FATAL ANY)
+	COMMAND_ERROR_IS_FATAL ANY)
 
 
 # --------------------------------------------------
@@ -76,7 +76,7 @@ target_compile_definitions(playlunky_definitions INTERFACE
 	NOMINMAX)
 
 add_library(playlunky_version STATIC
-        "source/version/version.h" "source/version/version.cpp")
+		"source/version/version.h" "source/version/version.cpp")
 target_include_directories(playlunky_version PUBLIC source/version)
 target_compile_definitions(playlunky_version PRIVATE
 	PLAYLUNKY_VERSION=${PLAYLUNKY_GIT_VERSION})
