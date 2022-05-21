@@ -54,8 +54,7 @@ bool Image::Load(const std::filesystem::path& file)
                                         float alpha = (float)pixel[3] / 255.0f;
                                         pixel[0] = (uchar)((float)pixel[0] * alpha);
                                         pixel[1] = (uchar)((float)pixel[1] * alpha);
-                                        pixel[2] = (uchar)((float)pixel[2] * alpha);
-                                    });
+                                        pixel[2] = (uchar)((float)pixel[2] * alpha); });
 
     return true;
 }

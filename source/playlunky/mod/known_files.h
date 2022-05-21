@@ -5463,11 +5463,11 @@ inline constexpr std::string_view s_SpeedrunFiles[]{
     "strings08_mod",
     /* These are additionally filtered to only load from .db, i.e. after they are merged from _mod files */
     /* See s_SpeedrunDbFiles for the same list but with explicit filetype */
-    "Data/Textures/journal_stickers",  // char stickers
-    "Data/Textures/journal_entry_people",  // char journal entries
-    "Data/Textures/menu_leader",  // char banners
-    "Data/Textures/menu_basic",  // pet heads
-    "Data/Textures/journal_entry_mons",  // pet journal entries
+    "Data/Textures/journal_stickers",     // char stickers
+    "Data/Textures/journal_entry_people", // char journal entries
+    "Data/Textures/menu_leader",          // char banners
+    "Data/Textures/menu_basic",           // pet heads
+    "Data/Textures/journal_entry_mons",   // pet journal entries
     "strings00",
     "strings01",
     "strings02",

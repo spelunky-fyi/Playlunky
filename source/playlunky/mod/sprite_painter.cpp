@@ -461,8 +461,7 @@ void SpritePainter::Update(const std::filesystem::path& source_folder, const std
                                 SetupSheet(*new_sheet);
 
                                 std::lock_guard lock{ m_RegisteredColorModSheetsMutex };
-                                std::swap(new_sheet, sheet);
-                            })
+                                std::swap(new_sheet, sheet); })
                     .detach();
             }
         }
@@ -498,8 +497,7 @@ void SpritePainter::Update(const std::filesystem::path& source_folder, const std
                                     }
                                     color_mod_image.Write(sheet->db_destination);
                                     RepaintImage(sheet->full_path, sheet->db_destination);
-                                    sheet->doing_repaint = false;
-                                })
+                                    sheet->doing_repaint = false; })
                         .detach();
                 }
             }

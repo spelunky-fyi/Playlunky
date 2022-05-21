@@ -73,13 +73,13 @@ enum class Event
 };
 
 /**
-	* \class FileWatch
-	*
-	* \brief Watches a folder or file, and will notify of changes via function callback.
-	*
-	* \author Thomas Monkman
-	*
-	*/
+ * \class FileWatch
+ *
+ * \brief Watches a folder or file, and will notify of changes via function callback.
+ *
+ * \author Thomas Monkman
+ *
+ */
 template<class T>
 class FileWatch
 {
@@ -227,8 +227,7 @@ class FileWatch
                                                          catch (...)
                                                          {
                                                          } // set_exception() may throw too
-                                                     }
-                                                 }));
+                                                     } }));
         _watch_thread = std::move(std::thread([this]()
                                               {
                                                   try
@@ -244,11 +243,10 @@ class FileWatch
                                                       catch (...)
                                                       {
                                                       } // set_exception() may throw too
-                                                  }
-                                              }));
+                                                  } }));
 
         std::future<void> future = _running.get_future();
-        future.get(); //block until the monitor_directory is up and running
+        future.get(); // block until the monitor_directory is up and running
     }
 
     void destroy()
@@ -283,7 +281,7 @@ class FileWatch
 
         UnderpinningString path_string = path;
         const auto pivot = std::find_if(path_string.rbegin(), path_string.rend(), predict).base();
-        //if the path is something like "test.txt" there will be no directory part, however we still need one, so insert './'
+        // if the path is something like "test.txt" there will be no directory part, however we still need one, so insert './'
         const T directory = [&]()
         {
             const auto extracted_directory = UnderpinningString(path_string.begin(), pivot);
@@ -298,7 +296,7 @@ class FileWatch
         if (_watching_single_file)
         {
             const UnderpinningString extracted_filename = { split_directory_and_file(file_path).filename };
-            //if we are watching a single file, only that file should trigger action
+            // if we are watching a single file, only that file should trigger action
             return extracted_filename == _filename;
         }
         return std::regex_match(file_path, _pattern);
@@ -451,7 +449,7 @@ class FileWatch
             case WAIT_FAILED:
                 break;
             }
-            //dispatch callbacks
+            // dispatch callbacks
             {
                 std::lock_guard<std::mutex> lock(_callback_mutex);
                 _callback_information.insert(_callback_information.end(), parsed_information.begin(), parsed_information.end());
@@ -461,7 +459,7 @@ class FileWatch
 
         if (async_pending)
         {
-            //clean up running async io
+            // clean up running async io
             CancelIo(_directory);
             GetOverlappedResult(_directory, &overlapped_buffer, &bytes_returned, TRUE);
         }
@@ -549,7 +547,7 @@ class FileWatch
                     }
                     i += event_size + event->len;
                 }
-                //dispatch callbacks
+                // dispatch callbacks
                 {
                     std::lock_guard<std::mutex> lock(_callback_mutex);
                     _callback_information.insert(_callback_information.end(), parsed_information.begin(), parsed_information.end());

@@ -55,8 +55,7 @@ struct DetourInitGameManager
                      auto swapchain_offset = decode_imm((char*)SigScan::FindPattern("Spel2.exe", "\xba\xf0\xff\xff\xff\x41\xB8\x00\x00\x00\x90"_sig, true) + 17);
                      auto renderer = *(void**)((char*)api + 0x10);
                      [[maybe_unused]] auto api_off = SigScan::GetOffset(api);
-                     SetSwapchain(*(void**)((char*)renderer + swapchain_offset));
-                 });
+                     SetSwapchain(*(void**)((char*)renderer + swapchain_offset)); });
         Playlunky::Get().PostGameInit();
         return res;
     }

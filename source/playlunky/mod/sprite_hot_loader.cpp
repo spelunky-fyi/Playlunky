@@ -64,8 +64,7 @@ void SpriteHotLoader::Update(const std::filesystem::path& source_folder, const s
             algo::erase_if(m_PendingReloads, [this](auto& pending_reload)
                            {
                                pending_reload.has_warned = !PrepareHotLoad(pending_reload.sheet->full_path, pending_reload.sheet->db_destination, !pending_reload.has_warned);
-                               return !pending_reload.has_warned;
-                           });
+                               return !pending_reload.has_warned; });
             if (m_HasPendingReloads && m_PendingReloads.empty())
             {
                 m_Merger.GenerateRequiredSheets(source_folder, destination_folder, vfs, true);

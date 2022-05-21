@@ -550,74 +550,74 @@ struct DetourFmodSystemLoadBankMemory
                     // BOOKMARK-POSSIBLE-OPT
                     // Possible optimization? Preload sounds here?
                     /*
-						static char empty_wav[]{
-							"\x52\x49\x46\x46\x25\x00\x00\x00\x57\x41\x56\x45\x66\x6D\x74\x20"
-							"\x10\x00\x00\x00\x01\x00\x01\x00\x44\xAC\x00\x00\x88\x58\x01\x00"
-							"\x02\x00\x10\x00\x64\x61\x74\x61\x74\x00\x00\x00\x00"
-						};
+                                                static char empty_wav[]{
+                                                        "\x52\x49\x46\x46\x25\x00\x00\x00\x57\x41\x56\x45\x66\x6D\x74\x20"
+                                                        "\x10\x00\x00\x00\x01\x00\x01\x00\x44\xAC\x00\x00\x88\x58\x01\x00"
+                                                        "\x02\x00\x10\x00\x64\x61\x74\x61\x74\x00\x00\x00\x00"
+                                                };
 
-						// Need to specify OPENMEMORY_POINT in case the .bank file is loose
-						const FMOD::FMOD_MODE loose_mode = (FMOD::FMOD_MODE)(mode | FMOD::MODE_OPENMEMORY_POINT);
+                                                // Need to specify OPENMEMORY_POINT in case the .bank file is loose
+                                                const FMOD::FMOD_MODE loose_mode = (FMOD::FMOD_MODE)(mode | FMOD::MODE_OPENMEMORY_POINT);
 
-						FMOD::CREATESOUNDEXINFO loose_exinfo{
-							.cbsize = sizeof(loose_exinfo),
-							.length = sizeof(empty_wav),
-							.fileoffset = 0,
-							.numsubsounds = 1,
-							.inclusionlist = 1
-						};
-						const auto create_empty_sound_res = Trampoline(fmod_system, empty_wav, loose_mode, &loose_exinfo, sound);
+                                                FMOD::CREATESOUNDEXINFO loose_exinfo{
+                                                        .cbsize = sizeof(loose_exinfo),
+                                                        .length = sizeof(empty_wav),
+                                                        .fileoffset = 0,
+                                                        .numsubsounds = 1,
+                                                        .inclusionlist = 1
+                                                };
+                                                const auto create_empty_sound_res = Trampoline(fmod_system, empty_wav, loose_mode, &loose_exinfo, sound);
 
-						if (create_empty_sound_res == FMOD::OK) {
-							auto get_sub_sound = [](FMOD::Sound* sound, int sub_sound_index) ->FMOD::Sound** {
-								const auto* num_sub_sounds = reinterpret_cast<int*>(sound) + 0x2c;
-								if (*num_sub_sounds <= sub_sound_index) {
-									return nullptr;
-								}
-								const auto* sub_sounds_array = reinterpret_cast<FMOD::Sound***>(sound) + 0x14;
-								return (*sub_sounds_array) + sub_sound_index;
-							};
+                                                if (create_empty_sound_res == FMOD::OK) {
+                                                        auto get_sub_sound = [](FMOD::Sound* sound, int sub_sound_index) ->FMOD::Sound** {
+                                                                const auto* num_sub_sounds = reinterpret_cast<int*>(sound) + 0x2c;
+                                                                if (*num_sub_sounds <= sub_sound_index) {
+                                                                        return nullptr;
+                                                                }
+                                                                const auto* sub_sounds_array = reinterpret_cast<FMOD::Sound***>(sound) + 0x14;
+                                                                return (*sub_sounds_array) + sub_sound_index;
+                                                        };
 
-							if (FMOD::Sound** sub_sound = get_sub_sound(*sound, 0))
-							{
-								if (*sub_sound != nullptr) {
-									ReleaseSound(*sub_sound);
-								}
+                                                        if (FMOD::Sound** sub_sound = get_sub_sound(*sound, 0))
+                                                        {
+                                                                if (*sub_sound != nullptr) {
+                                                                        ReleaseSound(*sub_sound);
+                                                                }
 
-								const FMOD::FMOD_MODE loose_sub_sound_mode = (FMOD::FMOD_MODE)(mode | FMOD::MODE_OPENMEMORY_POINT | FMOD::MODE_OPENRAW);
+                                                                const FMOD::FMOD_MODE loose_sub_sound_mode = (FMOD::FMOD_MODE)(mode | FMOD::MODE_OPENMEMORY_POINT | FMOD::MODE_OPENRAW);
 
-								FMOD::CREATESOUNDEXINFO loose_subsound_exinfo{
-									.cbsize = sizeof(loose_subsound_exinfo),
-									.length = (std::uint32_t)sample.Buffer.DataSize,
-									.numchannels = sample.Buffer.NumChannels,
-									.defaultfrequency = sample.Buffer.Frequency,
-									.format = [](std::int32_t bits_per_sample) {
-										switch (bits_per_sample) {
-										default:
-										case 8:
-											return FMOD::SOUND_FORMAT::PCM8;
-										case 16:
-											return FMOD::SOUND_FORMAT::PCM16;
-										case 24:
-											return FMOD::SOUND_FORMAT::PCM24;
-										case 32:
-											return FMOD::SOUND_FORMAT::PCM32;
-										}
-									}(sample.Buffer.BitsPerSample),
-									.numsubsounds = 0
-								};
+                                                                FMOD::CREATESOUNDEXINFO loose_subsound_exinfo{
+                                                                        .cbsize = sizeof(loose_subsound_exinfo),
+                                                                        .length = (std::uint32_t)sample.Buffer.DataSize,
+                                                                        .numchannels = sample.Buffer.NumChannels,
+                                                                        .defaultfrequency = sample.Buffer.Frequency,
+                                                                        .format = [](std::int32_t bits_per_sample) {
+                                                                                switch (bits_per_sample) {
+                                                                                default:
+                                                                                case 8:
+                                                                                        return FMOD::SOUND_FORMAT::PCM8;
+                                                                                case 16:
+                                                                                        return FMOD::SOUND_FORMAT::PCM16;
+                                                                                case 24:
+                                                                                        return FMOD::SOUND_FORMAT::PCM24;
+                                                                                case 32:
+                                                                                        return FMOD::SOUND_FORMAT::PCM32;
+                                                                                }
+                                                                        }(sample.Buffer.BitsPerSample),
+                                                                        .numsubsounds = 0
+                                                                };
 
-								const auto create_sub_sound_res = Trampoline(fmod_system, (const char*)sample.Buffer.Data.get(), loose_sub_sound_mode, &loose_subsound_exinfo, sub_sound);
-								if (create_sub_sound_res == FMOD::OK) {
-									return FMOD::OK;
-								}
+                                                                const auto create_sub_sound_res = Trampoline(fmod_system, (const char*)sample.Buffer.Data.get(), loose_sub_sound_mode, &loose_subsound_exinfo, sub_sound);
+                                                                if (create_sub_sound_res == FMOD::OK) {
+                                                                        return FMOD::OK;
+                                                                }
 
-								LogError("Failed loading loose audio file {}, falling back to loading from soundbank...", sample.Name);
-								[[maybe_unused]] const auto destroy_leaking_sound_res = ReleaseSound(*sound);
-								assert(destroy_leaking_sound_res == FMOD::OK);
-							}
-						}
-						*/
+                                                                LogError("Failed loading loose audio file {}, falling back to loading from soundbank...", sample.Name);
+                                                                [[maybe_unused]] const auto destroy_leaking_sound_res = ReleaseSound(*sound);
+                                                                assert(destroy_leaking_sound_res == FMOD::OK);
+                                                        }
+                                                }
+                                                */
                 }
             }
         }
@@ -716,7 +716,7 @@ struct DetourFmodSystemUnloadBank
     static FMOD::FMOD_RESULT Detour(FMOD::Bank* bank)
     {
         // BOOKMARK-POSSIBLE-OPT
-        //for (auto it = DetourFmodSystemLoadBankMemory::s_FsbFiles.begin(); it != DetourFmodSystemLoadBankMemory::s_FsbFiles.end(); ++it) {
+        // for (auto it = DetourFmodSystemLoadBankMemory::s_FsbFiles.begin(); it != DetourFmodSystemLoadBankMemory::s_FsbFiles.end(); ++it) {
         //	if (it->Bank == bank) {
         //		for (const auto& sample : it->Samples) {
         //			if (sample.Sound != nullptr) {
@@ -754,7 +754,7 @@ struct DetourFmodSystemCreateSound
 
                 // BOOKMARK-POSSIBLE-OPT
                 //*sound = fsb_file.Samples[sample_index].Sound;
-                //if (*sound != nullptr) {
+                // if (*sound != nullptr) {
                 //	return FMOD::OK;
                 //}
 
@@ -869,11 +869,11 @@ struct DetourFmodSystemReleaseSound
     static FMOD::FMOD_RESULT Detour(FMOD::Sound* sound)
     {
         // BOOKMARK-POSSIBLE-OPT
-        //static auto get_user_data = [](FMOD::Sound* sound) {
+        // static auto get_user_data = [](FMOD::Sound* sound) {
         //	return *(reinterpret_cast<void**>(sound) + 0x19);
         //};
-        //const auto user_data = get_user_data(sound);
-        //if (user_data == &DetourFmodSystemLoadBankMemory::s_FsbFiles) {
+        // const auto user_data = get_user_data(sound);
+        // if (user_data == &DetourFmodSystemLoadBankMemory::s_FsbFiles) {
         //	return FMOD::OK;
         //}
 

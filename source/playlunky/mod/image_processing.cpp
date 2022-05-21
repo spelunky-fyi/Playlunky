@@ -61,8 +61,7 @@ Image GenerateStickerPixelArt(Image input, ImageSize target_size)
                                              else if (pixel[3] > 0)
                                              {
                                                  pixel[3] = 255;
-                                             }
-                                         });
+                                             } });
         }
     };
 
@@ -400,8 +399,7 @@ Image ColorBlend(Image color_image, Image target_image)
                                                              const float color_alpha = color_pixel[3] / 255.0f;
                                                              pixel[0] = static_cast<uchar>(pixel[0] * (1.0f - color_alpha) + r * color_alpha);
                                                              pixel[1] = static_cast<uchar>(pixel[1] * (1.0f - color_alpha) + g * color_alpha);
-                                                             pixel[2] = static_cast<uchar>(pixel[2] * (1.0f - color_alpha) + b * color_alpha);
-                                                         });
+                                                             pixel[2] = static_cast<uchar>(pixel[2] * (1.0f - color_alpha) + b * color_alpha); });
 
         return target_image;
     }
@@ -433,8 +431,7 @@ Image LuminanceBlend(Image luminance_image, Image target_image)
                                                              const float luminance_alpha = luminance_pixel[3] / 255.0f;
                                                              pixel[0] = static_cast<uchar>(pixel[0] * (1.0f - luminance_alpha) + r * luminance_alpha);
                                                              pixel[1] = static_cast<uchar>(pixel[1] * (1.0f - luminance_alpha) + g * luminance_alpha);
-                                                             pixel[2] = static_cast<uchar>(pixel[2] * (1.0f - luminance_alpha) + b * luminance_alpha);
-                                                         });
+                                                             pixel[2] = static_cast<uchar>(pixel[2] * (1.0f - luminance_alpha) + b * luminance_alpha); });
 
         return target_image;
     }
@@ -468,8 +465,7 @@ Image LuminanceScale(Image luminance_scale_image, Image target_image)
                                                              const float luminance_alpha = luminance_pixel[3] / 255.0f;
                                                              pixel[0] = static_cast<uchar>(pixel[0] * (1.0f - luminance_alpha) + r * luminance_alpha);
                                                              pixel[1] = static_cast<uchar>(pixel[1] * (1.0f - luminance_alpha) + g * luminance_alpha);
-                                                             pixel[2] = static_cast<uchar>(pixel[2] * (1.0f - luminance_alpha) + b * luminance_alpha);
-                                                         });
+                                                             pixel[2] = static_cast<uchar>(pixel[2] * (1.0f - luminance_alpha) + b * luminance_alpha); });
 
         return target_image;
     }
@@ -513,8 +509,7 @@ Image LuminanceScale(Image luminance_scale_image, Image base_luminance_image, Im
                                                                  pixel[0] = static_cast<uchar>(pixel[0] * (1.0f - luminance_alpha) + r * luminance_alpha);
                                                                  pixel[1] = static_cast<uchar>(pixel[1] * (1.0f - luminance_alpha) + g * luminance_alpha);
                                                                  pixel[2] = static_cast<uchar>(pixel[2] * (1.0f - luminance_alpha) + b * luminance_alpha);
-                                                             }
-                                                         });
+                                                             } });
 
         return target_image;
     }
@@ -534,8 +529,7 @@ Image ReplaceColor(Image input_image, ColorRGB8 source_color, ColorRGB8 target_c
                                                       if (pixel == source_color)
                                                       {
                                                           pixel = target_color;
-                                                      }
-                                                  });
+                                                      } });
     }
     return input_image;
 }
@@ -557,8 +551,7 @@ Image ReplaceColors(Image input_image, const std::vector<ColorRGB8>& source_colo
                                                               pixel = target_colors[i];
                                                               return;
                                                           }
-                                                      }
-                                                  });
+                                                      } });
     }
     return input_image;
 }
@@ -575,8 +568,7 @@ Image ExtractColor(Image input_image, ColorRGB8 color)
                                                       if (pixel != color)
                                                       {
                                                           cv_pixel = cv::Vec4b{ 0, 0, 0, 0 };
-                                                      }
-                                                  });
+                                                      } });
     }
     return input_image;
 }
