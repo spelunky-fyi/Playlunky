@@ -571,16 +571,31 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             vfs.BindPathes({ "Data/Textures/Entities/qilin_full", "Data/Textures/Entities/Mounts/qilin" });
         }
 
-        if (speedrun_mode || !enable_raw_string_loading)
+        if (speedrun_mode)
         {
-            vfs.RegisterCustomFilter([db_folder](const fs::path& asset_path) -> bool
-                                     {
-                                         if (asset_path.extension() == L".str")
-                                         {
-                                             return ctre::match<s_StringModFileRule>(asset_path.filename().string()) || algo::is_sub_path(asset_path, db_folder);
-                                         }
-                                         return true;
-                                     });
+            vfs.RegisterCustomFilter(
+                [db_folder](const fs::path& asset_path) -> bool
+                {
+                    if (!algo::is_sub_path(asset_path, db_folder))
+                    {
+                        const fs::path relative_path = fs::proximate(asset_path, db_folder);
+                        const std::string relative_path_str = algo::path_string(relative_path);
+                        return !algo::contains(s_SpeedrunDbFiles, relative_path_str);
+                    }
+                    return true;
+                });
+        }
+        else if (!enable_raw_string_loading)
+        {
+            vfs.RegisterCustomFilter(
+                [db_folder](const fs::path& asset_path) -> bool
+                {
+                    if (asset_path.extension() == L".str")
+                    {
+                        return ctre::match<s_StringModFileRule>(asset_path.filename().string()) || algo::is_sub_path(asset_path, db_folder);
+                    }
+                    return true;
+                });
         }
 
         LogInfo("Merging entity sheets... This includes the automatic generating of stickers...");
