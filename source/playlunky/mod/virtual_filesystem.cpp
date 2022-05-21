@@ -184,9 +184,11 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
         return nullptr;
     }
 
+    std::string_view path_view{ path };
+
     if (!m_RestrictedFiles.empty())
     {
-        std::string_view path_no_extension{ path };
+        std::string_view path_no_extension{ path_view };
         path_no_extension = path_no_extension.substr(0, path_no_extension.rfind('.'));
         if (!algo::contains(m_RestrictedFiles, path_no_extension))
         {
@@ -202,7 +204,7 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
         {
             if (const auto& asset_path = mount.MountImpl->GetFilePath(path))
             {
-                if (!FilterPath(asset_path.value(), {}))
+                if (!FilterPath(asset_path.value(), path_view, {}))
                 {
                     continue;
                 }
@@ -229,10 +231,12 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(con
         return std::nullopt;
     }
 
+    const std::string path_string = path.string();
+    std::string_view path_view{ path_string };
+
     if (!m_RestrictedFiles.empty())
     {
-        std::string path_str{ path.string() };
-        std::string_view path_no_extension{ path_str };
+        std::string_view path_no_extension{ path_view };
         path_no_extension = path_no_extension.substr(0, path_no_extension.rfind('.'));
         if (!algo::contains(m_RestrictedFiles, path_no_extension))
         {
@@ -240,7 +244,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(con
         }
     }
 
-    if (const BoundPathes* bound_pathes = GetBoundPathes(path.string()))
+    if (const BoundPathes* bound_pathes = GetBoundPathes(path_string))
     {
         std::int64_t current_file_prio{ std::numeric_limits<std::int64_t>::max() };
         std::optional<std::filesystem::path> file_path{ std::nullopt };
@@ -254,7 +258,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(con
                 {
                     if (auto bound_file_path = mount.MountImpl->GetFilePath(bound_path)) // TODO: needs to ignore extension
                     {
-                        if (!FilterPath(bound_file_path.value(), allowed_extensions))
+                        if (!FilterPath(bound_file_path.value(), path_view, allowed_extensions))
                         {
                             continue;
                         }
@@ -307,7 +311,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(con
             {
                 if (auto file_path = mount.MountImpl->GetFilePath(path))
                 {
-                    if (FilterPath(file_path.value(), allowed_extensions))
+                    if (FilterPath(file_path.value(), path_view, allowed_extensions))
                     {
                         return file_path;
                     }
@@ -345,7 +349,10 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
         }
     }
 
-    if (const BoundPathes* bound_pathes = GetBoundPathes(path.string()))
+    const std::string path_string = path.string();
+    std::string_view path_view{ path_string };
+
+    if (const BoundPathes* bound_pathes = GetBoundPathes(path_string))
     {
         std::lock_guard lock{ m_RandomCacheMutex };
         const CachedRandomFile* cached_file = algo::find(m_RandomCache, &CachedRandomFile::TargetPath, CachedRandomFileKey{ bound_pathes });
@@ -360,7 +367,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
                     {
                         if (auto file_path = mount.MountImpl->GetFilePath(bound_path))
                         {
-                            if (FilterPath(file_path.value(), allowed_extensions))
+                            if (FilterPath(file_path.value(), path_view, allowed_extensions))
                             {
                                 file_paths.push_back(std::move(file_path).value());
                             }
@@ -399,7 +406,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
                 {
                     if (auto file_path = mount.MountImpl->GetFilePath(path))
                     {
-                        if (FilterPath(file_path.value(), allowed_extensions))
+                        if (FilterPath(file_path.value(), path_view, allowed_extensions))
                         {
                             file_paths.push_back(std::move(file_path).value());
                         }
@@ -448,11 +455,11 @@ std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std:
     return file_paths;
 }
 
-bool VirtualFilesystem::FilterPath(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const
+bool VirtualFilesystem::FilterPath(const std::filesystem::path& path, std::string_view relative_path, std::span<const std::filesystem::path> allowed_extensions) const
 {
     for (const auto& filter : m_CustomFilters)
     {
-        if (!filter(path))
+        if (!filter(path, relative_path))
         {
             return false;
         }

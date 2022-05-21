@@ -5462,7 +5462,7 @@ inline constexpr std::string_view s_SpeedrunFiles[]{
     "strings07_mod",
     "strings08_mod",
     /* These are additionally filtered to only load from .db, i.e. after they are merged from _mod files */
-    /* See s_SpeedrunDbFiles for the same list but with explicit filetype */
+    /* See s_SpeedrunDbFiles for the same list */
     "Data/Textures/journal_stickers",     // char stickers
     "Data/Textures/journal_entry_people", // char journal entries
     "Data/Textures/menu_leader",          // char banners
@@ -5481,20 +5481,20 @@ inline constexpr std::string_view s_SpeedrunFiles[]{
 };
 
 inline constexpr std::string_view s_SpeedrunDbFiles[]{
-    "Data/Textures/journal_stickers.DDS",
-    "Data/Textures/journal_entry_people.DDS",
-    "Data/Textures/menu_leader.DDS",
-    "Data/Textures/menu_basic.DDS",
-    "Data/Textures/journal_entry_mons.DDS",
-    "strings00.str",
-    "strings01.str",
-    "strings02.str",
-    "strings03.str",
-    "strings04.str",
-    "strings05.str",
-    "strings06.str",
-    "strings07.str",
-    "strings08.str",
+    "Data/Textures/journal_stickers",
+    "Data/Textures/journal_entry_people",
+    "Data/Textures/menu_leader",
+    "Data/Textures/menu_basic",
+    "Data/Textures/journal_entry_mons",
+    "strings00",
+    "strings01",
+    "strings02",
+    "strings03",
+    "strings04",
+    "strings05",
+    "strings06",
+    "strings07",
+    "strings08",
 };
 
 inline constexpr std::uint32_t s_SpeedrunStringHashes[] = {

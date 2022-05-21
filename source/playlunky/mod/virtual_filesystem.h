@@ -36,7 +36,7 @@ class VirtualFilesystem
     void RestrictFiles(std::span<const std::string_view> files);
 
     // Register a filter to block loading arbitrary files, return true from the filter to allow loading
-    using CustomFilterFun = std::function<bool(const std::filesystem::path)>;
+    using CustomFilterFun = std::function<bool(const std::filesystem::path&, std::string_view)>;
     void RegisterCustomFilter(CustomFilterFun filter);
 
     // Binding pathes makes sure that only one of the bound files can be loaded
@@ -55,7 +55,7 @@ class VirtualFilesystem
     std::vector<std::filesystem::path> GetAllFilePaths(const std::filesystem::path& path, VfsType type = VfsType::Any) const;
 
   private:
-    bool FilterPath(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions) const;
+    bool FilterPath(const std::filesystem::path& path, std::string_view relative_path, std::span<const std::filesystem::path> allowed_extensions) const;
 
     using BoundPathes = std::vector<std::string_view>;
     BoundPathes* GetBoundPathes(std::string_view path);

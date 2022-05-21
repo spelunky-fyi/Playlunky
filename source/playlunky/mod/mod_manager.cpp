@@ -80,7 +80,8 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
     const fs::path mods_root_path{ mModsRoot };
     if (fs::exists(mods_root_path) && fs::is_directory(mods_root_path))
     {
-        const auto db_folder = mods_root_path / ".db";
+        const auto db_folder{ mods_root_path / ".db" };
+        const auto mod_db_folder{ db_folder / "Mods" };
 
         bool speedrun_mode_changed{ false };
         bool journal_gen_settings_change{ false };
@@ -244,7 +245,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             }
         }
 
-        const std::vector<fs::path> mod_folders = [this, mods_root_path, db_folder](const fs::path& root_folder)
+        const std::vector<fs::path> mod_folders = [this, mods_root_path, mod_db_folder](const fs::path& root_folder)
         {
             std::vector<fs::path> mod_folders;
 
@@ -258,7 +259,6 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
 
             // Add all mods that were deleted since last load
             {
-                const auto mod_db_folder{ db_folder / "Mods" };
                 if (fs::exists(mod_db_folder))
                 {
                     for (fs::path sub_path : fs::directory_iterator{ mod_db_folder })
@@ -321,7 +321,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
         for (const fs::path& mod_folder : mod_folders)
         {
             const std::string mod_name = mod_folder.filename().string();
-            const auto mod_db_folder = db_folder / "Mods" / mod_name;
+            const auto this_db_folder = db_folder / "Mods" / mod_name;
 
             const auto [prio, enabled] = [&mod_name_to_prio, &mod_name, &mod_folder]() mutable
             {
@@ -343,13 +343,13 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             ModInfo mod_info{ mod_name };
 
             {
-                ModDatabase mod_db{ mod_db_folder, mod_folder, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Recurse) };
+                ModDatabase mod_db{ this_db_folder, mod_folder, static_cast<ModDatabaseFlags>(ModDatabaseFlags_Files | ModDatabaseFlags_Recurse) };
                 mod_db.SetEnabled(enabled);
 
                 if (mod_db.IsEnabled() || mod_db.WasEnabled())
                 {
                     mod_db.UpdateDatabase();
-                    const std::vector<fs::path> mod_load_paths{ mod_db_folder, mod_folder };
+                    const std::vector<fs::path> mod_load_paths{ this_db_folder, mod_folder };
                     if (mod_db.IsEnabled())
                     {
                         mod_db.ForEachFile([&](const fs::path& rel_asset_path, bool, bool, std::optional<bool>)
@@ -412,7 +412,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
                                                    }
 
                                                    // Does not necessarily write dds to the db
-                                                   const auto db_destination = mod_db_folder / rel_asset_path;
+                                                   const auto db_destination = this_db_folder / rel_asset_path;
                                                    mSpritePainter->RegisterSheet(full_asset_path, db_destination, outdated, deleted);
                                                    return;
                                                }
@@ -431,7 +431,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
 
                                                if (mSpriteHotLoader)
                                                {
-                                                   const auto db_destination = (mod_db_folder / rel_asset_path).replace_extension(".dds");
+                                                   const auto db_destination = (this_db_folder / rel_asset_path).replace_extension(".DDS");
                                                    mSpriteHotLoader->RegisterSheet(full_asset_path, db_destination);
                                                }
 
@@ -443,7 +443,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
 
                                                if (outdated || deleted)
                                                {
-                                                   const auto db_destination = (mod_db_folder / rel_asset_path).replace_extension(".dds");
+                                                   const auto db_destination = (this_db_folder / rel_asset_path).replace_extension(".DDS");
 
                                                    if (deleted)
                                                    {
@@ -492,11 +492,11 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
                                            {
                                                if (deleted)
                                                {
-                                                   DeleteCachedAudioFile(full_asset_path, mod_db_folder);
+                                                   DeleteCachedAudioFile(full_asset_path, this_db_folder);
                                                }
-                                               else if (!HasCachedAudioFile(full_asset_path, mod_db_folder))
+                                               else if (!HasCachedAudioFile(full_asset_path, this_db_folder))
                                                {
-                                                   if (CacheAudioFile(full_asset_path, mod_db_folder, outdated))
+                                                   if (CacheAudioFile(full_asset_path, this_db_folder, outdated))
                                                    {
                                                        LogInfo("Successfully cached audio file '{}'...", full_asset_path.string());
                                                    }
@@ -525,7 +525,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             {
                 if (enabled)
                 {
-                    vfs.MountFolder(mod_db_folder.string(), prio);
+                    vfs.MountFolder(this_db_folder.string(), prio);
                     vfs.MountFolder(mod_folder.string(), prio, VfsType::User);
                 }
 
@@ -570,13 +570,13 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
         if (speedrun_mode)
         {
             vfs.RegisterCustomFilter(
-                [db_folder](const fs::path& asset_path) -> bool
+                [db_folder, mod_db_folder](const fs::path& asset_path, std::string_view relative_path) -> bool
                 {
-                    if (!algo::is_sub_path(asset_path, db_folder))
+                    const bool in_mod_db_folder = algo::is_sub_path(asset_path, mod_db_folder);
+                    const bool in_db_folder = in_mod_db_folder || algo::is_sub_path(asset_path, db_folder);
+                    if (!in_db_folder || in_mod_db_folder)
                     {
-                        const fs::path relative_path = fs::proximate(asset_path, db_folder);
-                        const std::string relative_path_str = algo::path_string(relative_path);
-                        return !algo::contains(s_SpeedrunDbFiles, relative_path_str);
+                        return !algo::contains(s_SpeedrunDbFiles, relative_path);
                     }
                     return true;
                 });
@@ -584,7 +584,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
         else if (!enable_raw_string_loading)
         {
             vfs.RegisterCustomFilter(
-                [db_folder](const fs::path& asset_path) -> bool
+                [db_folder](const fs::path& asset_path, [[maybe_unused]] std::string_view relative_path) -> bool
                 {
                     if (asset_path.extension() == L".str")
                     {
