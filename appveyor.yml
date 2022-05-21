@@ -3,7 +3,7 @@ platform:
 
 configuration:
   - Debug
-  - Release
+#  - Release
 
 image:
   - Visual Studio 2019
