@@ -576,6 +576,15 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
                     const bool in_db_folder = in_mod_db_folder || algo::is_sub_path(asset_path, db_folder);
                     if (!in_db_folder || in_mod_db_folder)
                     {
+                        // Strip extension
+                        {
+                            const size_t ext_pos = relative_path.find(".");
+                            if (ext_pos != std::string_view::npos)
+                            {
+                                relative_path = relative_path.substr(0, ext_pos);
+                            }
+                        }
+
                         return !algo::contains(s_SpeedrunDbFiles, relative_path);
                     }
                     return true;
