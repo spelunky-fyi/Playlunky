@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.1] - 2021-05-23
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.25.2-orange">
+
+### Fixed
+- Added support for the allowed mods in speedrun mode
+
 ## [0.14.0] - 2021-05-15
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.25.2-orange">
