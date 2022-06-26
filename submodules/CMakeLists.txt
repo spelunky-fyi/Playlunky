@@ -75,6 +75,7 @@ function(remove_arch_avx target)
     list(REMOVE_ITEM target_compile_options /arch:AVX)
     set_target_properties(${target} PROPERTIES COMPILE_OPTIONS "${target_compile_options}")
 endfunction()
+remove_arch_avx(libwavpack)
 remove_arch_avx(libnyquist)
 
 # --------------------------------------------------
