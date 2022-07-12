@@ -66,11 +66,13 @@ class VirtualFilesystem
     struct VfsMount;
     std::vector<VfsMount> mMounts;
 
-    using CachedRandomFileKey = std::variant<const BoundPathes*, std::filesystem::path>;
+    using CachedRandomFileKey = std::variant<const BoundPathes*, std::filesystem::path, std::monostate>;
     struct CachedRandomFile
     {
         CachedRandomFileKey TargetPath;
         std::optional<std::filesystem::path> ResultPath;
+        std::optional<std::filesystem::path> ResultPathNoExt;
+        const VfsMount* Mount;
     };
     mutable std::mutex m_RandomCacheMutex;
     mutable std::vector<CachedRandomFile> m_RandomCache;

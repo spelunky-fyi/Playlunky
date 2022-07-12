@@ -358,18 +358,24 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
         const CachedRandomFile* cached_file = algo::find(m_RandomCache, &CachedRandomFile::TargetPath, CachedRandomFileKey{ bound_pathes });
         if (cached_file == nullptr)
         {
-            std::vector<std::filesystem::path> file_paths;
+            std::vector<CachedRandomFile> file_paths;
             for (std::string_view bound_path : *bound_pathes)
             {
                 for (const VfsMount& mount : mMounts)
                 {
                     if (mount.MountImpl->IsType(type))
                     {
-                        if (auto file_path = mount.MountImpl->GetFilePath(bound_path))
+                        if (auto file_path_res = mount.MountImpl->GetFilePath(bound_path))
                         {
-                            if (FilterPath(file_path.value(), path_view, allowed_extensions))
+                            std::filesystem::path file_path = std::move(file_path_res).value();
+                            if (FilterPath(file_path, path_view, allowed_extensions))
                             {
-                                file_paths.push_back(std::move(file_path).value());
+                                std::filesystem::path file_path_no_ext{ file_path };
+                                file_path_no_ext.replace_extension();
+                                file_paths.push_back(CachedRandomFile{ CachedRandomFileKey{},
+                                                                       std::move(file_path),
+                                                                       std::move(file_path_no_ext),
+                                                                       &mount });
                             }
                         }
                     }
@@ -377,11 +383,14 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
             }
             if (!file_paths.empty())
             {
-                m_RandomCache.push_back(CachedRandomFile{ CachedRandomFileKey{ bound_pathes }, file_paths[rand() % file_paths.size()] }); // use something better for randomness?
+                CachedRandomFile selected_file{ file_paths[rand() % file_paths.size()] }; // use something better for randomness??? nah...
+                selected_file.TargetPath = bound_pathes;
+                LogInfo("Random select for file {} has selected file {}", path.string(), selected_file.ResultPath.value().string());
+                m_RandomCache.push_back(std::move(selected_file));
             }
             else
             {
-                m_RandomCache.push_back(CachedRandomFile{ CachedRandomFileKey{ bound_pathes }, std::nullopt });
+                m_RandomCache.push_back(CachedRandomFile{ CachedRandomFileKey{ bound_pathes } });
             }
             cached_file = &m_RandomCache.back();
         }
@@ -399,16 +408,22 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
         const CachedRandomFile* cached_file = algo::find(m_RandomCache, &CachedRandomFile::TargetPath, CachedRandomFileKey{ path });
         if (cached_file == nullptr)
         {
-            std::vector<std::filesystem::path> file_paths;
+            std::vector<CachedRandomFile> file_paths;
             for (const VfsMount& mount : mMounts)
             {
                 if (mount.MountImpl->IsType(type))
                 {
-                    if (auto file_path = mount.MountImpl->GetFilePath(path))
+                    if (auto file_path_res = mount.MountImpl->GetFilePath(path))
                     {
-                        if (FilterPath(file_path.value(), path_view, allowed_extensions))
+                        std::filesystem::path file_path = std::move(file_path_res).value();
+                        if (FilterPath(file_path, path_view, allowed_extensions))
                         {
-                            file_paths.push_back(std::move(file_path).value());
+                            std::filesystem::path file_path_no_ext{ file_path };
+                            file_path_no_ext.replace_extension();
+                            file_paths.push_back(CachedRandomFile{ CachedRandomFileKey{},
+                                                                   std::move(file_path),
+                                                                   std::move(file_path_no_ext),
+                                                                   &mount });
                         }
                     }
                 }
@@ -416,11 +431,14 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
 
             if (!file_paths.empty())
             {
-                m_RandomCache.push_back(CachedRandomFile{ CachedRandomFileKey{ path }, file_paths[rand() % file_paths.size()] }); // use something better for randomness?
+                CachedRandomFile selected_file{ file_paths[rand() % file_paths.size()] }; // use something better for randomness??? nah...
+                selected_file.TargetPath = bound_pathes;
+                LogInfo("Random select for file {} has selected file {}", path.string(), selected_file.ResultPath.value().string());
+                m_RandomCache.push_back(std::move(selected_file));
             }
             else
             {
-                m_RandomCache.push_back(CachedRandomFile{ CachedRandomFileKey{ path }, std::nullopt });
+                m_RandomCache.push_back(CachedRandomFile{ CachedRandomFileKey{ path } });
             }
             cached_file = &m_RandomCache.back();
         }
