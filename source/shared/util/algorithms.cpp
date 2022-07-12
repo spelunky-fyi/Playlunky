@@ -26,6 +26,21 @@ bool is_end_of_path(const std::filesystem::path& path, const std::filesystem::pa
     const auto begin_of_sub_path = std::search(base.begin(), base.end(), path.begin(), path.end());
     return std::distance(begin_of_sub_path, base.end()) == std::distance(path.begin(), path.end());
 }
+std::filesystem::path strip_end_of_path(const std::filesystem::path& path, const std::filesystem::path& base)
+{
+    std::filesystem::path ret{};
+    {
+        const auto begin_of_sub_path = std::search(base.begin(), base.end(), path.begin(), path.end());
+        if (std::distance(begin_of_sub_path, base.end()) == std::distance(path.begin(), path.end()))
+        {
+            for (auto it = base.begin(); it != begin_of_sub_path; it++)
+            {
+                ret /= *it;
+            }
+        }
+    }
+    return ret;
+}
 
 std::string trim(std::string str)
 {
