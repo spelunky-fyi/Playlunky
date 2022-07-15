@@ -262,26 +262,11 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
         return *m_CachedImages.back().ImageFile;
     };
 
-    static const std::array allowed_extensions{
-        std::filesystem::path{ ".png" },
-        std::filesystem::path{ ".bmp" },
-        std::filesystem::path{ ".jpg" },
-        std::filesystem::path{ ".jpeg" },
-        std::filesystem::path{ ".jpe" },
-        std::filesystem::path{ ".jp2" },
-        std::filesystem::path{ ".tif" },
-        std::filesystem::path{ ".tiff" },
-        std::filesystem::path{ ".pbm" },
-        std::filesystem::path{ ".pgm" },
-        std::filesystem::path{ ".ppm" },
-        std::filesystem::path{ ".sr" },
-        std::filesystem::path{ ".ras" },
-    };
     for (const TargetSheet& target_sheet : m_TargetSheets)
     {
         if (NeedsRegen(target_sheet, destination_folder))
         {
-            const auto target_file_path = vfs.GetFilePathFilterExt(target_sheet.Path, allowed_extensions).value_or(fs::path{ source_folder / target_sheet.Path }.replace_extension(".png"));
+            const auto target_file_path = vfs.GetFilePathFilterExt(target_sheet.Path, Image::AllowedExtensions).value_or(fs::path{ source_folder / target_sheet.Path }.replace_extension(".png"));
             Image target_image = get_image(target_file_path).Clone();
 
             static auto validate_source_aspect_ratio = [](const SourceSheet& source_sheet, const Image& source_image)
@@ -313,11 +298,11 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
 
                     if (!random_select)
                     {
-                        return vfs.GetFilePathFilterExt(source_sheet.Path, allowed_extensions);
+                        return vfs.GetFilePathFilterExt(source_sheet.Path, Image::AllowedExtensions);
                     }
                     else
                     {
-                        return vfs.GetRandomFilePathFilterExt(source_sheet.Path, allowed_extensions);
+                        return vfs.GetRandomFilePathFilterExt(source_sheet.Path, Image::AllowedExtensions);
                     }
                 }();
 
@@ -429,11 +414,11 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
                     {
                         if (!random_select)
                         {
-                            return vfs.GetFilePathFilterExt(path, allowed_extensions);
+                            return vfs.GetFilePathFilterExt(path, Image::AllowedExtensions);
                         }
                         else
                         {
-                            return vfs.GetRandomFilePathFilterExt(path, allowed_extensions);
+                            return vfs.GetRandomFilePathFilterExt(path, Image::AllowedExtensions);
                         }
                     }();
 

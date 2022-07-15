@@ -907,22 +907,7 @@ SpritePainter::FilePair SpritePainter::ConvertToRealFilePair(const std::filesyst
 }
 std::optional<std::filesystem::path> SpritePainter::GetSourcePath(const std::filesystem::path& relative_path)
 {
-    static const std::array allowed_extensions{
-        std::filesystem::path{ ".png" },
-        std::filesystem::path{ ".bmp" },
-        std::filesystem::path{ ".jpg" },
-        std::filesystem::path{ ".jpeg" },
-        std::filesystem::path{ ".jpe" },
-        std::filesystem::path{ ".jp2" },
-        std::filesystem::path{ ".tif" },
-        std::filesystem::path{ ".tiff" },
-        std::filesystem::path{ ".pbm" },
-        std::filesystem::path{ ".pgm" },
-        std::filesystem::path{ ".ppm" },
-        std::filesystem::path{ ".sr" },
-        std::filesystem::path{ ".ras" },
-    };
-    std::optional<std::filesystem::path> vfs_path = m_Vfs.GetFilePathFilterExt(relative_path, allowed_extensions, VfsType::User);
+    std::optional<std::filesystem::path> vfs_path = m_Vfs.GetFilePathFilterExt(relative_path, Image::AllowedExtensions, VfsType::User);
     if (!vfs_path && algo::contains(s_KnownTextureFiles, std::filesystem::path{ relative_path }.replace_extension("").filename().string()))
     {
         vfs_path = m_OriginalDataFolder / relative_path;

@@ -99,6 +99,22 @@ class Image
     void DebugShow() const;
     void DebugShowWith(const Image& other) const;
 
+    static inline std::array AllowedExtensions{
+        std::filesystem::path{ ".png" },
+        std::filesystem::path{ ".bmp" },
+        std::filesystem::path{ ".jpg" },
+        std::filesystem::path{ ".jpeg" },
+        std::filesystem::path{ ".jpe" },
+        std::filesystem::path{ ".jp2" },
+        std::filesystem::path{ ".tif" },
+        std::filesystem::path{ ".tiff" },
+        std::filesystem::path{ ".pbm" },
+        std::filesystem::path{ ".pgm" },
+        std::filesystem::path{ ".ppm" },
+        std::filesystem::path{ ".sr" },
+        std::filesystem::path{ ".ras" },
+    };
+
   private:
     bool ConvertToRGBA();
 
