@@ -154,12 +154,24 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
         "khaki"sv,
         "orange"sv
     };
+    const bool random_character_select{ settings.GetBool("sprite_settings", "random_character_select", false) };
+    auto vfs_get_file_path = [=, &vfs](const std::string& file_path)
+    {
+        if (!random_character_select)
+        {
+            return vfs.GetFilePath(file_path);
+        }
+        else
+        {
+            return vfs.GetRandomFilePath(file_path);
+        }
+    };
     for (std::uint32_t i = 0; i < characters.size(); i++)
     {
         auto char_name = characters[i];
 
         auto name_file_name = fmt::format("char_{}.name", char_name);
-        if (auto file_path = vfs.GetFilePath(name_file_name))
+        if (auto file_path = vfs_get_file_path(name_file_name))
         {
             if (auto strings_source_file = std::ifstream{ file_path.value() })
             {
@@ -215,7 +227,7 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
         }
 
         auto color_file_name = fmt::format("char_{}.color", char_name);
-        if (auto file_path = vfs.GetFilePath(color_file_name))
+        if (auto file_path = vfs_get_file_path(color_file_name))
         {
             auto change_heart_color_from_file = [i, file_path = file_path.value()](const std::filesystem::path&, const filewatch::Event change_type)
             {
@@ -257,7 +269,7 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
         }
 
         auto json_file_name = fmt::format("char_{}.json", char_name);
-        if (auto file_path = vfs.GetFilePath(json_file_name))
+        if (auto file_path = vfs_get_file_path(json_file_name))
         {
             auto apply_char_def_from_json = [i, file_path = file_path.value()](const std::filesystem::path&, const filewatch::Event change_type)
             {

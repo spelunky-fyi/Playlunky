@@ -42,6 +42,15 @@ class VirtualFilesystem
     // Binding pathes makes sure that only one of the bound files can be loaded
     void BindPathes(std::vector<std::string_view> pathes);
 
+    // Linking pathes makes sure that if a file is loaded from one mount all linked pathes will also be loaded
+    // from that mount, or fail if not available on that mount
+    struct LinkedPathesElement
+    {
+        std::filesystem::path Path;
+        std::span<std::filesystem::path> AllowedExtensions;
+    };
+    void LinkPathes(std::vector<LinkedPathesElement> pathes);
+
     // Interface for runtime loading
     using FileInfo = SpelunkyFileInfo;
     FileInfo* LoadFile(const char* path, void* (*allocator)(std::size_t) = nullptr) const;
@@ -55,30 +64,44 @@ class VirtualFilesystem
     std::vector<std::filesystem::path> GetAllFilePaths(const std::filesystem::path& path, VfsType type = VfsType::Any) const;
 
   private:
+    struct VfsMount;
+    using BoundPathes = std::vector<std::string_view>;
+    using LinkedPathes = std::vector<LinkedPathesElement>;
+
+    const VfsMount* GetLinkedMount(const std::filesystem::path& path, std::string_view path_view, std::span<const std::filesystem::path> allowed_extensions, VfsType type) const;
+    const VfsMount* GetLoadingMount(const std::filesystem::path& path, std::string_view path_view, std::span<const std::filesystem::path> allowed_extensions, VfsType type) const;
+
+    const VfsMount* GetRandomLinkedMount(const std::filesystem::path& path, std::string_view path_view, std::span<const std::filesystem::path> allowed_extensions, VfsType type) const;
+    const VfsMount* GetRandomLoadingMount(const std::filesystem::path& path, std::string_view path_view, std::span<const std::filesystem::path> allowed_extensions, VfsType type) const;
+
+    std::vector<const VfsMount*> GetAllLoadingMounts(const std::filesystem::path& path, std::string_view path_view, std::span<const std::filesystem::path> allowed_extensions, VfsType type) const;
+
     bool FilterPath(const std::filesystem::path& path, std::string_view relative_path, std::span<const std::filesystem::path> allowed_extensions) const;
 
-    using BoundPathes = std::vector<std::string_view>;
     BoundPathes* GetBoundPathes(std::string_view path);
     BoundPathes* GetBoundPathes(const BoundPathes& pathes);
     const BoundPathes* GetBoundPathes(std::string_view path) const;
     const BoundPathes* GetBoundPathes(const BoundPathes& pathes) const;
 
-    struct VfsMount;
-    std::vector<VfsMount> mMounts;
+    LinkedPathes* GetLinkedPathes(std::string_view path);
+    LinkedPathes* GetLinkedPathes(const LinkedPathes& pathes);
+    const LinkedPathes* GetLinkedPathes(std::string_view path) const;
+    const LinkedPathes* GetLinkedPathes(const LinkedPathes& pathes) const;
 
-    using CachedRandomFileKey = std::variant<const BoundPathes*, std::filesystem::path, std::monostate>;
-    struct CachedRandomFile
+    std::vector<std::unique_ptr<VfsMount>> mMounts;
+
+    using CachedMountKey = std::variant<const BoundPathes*, const LinkedPathes*, std::filesystem::path>;
+    struct CachedMount
     {
-        CachedRandomFileKey TargetPath;
-        std::optional<std::filesystem::path> ResultPath;
-        std::optional<std::filesystem::path> ResultPathNoExt;
+        CachedMountKey Key;
         const VfsMount* Mount;
     };
-    mutable std::mutex m_RandomCacheMutex;
-    mutable std::vector<CachedRandomFile> m_RandomCache;
+    mutable std::mutex m_MountCacheMutex;
+    mutable std::vector<CachedMount> m_MountCache;
 
     std::span<const std::string_view> m_RestrictedFiles;
     std::vector<CustomFilterFun> m_CustomFilters;
 
     std::vector<BoundPathes> m_BoundPathes;
+    std::vector<LinkedPathes> m_LinkedPathes;
 };

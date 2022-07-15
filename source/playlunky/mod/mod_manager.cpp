@@ -14,6 +14,7 @@
 #include "playlunky_settings.h"
 #include "save_game.h"
 #include "shader_merge.h"
+#include "special_pathes.h"
 #include "sprite_hot_loader.h"
 #include "sprite_painter.h"
 #include "sprite_sheet_merger.h"
@@ -525,7 +526,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             {
                 if (enabled)
                 {
-                    vfs.MountFolder(this_db_folder.string(), prio);
+                    vfs.MountFolder(this_db_folder.string(), prio, VfsType::Backend);
                     vfs.MountFolder(mod_folder.string(), prio, VfsType::User);
                 }
 
@@ -533,39 +534,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             }
         }
 
-        {
-            // Bind char pathes
-            vfs.BindPathes({ "Data/Textures/char_orange", "Data/Textures/Entities/char_orange_full" });
-            vfs.BindPathes({ "Data/Textures/char_pink", "Data/Textures/Entities/char_pink_full" });
-            vfs.BindPathes({ "Data/Textures/char_red", "Data/Textures/Entities/char_red_full" });
-            vfs.BindPathes({ "Data/Textures/char_violet", "Data/Textures/Entities/char_violet_full" });
-            vfs.BindPathes({ "Data/Textures/char_white", "Data/Textures/Entities/char_white_full" });
-            vfs.BindPathes({ "Data/Textures/char_yellow", "Data/Textures/Entities/char_yellow_full" });
-            vfs.BindPathes({ "Data/Textures/char_black", "Data/Textures/Entities/char_black_full" });
-            vfs.BindPathes({ "Data/Textures/char_blue", "Data/Textures/Entities/char_blue_full" });
-            vfs.BindPathes({ "Data/Textures/char_cerulean", "Data/Textures/Entities/char_cerulean_full" });
-            vfs.BindPathes({ "Data/Textures/char_cinnabar", "Data/Textures/Entities/char_cinnabar_full" });
-            vfs.BindPathes({ "Data/Textures/char_cyan", "Data/Textures/Entities/char_cyan_full" });
-            vfs.BindPathes({ "Data/Textures/char_eggchild", "Data/Textures/Entities/char_eggchild_full" });
-            vfs.BindPathes({ "Data/Textures/char_gold", "Data/Textures/Entities/char_gold_full" });
-            vfs.BindPathes({ "Data/Textures/char_gray", "Data/Textures/Entities/char_gray_full" });
-            vfs.BindPathes({ "Data/Textures/char_green", "Data/Textures/Entities/char_green_full" });
-            vfs.BindPathes({ "Data/Textures/char_hired", "Data/Textures/Entities/char_hired_full" });
-            vfs.BindPathes({ "Data/Textures/char_iris", "Data/Textures/Entities/char_iris_full" });
-            vfs.BindPathes({ "Data/Textures/char_khaki", "Data/Textures/Entities/char_khaki_full" });
-            vfs.BindPathes({ "Data/Textures/char_lemon", "Data/Textures/Entities/char_lemon_full" });
-            vfs.BindPathes({ "Data/Textures/char_lime", "Data/Textures/Entities/char_lime_full" });
-            vfs.BindPathes({ "Data/Textures/char_magenta", "Data/Textures/Entities/char_magenta_full" });
-            vfs.BindPathes({ "Data/Textures/char_olive", "Data/Textures/Entities/char_olive_full" });
-
-            vfs.BindPathes({ "Data/Textures/Entities/monty_full", "Data/Textures/Entities/Pets/monty", "Data/Textures/Entities/Pets/monty_v2" });
-            vfs.BindPathes({ "Data/Textures/Entities/percy_full", "Data/Textures/Entities/Pets/percy", "Data/Textures/Entities/Pets/percy_v2" });
-            vfs.BindPathes({ "Data/Textures/Entities/poochi_full", "Data/Textures/Entities/Pets/poochi", "Data/Textures/Entities/Pets/poochi_v2" });
-            vfs.BindPathes({ "Data/Textures/Entities/turkey_full", "Data/Textures/Entities/Mounts/turkey" });
-            vfs.BindPathes({ "Data/Textures/Entities/rockdog_full", "Data/Textures/Entities/Mounts/rockdog" });
-            vfs.BindPathes({ "Data/Textures/Entities/axolotl_full", "Data/Textures/Entities/Mounts/axolotl" });
-            vfs.BindPathes({ "Data/Textures/Entities/qilin_full", "Data/Textures/Entities/Mounts/qilin" });
-        }
+        SetupSpecialPathes(vfs);
 
         if (speedrun_mode)
         {

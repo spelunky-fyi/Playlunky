@@ -144,9 +144,9 @@ void VirtualFilesystem::MountFolder(std::string_view path, std::int64_t priority
 
     LogInfo("Mounting folder '{}' as a virtual filesystem...", path);
 
-    auto it = std::upper_bound(mMounts.begin(), mMounts.end(), priority, [](std::int64_t prio, const VfsMount& mount)
-                               { return mount.Priority > prio; });
-    mMounts.insert(it, VfsMount{ .Priority = priority, .MountImpl = std::make_unique<VfsFolderMount>(path, type) });
+    auto it = std::upper_bound(mMounts.begin(), mMounts.end(), priority, [](std::int64_t prio, const auto& mount)
+                               { return mount->Priority > prio; });
+    mMounts.emplace(it, new VfsMount{ .Priority = priority, .MountImpl = std::make_unique<VfsFolderMount>(path, type) });
 }
 
 void VirtualFilesystem::RestrictFiles(std::span<const std::string_view> files)
@@ -177,6 +177,24 @@ void VirtualFilesystem::BindPathes(std::vector<std::string_view> pathes)
     }
 }
 
+void VirtualFilesystem::LinkPathes(std::vector<LinkedPathesElement> pathes)
+{
+    if (LinkedPathes* linked_pathes = GetLinkedPathes(pathes))
+    {
+        for (LinkedPathesElement& path : pathes)
+        {
+            if (!algo::contains(*linked_pathes, &LinkedPathesElement::Path, path.Path))
+            {
+                linked_pathes->push_back(std::move(path));
+            }
+        }
+    }
+    else
+    {
+        m_LinkedPathes.push_back(std::move(pathes));
+    }
+}
+
 VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void* (*allocator)(std::size_t)) const
 {
     if (mMounts.empty())
@@ -198,11 +216,12 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
 
     // Should not need to use bound pathes here because those should all be handled during preprocessing
     // Bound pathes should usually contain one 'actual' game asset and the rest addon assets
-    for (const VfsMount& mount : mMounts)
+    // Same reasoning for linked pathes
+    for (const auto& mount : mMounts)
     {
         if (!m_CustomFilters.empty())
         {
-            if (const auto& asset_path = mount.MountImpl->GetFilePath(path))
+            if (const auto& asset_path = mount->MountImpl->GetFilePath(path))
             {
                 if (!FilterPath(asset_path.value(), path_view, {}))
                 {
@@ -211,7 +230,7 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
             }
         }
 
-        if (FileInfo* loaded_data = mount.MountImpl->LoadFile(path, allocator))
+        if (FileInfo* loaded_data = mount->MountImpl->LoadFile(path, allocator))
         {
             return loaded_data;
         }
@@ -244,80 +263,14 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(con
         }
     }
 
-    if (const BoundPathes* bound_pathes = GetBoundPathes(path_string))
+    if (const VfsMount* linked_mount = GetLinkedMount(path, path_view, allowed_extensions, type))
     {
-        std::int64_t current_file_prio{ std::numeric_limits<std::int64_t>::max() };
-        std::optional<std::filesystem::path> file_path{ std::nullopt };
-
-        for (std::string_view bound_path_str : *bound_pathes)
-        {
-            std::filesystem::path bound_path = bound_path_str;
-            for (const VfsMount& mount : mMounts)
-            {
-                if (mount.MountImpl->IsType(type) && mount.Priority < current_file_prio)
-                {
-                    if (auto bound_file_path = mount.MountImpl->GetFilePath(bound_path)) // TODO: needs to ignore extension
-                    {
-                        if (!FilterPath(bound_file_path.value(), path_view, allowed_extensions))
-                        {
-                            continue;
-                        }
-
-                        current_file_prio = mount.Priority;
-
-                        auto is_this_path = [&path](const std::filesystem::path& found_path)
-                        {
-                            if (path.has_extension())
-                            {
-                                return algo::is_end_of_path(path, found_path);
-                            }
-                            else
-                            {
-                                auto found_path_no_ext = std::filesystem::path{ found_path }.replace_extension();
-                                return algo::is_end_of_path(path, found_path_no_ext);
-                            }
-                        };
-
-                        // Only assign pathes that we are actually looking for
-                        // Anything else blocks lower prio files by design
-                        if (is_this_path(bound_file_path.value()))
-                        {
-                            file_path = std::move(bound_file_path).value();
-                        }
-                        else
-                        {
-                            file_path.reset();
-                        }
-
-                        break; // into loop over bound pathes
-                    }
-                }
-            }
-
-            // No need to continue looking if we found a file in the first mount
-            if (current_file_prio == mMounts.front().Priority)
-            {
-                break;
-            }
-        }
-
-        return file_path;
+        return linked_mount->MountImpl->GetFilePath(path);
     }
-    else
+
+    if (const VfsMount* loading_mount = GetLoadingMount(path, path_view, allowed_extensions, type))
     {
-        for (const VfsMount& mount : mMounts)
-        {
-            if (mount.MountImpl->IsType(type))
-            {
-                if (auto file_path = mount.MountImpl->GetFilePath(path))
-                {
-                    if (FilterPath(file_path.value(), path_view, allowed_extensions))
-                    {
-                        return file_path;
-                    }
-                }
-            }
-        }
+        return loading_mount->MountImpl->GetFilePath(path);
     }
 
     return std::nullopt;
@@ -352,99 +305,17 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
     const std::string path_string = path.string();
     std::string_view path_view{ path_string };
 
-    if (const BoundPathes* bound_pathes = GetBoundPathes(path_string))
+    if (const VfsMount* linked_mount = GetRandomLinkedMount(path, path_view, allowed_extensions, type))
     {
-        std::lock_guard lock{ m_RandomCacheMutex };
-        const CachedRandomFile* cached_file = algo::find(m_RandomCache, &CachedRandomFile::TargetPath, CachedRandomFileKey{ bound_pathes });
-        if (cached_file == nullptr)
-        {
-            std::vector<CachedRandomFile> file_paths;
-            for (std::string_view bound_path : *bound_pathes)
-            {
-                for (const VfsMount& mount : mMounts)
-                {
-                    if (mount.MountImpl->IsType(type))
-                    {
-                        if (auto file_path_res = mount.MountImpl->GetFilePath(bound_path))
-                        {
-                            std::filesystem::path file_path = std::move(file_path_res).value();
-                            if (FilterPath(file_path, path_view, allowed_extensions))
-                            {
-                                std::filesystem::path file_path_no_ext{ file_path };
-                                file_path_no_ext.replace_extension();
-                                file_paths.push_back(CachedRandomFile{ CachedRandomFileKey{},
-                                                                       std::move(file_path),
-                                                                       std::move(file_path_no_ext),
-                                                                       &mount });
-                            }
-                        }
-                    }
-                }
-            }
-            if (!file_paths.empty())
-            {
-                CachedRandomFile selected_file{ file_paths[rand() % file_paths.size()] }; // use something better for randomness??? nah...
-                selected_file.TargetPath = bound_pathes;
-                LogInfo("Random select for file {} has selected file {}", path.string(), selected_file.ResultPath.value().string());
-                m_RandomCache.push_back(std::move(selected_file));
-            }
-            else
-            {
-                m_RandomCache.push_back(CachedRandomFile{ CachedRandomFileKey{ bound_pathes } });
-            }
-            cached_file = &m_RandomCache.back();
-        }
-
-        if (cached_file->ResultPath.has_value() && algo::is_end_of_path(path, cached_file->ResultPath.value()))
-        {
-            return cached_file->ResultPath;
-        }
-        return std::nullopt;
+        return linked_mount->MountImpl->GetFilePath(path);
     }
-    else
+
+    if (const VfsMount* loading_mount = GetRandomLoadingMount(path, path_view, allowed_extensions, type))
     {
-
-        std::lock_guard lock{ m_RandomCacheMutex };
-        const CachedRandomFile* cached_file = algo::find(m_RandomCache, &CachedRandomFile::TargetPath, CachedRandomFileKey{ path });
-        if (cached_file == nullptr)
-        {
-            std::vector<CachedRandomFile> file_paths;
-            for (const VfsMount& mount : mMounts)
-            {
-                if (mount.MountImpl->IsType(type))
-                {
-                    if (auto file_path_res = mount.MountImpl->GetFilePath(path))
-                    {
-                        std::filesystem::path file_path = std::move(file_path_res).value();
-                        if (FilterPath(file_path, path_view, allowed_extensions))
-                        {
-                            std::filesystem::path file_path_no_ext{ file_path };
-                            file_path_no_ext.replace_extension();
-                            file_paths.push_back(CachedRandomFile{ CachedRandomFileKey{},
-                                                                   std::move(file_path),
-                                                                   std::move(file_path_no_ext),
-                                                                   &mount });
-                        }
-                    }
-                }
-            }
-
-            if (!file_paths.empty())
-            {
-                CachedRandomFile selected_file{ file_paths[rand() % file_paths.size()] }; // use something better for randomness??? nah...
-                selected_file.TargetPath = bound_pathes;
-                LogInfo("Random select for file {} has selected file {}", path.string(), selected_file.ResultPath.value().string());
-                m_RandomCache.push_back(std::move(selected_file));
-            }
-            else
-            {
-                m_RandomCache.push_back(CachedRandomFile{ CachedRandomFileKey{ path } });
-            }
-            cached_file = &m_RandomCache.back();
-        }
-
-        return cached_file->ResultPath;
+        return loading_mount->MountImpl->GetFilePath(path);
     }
+
+    return std::nullopt;
 }
 std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std::filesystem::path& path, VfsType type) const
 {
@@ -459,11 +330,11 @@ std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std:
         }
     }
 
-    for (const VfsMount& mount : mMounts)
+    for (const auto& mount : mMounts)
     {
-        if (mount.MountImpl->IsType(type))
+        if (mount->MountImpl->IsType(type))
         {
-            if (auto file_path = mount.MountImpl->GetFilePath(path))
+            if (auto file_path = mount->MountImpl->GetFilePath(path))
             {
                 file_paths.push_back(std::move(file_path).value());
             }
@@ -471,6 +342,298 @@ std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std:
     }
 
     return file_paths;
+}
+
+const VirtualFilesystem::VfsMount* VirtualFilesystem::GetLinkedMount(
+    const std::filesystem::path& path,
+    std::string_view path_view,
+    [[maybe_unused]] std::span<const std::filesystem::path> allowed_extensions,
+    VfsType type) const
+{
+    if (const LinkedPathes* linked_pathes = GetLinkedPathes(path_view))
+    {
+#ifdef _DEBUG
+        for (const LinkedPathesElement& linked_path : *linked_pathes)
+        {
+            if (path == linked_path.Path)
+            {
+                std::vector<std::filesystem::path> lhs{ allowed_extensions.begin(), allowed_extensions.end() };
+                std::vector<std::filesystem::path> rhs{ linked_path.AllowedExtensions.begin(), linked_path.AllowedExtensions.end() };
+                assert(lhs == rhs);
+            }
+        }
+#endif
+
+        const CachedMountKey cache_key{ linked_pathes };
+
+        std::lock_guard lock{ m_MountCacheMutex };
+        if (const CachedMount* cached_mount = algo::find(m_MountCache, &CachedMount::Key, cache_key))
+        {
+            return cached_mount->Mount;
+        }
+
+        const VfsMount* linked_mount{ nullptr };
+        for (const LinkedPathesElement& linked_path : *linked_pathes)
+        {
+            const std::string linked_path_string{ linked_path.Path.string() };
+            const std::string_view linked_path_view{ linked_path_string };
+            if (const VfsMount* loading_mount = GetLoadingMount(linked_path.Path, linked_path_view, linked_path.AllowedExtensions, type))
+            {
+                if (linked_mount == nullptr || loading_mount->Priority < linked_mount->Priority)
+                {
+                    linked_mount = loading_mount;
+                }
+            }
+        }
+        
+        m_MountCache.push_back(CachedMount{ cache_key, linked_mount });
+        return linked_mount;
+    }
+
+    return nullptr;
+}
+const VirtualFilesystem::VfsMount* VirtualFilesystem::GetLoadingMount(
+    const std::filesystem::path& path,
+    std::string_view path_view,
+    std::span<const std::filesystem::path> allowed_extensions,
+    VfsType type) const
+{
+    if (const BoundPathes* bound_pathes = GetBoundPathes(path_view))
+    {
+        std::int64_t current_file_prio{ std::numeric_limits<std::int64_t>::max() };
+        const VfsMount* file_mount{ nullptr };
+
+        for (std::string_view bound_path_str : *bound_pathes)
+        {
+            std::filesystem::path bound_path = bound_path_str;
+            for (const auto& mount : mMounts)
+            {
+                if (mount->MountImpl->IsType(type) && mount->Priority < current_file_prio)
+                {
+                    if (auto bound_file_path = mount->MountImpl->GetFilePath(bound_path))
+                    {
+                        if (!FilterPath(bound_file_path.value(), path_view, allowed_extensions))
+                        {
+                            continue;
+                        }
+
+                        current_file_prio = mount->Priority;
+
+                        auto is_this_path = [&path](const std::filesystem::path& found_path)
+                        {
+                            if (path.has_extension())
+                            {
+                                return algo::is_end_of_path(path, found_path);
+                            }
+                            else
+                            {
+                                auto found_path_no_ext = std::filesystem::path{ found_path }.replace_extension();
+                                return algo::is_end_of_path(path, found_path_no_ext);
+                            }
+                        };
+
+                        // Only assign pathes that we are actually looking for
+                        // Anything else blocks lower prio files by design
+                        if (is_this_path(bound_file_path.value()))
+                        {
+                            file_mount = mount.get();
+                        }
+                        else
+                        {
+                            file_mount = nullptr;
+                        }
+
+                        break; // into loop over bound pathes
+                    }
+                }
+            }
+
+            // No need to continue looking if we found a file in the first mount
+            if (current_file_prio == mMounts.front()->Priority)
+            {
+                break;
+            }
+        }
+
+        return file_mount;
+    }
+    else
+    {
+        for (const auto& mount : mMounts)
+        {
+            if (mount->MountImpl->IsType(type))
+            {
+                if (auto file_path = mount->MountImpl->GetFilePath(path))
+                {
+                    if (FilterPath(file_path.value(), path_view, allowed_extensions))
+                    {
+                        return mount.get();
+                    }
+                }
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+const VirtualFilesystem::VfsMount* VirtualFilesystem::GetRandomLinkedMount(
+    const std::filesystem::path& path,
+    std::string_view path_view,
+    std::span<const std::filesystem::path> allowed_extensions,
+    VfsType type) const
+{
+    if (const LinkedPathes* linked_pathes = GetLinkedPathes(path_view))
+    {
+#ifdef _DEBUG
+        for (const LinkedPathesElement& linked_path : *linked_pathes)
+        {
+            if (path == linked_path.Path)
+            {
+                std::vector<std::filesystem::path> lhs{ allowed_extensions.begin(), allowed_extensions.end() };
+                std::vector<std::filesystem::path> rhs{ linked_path.AllowedExtensions.begin(), linked_path.AllowedExtensions.end() };
+                assert(lhs == rhs);
+            }
+        }
+#endif
+        const CachedMountKey cache_key{ linked_pathes };
+
+        std::lock_guard lock{ m_MountCacheMutex };
+        if (const CachedMount* cached_mount = algo::find(m_MountCache, &CachedMount::Key, cache_key))
+        {
+            return cached_mount->Mount;
+        }
+
+        const VfsMount* linked_mount{ [&]() -> const VfsMount* {
+            std::vector<const VfsMount*> all_mounts;
+            for (const LinkedPathesElement& linked_path : *linked_pathes)
+            {
+                const std::string linked_path_string{ linked_path.Path.string() };
+                const std::string_view linked_path_view{ linked_path_string };
+                std::vector<const VfsMount*> mounts = GetAllLoadingMounts(linked_path.Path, linked_path_view, linked_path.AllowedExtensions, type);
+                all_mounts.insert(all_mounts.end(), mounts.begin(), mounts.end());
+            }
+            std::sort(all_mounts.begin(), all_mounts.end());
+            all_mounts.erase(std::unique(all_mounts.begin(), all_mounts.end()), all_mounts.end());
+            if (!all_mounts.empty())
+            {
+                return all_mounts[rand() % all_mounts.size()]; // use something better for randomness??? nah...
+            }
+            else
+            {
+                return nullptr;
+            }
+        }() };
+
+        // Also cache for all bound-pathes of all linked files in case a path is bound to a path but not linked to it
+        std::vector<const BoundPathes*> all_bound_pathes;
+        for (const LinkedPathesElement& linked_path : *linked_pathes)
+        {
+            const std::string linked_path_string{ linked_path.Path.string() };
+            const std::string_view linked_path_view{ linked_path_string };
+            if (const BoundPathes* bound_pathes = GetBoundPathes(linked_path_view))
+            {
+                all_bound_pathes.push_back(bound_pathes);
+            }
+        }
+        std::sort(all_bound_pathes.begin(), all_bound_pathes.end());
+        all_bound_pathes.erase(std::unique(all_bound_pathes.begin(), all_bound_pathes.end()), all_bound_pathes.end());
+
+        m_MountCache.push_back(CachedMount{ cache_key, linked_mount });
+        for (const BoundPathes* bound_pathes : all_bound_pathes)
+        {
+            m_MountCache.push_back(CachedMount{ CachedMountKey{ bound_pathes }, linked_mount });
+        }
+
+        return linked_mount;
+    }
+
+    return nullptr;
+}
+const VirtualFilesystem::VfsMount* VirtualFilesystem::GetRandomLoadingMount(
+    const std::filesystem::path& path,
+    std::string_view path_view,
+    std::span<const std::filesystem::path> allowed_extensions,
+    VfsType type) const
+{
+    CachedMountKey cache_key = [&]() {
+        if (const BoundPathes* bound_pathes = GetBoundPathes(path_view))
+        {
+            return CachedMountKey{ bound_pathes };
+        }
+        else
+        {
+            return CachedMountKey{ path };
+        }
+    }();
+
+    std::lock_guard lock{ m_MountCacheMutex };
+    const CachedMount* cached_mount = algo::find(m_MountCache, &CachedMount::Key, cache_key);
+    if (cached_mount == nullptr)
+    {
+        const VfsMount* selected_mount{ [&]() -> const VfsMount* {
+            std::vector<const VfsMount*> mounts = GetAllLoadingMounts(path, path_view, allowed_extensions, type);
+            if (!mounts.empty())
+            {
+                return mounts[rand() % mounts.size()]; // use something better for randomness??? nah...
+            }
+            else
+            {
+                return nullptr;
+            }
+        }() };
+        m_MountCache.push_back(CachedMount{ cache_key, selected_mount });
+        cached_mount = &m_MountCache.back();
+    }
+
+    return cached_mount->Mount;
+}
+
+std::vector<const VirtualFilesystem::VfsMount*> VirtualFilesystem::GetAllLoadingMounts(
+    const std::filesystem::path& path,
+    std::string_view path_view,
+    std::span<const std::filesystem::path> allowed_extensions,
+    VfsType type) const
+{
+    std::vector<const VfsMount*> mounts;
+    if (const BoundPathes* bound_pathes = GetBoundPathes(path_view))
+    {
+        for (std::string_view bound_path : *bound_pathes)
+        {
+            for (const auto& mount : mMounts)
+            {
+                if (mount->MountImpl->IsType(type))
+                {
+                    if (auto file_path_res = mount->MountImpl->GetFilePath(bound_path))
+                    {
+                        std::filesystem::path file_path = std::move(file_path_res).value();
+                        if (FilterPath(file_path, path_view, allowed_extensions))
+                        {
+                            mounts.push_back(mount.get());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        for (const auto& mount : mMounts)
+        {
+            if (mount->MountImpl->IsType(type))
+            {
+                if (auto file_path_res = mount->MountImpl->GetFilePath(path))
+                {
+                    std::filesystem::path file_path = std::move(file_path_res).value();
+                    if (FilterPath(file_path, path_view, allowed_extensions))
+                    {
+                        mounts.push_back(mount.get());
+                    }
+                }
+            }
+        }
+    }
+    return mounts;
 }
 
 bool VirtualFilesystem::FilterPath(const std::filesystem::path& path, std::string_view relative_path, std::span<const std::filesystem::path> allowed_extensions) const
@@ -485,26 +648,20 @@ bool VirtualFilesystem::FilterPath(const std::filesystem::path& path, std::strin
     return allowed_extensions.empty() || algo::contains(allowed_extensions, path.extension());
 }
 
-VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(std::string_view path)
-{
-    return const_cast<BoundPathes*>(static_cast<const VirtualFilesystem*>(this)->GetBoundPathes(path));
-}
-VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(const BoundPathes& pathes)
-{
-    return const_cast<BoundPathes*>(static_cast<const VirtualFilesystem*>(this)->GetBoundPathes(pathes));
-}
-const VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(std::string_view path) const
+template<class PathListSourceT>
+auto* GetBoundPathesImpl(std::string_view path, PathListSourceT& source)
 {
     path = path.substr(0, path.rfind('.'));
-    return algo::find_if(m_BoundPathes,
+    return algo::find_if(source,
                          [path](const std::vector<std::string_view>& bound_pathes)
                          {
                              return algo::contains(bound_pathes, path);
                          });
 }
-const VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(const BoundPathes& pathes) const
+template<class PathListSourceT>
+auto* GetBoundPathesImpl(const std::vector<std::string_view>& pathes, PathListSourceT& source)
 {
-    return algo::find_if(m_BoundPathes,
+    return algo::find_if(source,
                          [&pathes](const std::vector<std::string_view>& bound_pathes)
                          {
                              return algo::contains_if(bound_pathes,
@@ -513,4 +670,62 @@ const VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(const Bo
                                                           return algo::contains(pathes, bound_path);
                                                       });
                          });
+}
+
+VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(std::string_view path)
+{
+    return GetBoundPathesImpl(path, m_BoundPathes);
+}
+VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(const BoundPathes& pathes)
+{
+    return GetBoundPathesImpl(pathes, m_BoundPathes);
+}
+const VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(std::string_view path) const
+{
+    return GetBoundPathesImpl(path, m_BoundPathes);
+}
+const VirtualFilesystem::BoundPathes* VirtualFilesystem::GetBoundPathes(const BoundPathes& pathes) const
+{
+    return GetBoundPathesImpl(pathes, m_BoundPathes);
+}
+
+template<class PathListSourceT>
+auto* GetLinkedPathesImpl(std::string_view path, PathListSourceT& source)
+{
+    path = path.substr(0, path.rfind('.'));
+    return algo::find_if(source,
+                         [path](const std::vector<VirtualFilesystem::LinkedPathesElement>& linked_pathes)
+                         {
+                             return algo::contains(linked_pathes, &VirtualFilesystem::LinkedPathesElement::Path, path);
+                         });
+}
+template<class PathListSourceT>
+auto* GetLinkedPathesImpl(const std::vector<VirtualFilesystem::LinkedPathesElement>& pathes, PathListSourceT& source)
+{
+    return algo::find_if(source,
+                         [&pathes](const std::vector<VirtualFilesystem::LinkedPathesElement>& linked_pathes)
+                         {
+                             return algo::contains_if(linked_pathes,
+                                                      [&pathes](const VirtualFilesystem::LinkedPathesElement& linked_path)
+                                                      {
+                                                          return algo::contains(pathes, &VirtualFilesystem::LinkedPathesElement::Path, linked_path.Path);
+                                                      });
+                         });
+}
+
+VirtualFilesystem::LinkedPathes* VirtualFilesystem::GetLinkedPathes(std::string_view path)
+{
+    return GetLinkedPathesImpl(path, m_LinkedPathes);
+}
+VirtualFilesystem::LinkedPathes* VirtualFilesystem::GetLinkedPathes(const LinkedPathes& pathes)
+{
+    return GetLinkedPathesImpl(pathes, m_LinkedPathes);
+}
+const VirtualFilesystem::LinkedPathes* VirtualFilesystem::GetLinkedPathes(std::string_view path) const
+{
+    return GetLinkedPathesImpl(path, m_LinkedPathes);
+}
+const VirtualFilesystem::LinkedPathes* VirtualFilesystem::GetLinkedPathes(const LinkedPathes& pathes) const
+{
+    return GetLinkedPathesImpl(pathes, m_LinkedPathes);
 }
