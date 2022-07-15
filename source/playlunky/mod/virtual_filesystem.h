@@ -30,7 +30,7 @@ class VirtualFilesystem
     VirtualFilesystem& operator=(const VirtualFilesystem&) = delete;
     VirtualFilesystem& operator=(VirtualFilesystem&&) = delete;
 
-    void MountFolder(std::string_view path, std::int64_t priority, VfsType vfs_type = VfsType::Backend);
+    void MountFolder(std::string_view path, std::int64_t priority, VfsType vfs_type);
 
     // Allow loading only files specified in this list
     void RestrictFiles(std::span<const std::string_view> files);

@@ -660,8 +660,8 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
         // Mounting early to maintain guarantees about VFS immutability
         BugFixesMount(vfs, db_folder);
 
-        vfs.MountFolder(db_folder.string(), -1);
-        vfs.MountFolder("", -2);
+        vfs.MountFolder(db_folder.string(), -1, VfsType::Backend);
+        vfs.MountFolder("", -2, VfsType::Backend);
 
         {
             struct ModNameAndState
