@@ -78,6 +78,7 @@ void PlaylunkySettings::WriteToFile(std::string settings_file) const
                                              } },
         KnownCategory{ { "sprite_settings" }, {
                                                   KnownSetting{ .Name{ "random_character_select" }, .AltCategory{ "settings" }, .DefaultValue{ "off" } },
+                                                  KnownSetting{ .Name{ "link_related_files" }, .DefaultValue{ "on" }, .Comment{ "Makes sure that related files, e.g. char_black.png and char_black.json are always loaded from the same mod" } },
                                                   KnownSetting{ .Name{ "generate_character_journal_stickers" }, .DefaultValue{ "on" } },
                                                   KnownSetting{ .Name{ "generate_character_journal_entries" }, .DefaultValue{ "on" } },
                                                   KnownSetting{ .Name{ "generate_sticker_pixel_art" }, .DefaultValue{ "on" } },

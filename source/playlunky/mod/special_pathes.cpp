@@ -1,9 +1,10 @@
 #include "special_pathes.h"
 
 #include "mod/virtual_filesystem.h"
+#include "playlunky_settings.h"
 #include "util/image.h"
 
-void SetupSpecialPathes(VirtualFilesystem& vfs)
+void SetupSpecialPathes(VirtualFilesystem& vfs, const PlaylunkySettings& settings)
 {
     {
         // Bind char pathes
@@ -39,6 +40,7 @@ void SetupSpecialPathes(VirtualFilesystem& vfs)
         vfs.BindPathes({ "Data/Textures/Entities/qilin_full", "Data/Textures/Entities/Mounts/qilin" });
     }
 
+    if (const bool link_related_files = settings.GetBool("sprite_settings", "link_related_files", true))
     {
         // Link char paths and char name/color/json
         vfs.LinkPathes({

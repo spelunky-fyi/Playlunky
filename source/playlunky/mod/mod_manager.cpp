@@ -534,7 +534,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             }
         }
 
-        SetupSpecialPathes(vfs);
+        SetupSpecialPathes(vfs, settings);
 
         if (speedrun_mode)
         {

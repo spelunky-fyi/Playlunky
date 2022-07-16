@@ -75,6 +75,13 @@ target_compile_definitions(playlunky_definitions INTERFACE
 	WIN32_LEAN_AND_MEAN
 	NOMINMAX)
 
+option(PL_UNITY_BUILD "Build batch sources for faster builds." OFF)
+if(PL_UNITY_BUILD)
+	set_property(
+		TARGET playlunky_definitions
+		PROPERTY UNITY_BUILD ON)
+endif()
+
 add_library(playlunky_version STATIC
 		"source/version/version.h" "source/version/version.cpp")
 target_include_directories(playlunky_version PUBLIC source/version)
