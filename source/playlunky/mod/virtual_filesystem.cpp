@@ -345,7 +345,7 @@ std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std:
 }
 
 const VirtualFilesystem::VfsMount* VirtualFilesystem::GetLinkedMount(
-    const std::filesystem::path& path,
+    [[maybe_unused]] const std::filesystem::path& path,
     std::string_view path_view,
     [[maybe_unused]] std::span<const std::filesystem::path> allowed_extensions,
     VfsType type) const
@@ -385,7 +385,7 @@ const VirtualFilesystem::VfsMount* VirtualFilesystem::GetLinkedMount(
                 }
             }
         }
-        
+
         m_MountCache.push_back(CachedMount{ cache_key, linked_mount });
         return linked_mount;
     }
@@ -478,9 +478,9 @@ const VirtualFilesystem::VfsMount* VirtualFilesystem::GetLoadingMount(
 }
 
 const VirtualFilesystem::VfsMount* VirtualFilesystem::GetRandomLinkedMount(
-    const std::filesystem::path& path,
+    [[maybe_unused]] const std::filesystem::path& path,
     std::string_view path_view,
-    std::span<const std::filesystem::path> allowed_extensions,
+    [[maybe_unused]] std::span<const std::filesystem::path> allowed_extensions,
     VfsType type) const
 {
     if (const LinkedPathes* linked_pathes = GetLinkedPathes(path_view))
@@ -504,26 +504,27 @@ const VirtualFilesystem::VfsMount* VirtualFilesystem::GetRandomLinkedMount(
             return cached_mount->Mount;
         }
 
-        const VfsMount* linked_mount{ [&]() -> const VfsMount* {
-            std::vector<const VfsMount*> all_mounts;
-            for (const LinkedPathesElement& linked_path : *linked_pathes)
-            {
-                const std::string linked_path_string{ linked_path.Path.string() };
-                const std::string_view linked_path_view{ linked_path_string };
-                std::vector<const VfsMount*> mounts = GetAllLoadingMounts(linked_path.Path, linked_path_view, linked_path.AllowedExtensions, type);
-                all_mounts.insert(all_mounts.end(), mounts.begin(), mounts.end());
-            }
-            std::sort(all_mounts.begin(), all_mounts.end());
-            all_mounts.erase(std::unique(all_mounts.begin(), all_mounts.end()), all_mounts.end());
-            if (!all_mounts.empty())
-            {
-                return all_mounts[rand() % all_mounts.size()]; // use something better for randomness??? nah...
-            }
-            else
-            {
-                return nullptr;
-            }
-        }() };
+        const VfsMount* linked_mount{ [&]() -> const VfsMount*
+                                      {
+                                          std::vector<const VfsMount*> all_mounts;
+                                          for (const LinkedPathesElement& linked_path : *linked_pathes)
+                                          {
+                                              const std::string linked_path_string{ linked_path.Path.string() };
+                                              const std::string_view linked_path_view{ linked_path_string };
+                                              std::vector<const VfsMount*> mounts = GetAllLoadingMounts(linked_path.Path, linked_path_view, linked_path.AllowedExtensions, type);
+                                              all_mounts.insert(all_mounts.end(), mounts.begin(), mounts.end());
+                                          }
+                                          std::sort(all_mounts.begin(), all_mounts.end());
+                                          all_mounts.erase(std::unique(all_mounts.begin(), all_mounts.end()), all_mounts.end());
+                                          if (!all_mounts.empty())
+                                          {
+                                              return all_mounts[rand() % all_mounts.size()]; // use something better for randomness??? nah...
+                                          }
+                                          else
+                                          {
+                                              return nullptr;
+                                          }
+                                      }() };
 
         // Also cache for all bound-pathes of all linked files in case a path is bound to a path but not linked to it
         std::vector<const BoundPathes*> all_bound_pathes;
@@ -556,7 +557,8 @@ const VirtualFilesystem::VfsMount* VirtualFilesystem::GetRandomLoadingMount(
     std::span<const std::filesystem::path> allowed_extensions,
     VfsType type) const
 {
-    CachedMountKey cache_key = [&]() {
+    CachedMountKey cache_key = [&]()
+    {
         if (const BoundPathes* bound_pathes = GetBoundPathes(path_view))
         {
             return CachedMountKey{ bound_pathes };
@@ -571,17 +573,18 @@ const VirtualFilesystem::VfsMount* VirtualFilesystem::GetRandomLoadingMount(
     const CachedMount* cached_mount = algo::find(m_MountCache, &CachedMount::Key, cache_key);
     if (cached_mount == nullptr)
     {
-        const VfsMount* selected_mount{ [&]() -> const VfsMount* {
-            std::vector<const VfsMount*> mounts = GetAllLoadingMounts(path, path_view, allowed_extensions, type);
-            if (!mounts.empty())
-            {
-                return mounts[rand() % mounts.size()]; // use something better for randomness??? nah...
-            }
-            else
-            {
-                return nullptr;
-            }
-        }() };
+        const VfsMount* selected_mount{ [&]() -> const VfsMount*
+                                        {
+                                            std::vector<const VfsMount*> mounts = GetAllLoadingMounts(path, path_view, allowed_extensions, type);
+                                            if (!mounts.empty())
+                                            {
+                                                return mounts[rand() % mounts.size()]; // use something better for randomness??? nah...
+                                            }
+                                            else
+                                            {
+                                                return nullptr;
+                                            }
+                                        }() };
         m_MountCache.push_back(CachedMount{ cache_key, selected_mount });
         cached_mount = &m_MountCache.back();
     }
