@@ -47,101 +47,101 @@ void SetupSpecialPathes(VirtualFilesystem& vfs, const PlaylunkySettings& setting
             { "Data/Textures/char_orange", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_orange_full", Image::AllowedExtensions },
             { "char_orange" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_pink", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_pink_full", Image::AllowedExtensions },
             { "char_pink" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_red", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_red_full", Image::AllowedExtensions },
             { "char_red" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_violet", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_violet_full", Image::AllowedExtensions },
             { "char_violet" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_white", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_white_full", Image::AllowedExtensions },
             { "char_white" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_yellow", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_yellow_full", Image::AllowedExtensions },
             { "char_yellow" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_black", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_black_full", Image::AllowedExtensions },
             { "char_black" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_blue", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_blue_full", Image::AllowedExtensions },
             { "char_blue" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_cerulean", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_cerulean_full", Image::AllowedExtensions },
             { "char_cerulean" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_cinnabar", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_cinnabar_full", Image::AllowedExtensions },
             { "char_cinnabar" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_cyan", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_cyan_full", Image::AllowedExtensions },
             { "char_cyan" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_gold", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_gold_full", Image::AllowedExtensions },
             { "char_gold" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_gray", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_gray_full", Image::AllowedExtensions },
             { "char_gray" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_green", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_green_full", Image::AllowedExtensions },
             { "char_green" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_iris", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_iris_full", Image::AllowedExtensions },
             { "char_iris" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_khaki", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_khaki_full", Image::AllowedExtensions },
             { "char_khaki" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_lemon", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_lemon_full", Image::AllowedExtensions },
             { "char_lemon" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_lime", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_lime_full", Image::AllowedExtensions },
             { "char_lime" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_magenta", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_magenta_full", Image::AllowedExtensions },
             { "char_magenta" },
-            });
+        });
         vfs.LinkPathes({
             { "Data/Textures/char_olive", Image::AllowedExtensions },
             { "Data/Textures/Entities/char_olive_full", Image::AllowedExtensions },
             { "char_olive" },
-            });
+        });
     }
 }
