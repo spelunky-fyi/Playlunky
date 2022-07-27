@@ -5,13 +5,9 @@
 #include "log.h"
 #include "playlunky_settings.h"
 #include "util/algorithms.h"
+#include "util/file_watch.h"
 #include "util/format.h"
 #include "virtual_filesystem.h"
-
-#pragma warning(push)
-#pragma warning(disable : 4927)
-#include <FileWatch.hpp>
-#pragma warning(pop)
 
 #include <nlohmann/json.hpp>
 #include <spel2.h>
@@ -23,8 +19,6 @@
 #include <fstream>
 #include <span>
 #include <unordered_map>
-
-std::vector<std::unique_ptr<filewatch::FileWatch<std::filesystem::path>>> g_FileWatchers;
 
 template<typename T>
 std::string toUTF8(const std::basic_string<T, std::char_traits<T>>& source)
@@ -229,9 +223,9 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
         auto color_file_name = fmt::format("char_{}.color", char_name);
         if (auto file_path = vfs_get_file_path(color_file_name))
         {
-            auto change_heart_color_from_file = [i, file_path = file_path.value()](const std::filesystem::path&, const filewatch::Event change_type)
+            auto change_heart_color_from_file = [i, file_path = file_path.value()](const std::filesystem::path&, const FileEvent change_type)
             {
-                if (change_type == filewatch::Event::removed || change_type == filewatch::Event::renamed_old)
+                if (change_type == FileEvent::Removed || change_type == FileEvent::RenamedOld)
                 {
                     return;
                 }
@@ -260,20 +254,20 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
                     Spelunky_SetCharacterHeartColor(i, color);
                 }
             };
-            change_heart_color_from_file(file_path.value(), filewatch::Event::added);
+            change_heart_color_from_file(file_path.value(), FileEvent::Added);
 
             if (settings.GetBool("script_settings", "enable_developer_mode", false))
             {
-                g_FileWatchers.push_back(std::make_unique<filewatch::FileWatch<std::filesystem::path>>(file_path.value(), change_heart_color_from_file));
+                AddFileWatch(file_path.value(), change_heart_color_from_file);
             }
         }
 
         auto json_file_name = fmt::format("char_{}.json", char_name);
         if (auto file_path = vfs_get_file_path(json_file_name))
         {
-            auto apply_char_def_from_json = [i, file_path = file_path.value()](const std::filesystem::path&, const filewatch::Event change_type)
+            auto apply_char_def_from_json = [i, file_path = file_path.value()](const std::filesystem::path&, const FileEvent change_type)
             {
-                if (change_type == filewatch::Event::removed || change_type == filewatch::Event::renamed_old)
+                if (change_type == FileEvent::Removed || change_type == FileEvent::RenamedOld)
                 {
                     return;
                 }
@@ -302,11 +296,11 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
                     }
                 }
             };
-            apply_char_def_from_json(file_path.value(), filewatch::Event::added);
+            apply_char_def_from_json(file_path.value(), FileEvent::Added);
 
             if (settings.GetBool("script_settings", "enable_developer_mode", false))
             {
-                g_FileWatchers.push_back(std::make_unique<filewatch::FileWatch<std::filesystem::path>>(file_path.value(), apply_char_def_from_json));
+                AddFileWatch(file_path.value(), apply_char_def_from_json);
             }
         }
     }
