@@ -125,10 +125,10 @@ void DrawVersionOverlay()
 {
     const float overlay_alpha = []() -> float
     {
-        // if (static_cast<int>(SpelunkyState_GetScreen()) <= static_cast<int>(SpelunkyScreen::Menu))
-        //{
-        //     return 0.25f;
-        // }
+        if (static_cast<int>(SpelunkyState_GetScreen()) <= static_cast<int>(SpelunkyScreen::Menu))
+        {
+            return 0.25f;
+        }
         return 0.004f;
     }();
 
