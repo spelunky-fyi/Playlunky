@@ -34,6 +34,10 @@ class VirtualFilesystem
 
     // Allow loading only files specified in this list
     void RestrictFiles(std::span<const std::string_view> files);
+    bool HasRestrictedFiles() const
+    {
+        return !m_RestrictedFiles.empty();
+    }
 
     // Register a filter to block loading arbitrary files, return true from the filter to allow loading
     using CustomFilterFun = std::function<bool(const std::filesystem::path&, std::string_view)>;

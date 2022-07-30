@@ -75,8 +75,8 @@ target_compile_definitions(playlunky_definitions INTERFACE
 	WIN32_LEAN_AND_MEAN
 	NOMINMAX)
 
-option(PL_UNITY_BUILD "Build batch sources for faster builds." OFF)
-if(PL_UNITY_BUILD)
+option(PLAYLUNKY_UNITY_BUILD "Build batch sources for faster builds." OFF)
+if(PLAYLUNKY_UNITY_BUILD)
 	set_property(
 		TARGET playlunky_definitions
 		PROPERTY UNITY_BUILD ON)

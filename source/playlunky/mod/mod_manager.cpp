@@ -672,6 +672,12 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             Spelunky_SetWriteLoadOptimization(true);
         }
 
+        if (!vfs.HasRestrictedFiles())
+        {
+            Spelunky_EnabledAdvancedHud();
+            Spelunky_SetPostRenderGame(&DrawVersionOverlay);
+        }
+
         LogInfo("All mods initialized...");
     }
     else

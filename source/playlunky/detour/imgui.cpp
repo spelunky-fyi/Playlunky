@@ -76,31 +76,6 @@ void ImguiInit(ImGuiContext* imgui_context)
 
 void ImguiDraw()
 {
-    static const bool speedrun_mode = Playlunky::Get().GetSettings().GetBool("general_settings", "speedrun_mode", false);
-    if (!speedrun_mode)
-    {
-        const std::uint8_t overlay_alpha = []() -> std::uint8_t
-        {
-            if (static_cast<int>(SpelunkyState_GetScreen()) <= static_cast<int>(SpelunkyScreen::Menu))
-            {
-                return 77;
-            }
-            return 2;
-        }();
-
-        ImGui::SetNextWindowSize({ -1, 30 });
-        ImGui::SetNextWindowPos({ 0, ImGui::GetIO().DisplaySize.y - 30 });
-        ImGui::Begin(
-            "Version Overlay",
-            nullptr,
-            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
-                ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
-                ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
-        const std::string_view version = playlunky_version();
-        ImGui::TextColored(ImColor(0xffffff | (overlay_alpha << 24)), "Playlunky %.*s", static_cast<int>(version.size()), version.data());
-        ImGui::End();
-    }
-
     if (!g_Messages.empty())
     {
         ImGui::SetNextWindowSize({ -1, -1 });
@@ -145,6 +120,24 @@ void PrintInfo(std::string message, float time)
 void DrawImguiOverlay()
 {
     ImguiDraw();
+}
+void DrawVersionOverlay()
+{
+    const float overlay_alpha = []() -> float
+    {
+        //if (static_cast<int>(SpelunkyState_GetScreen()) <= static_cast<int>(SpelunkyScreen::Menu))
+        //{
+        //    return 0.25f;
+        //}
+        return 0.004f;
+    }();
+
+    const std::string_view version = playlunky_version();
+    const std::string full_version_str = fmt::format("Playlunky {}", version);
+    const float color[4]{ 0.7f, 0.7f, 0.7f, overlay_alpha };
+    const float scale{ 0.0005f };
+    const auto [w, h] = Spelunky_DrawTextSize(full_version_str.c_str(), scale, scale, 0);
+    Spelunky_DrawText(full_version_str.c_str(), -1.0f, -1.0f + std::abs(h) / 2.0f, scale, scale, color, 0, 0);
 }
 
 void SetSwapchain(void* swap_chain)
