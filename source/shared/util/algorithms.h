@@ -4,6 +4,7 @@
 #include "tokenize.h"
 
 #include <filesystem>
+#include <functional>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -124,6 +125,37 @@ bool contains(ContainerT&& container, ValueT&& value)
 
 template<class ContainerT>
 requires range<ContainerT>
+void sort(ContainerT&& container)
+{
+    const auto begin_it = get_begin(container);
+    const auto end_it = get_end(container);
+    std::sort(begin_it, end_it);
+}
+template<class ContainerT, class FunT>
+requires range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>, range_element_t<ContainerT>>
+void sort(ContainerT&& container, FunT&& fun)
+{
+    const auto begin_it = get_begin(container);
+    const auto end_it = get_end(container);
+    std::sort(begin_it, end_it, std::forward<FunT>(fun));
+}
+template<class ContainerT, class T, class U>
+requires range<ContainerT> && range_contains_v<ContainerT, T>
+bool sort(ContainerT&& container, U T::*member)
+{
+    sort(std::forward<ContainerT>(container), [member](auto& lhs, auto& rhs)
+         { return lhs.*member == rhs.*member; });
+}
+template<class ContainerT, class T, class U>
+requires range<ContainerT> && range_contains_v<ContainerT, T>
+bool sort(ContainerT&& container, U (T::*member)() const)
+{
+    sort(std::forward<ContainerT>(container), [member](auto& lhs, auto& rhs)
+         { return (lhs.*member)() == (rhs.*member)(); });
+}
+
+template<class ContainerT>
+requires range<ContainerT>
 bool is_sub_set(ContainerT&& sub_set, ContainerT&& container)
 {
     return all_of(std::forward<ContainerT>(sub_set), [container = std::forward<ContainerT>(container)](const auto& val)
@@ -185,5 +217,31 @@ template<std::size_t N, std::size_t M>
 inline bool case_insensitive_equal(char (&lhs)[N], char (&rhs)[M])
 {
     return case_insensitive_equal(std::string_view{ lhs, N }, std::string_view{ rhs, M });
+}
+
+// Intentionally copies args, require std::reference_wrapper if people want references
+// https://github.com/lefticus/tools/blob/main/include/lefticus/tools/curry.hpp
+constexpr decltype(auto) curry(auto f, auto... ps)
+{
+    if constexpr (requires { std::invoke(f, ps...); })
+    {
+        return std::invoke(f, ps...);
+    }
+    else
+    {
+        return [f, ps...](auto... qs) -> decltype(auto)
+        { return curry(f, ps..., qs...); };
+    }
+}
+// https://www.youtube.com/watch?v=s2Kqcn5e73c
+constexpr decltype(auto) bind_front(auto f, auto... ps)
+{
+    return [f, ps...](auto... qs) -> decltype(auto)
+    { return std::invoke(f, ps..., qs...); };
+}
+constexpr decltype(auto) bind_back(auto f, auto... ps)
+{
+    return [f, ps...](auto... qs) -> decltype(auto)
+    { return std::invoke(f, qs..., ps...); };
 }
 } // namespace algo
