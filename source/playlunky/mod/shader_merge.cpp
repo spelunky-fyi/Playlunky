@@ -2,6 +2,7 @@
 
 #include "log.h"
 #include "util/algorithms.h"
+#include "util/file_watch.h"
 #include "util/image.h"
 #include "util/regex.h"
 #include "virtual_filesystem.h"
@@ -11,29 +12,45 @@
 #include <fstream>
 #include <unordered_map>
 
-bool MergeShaders(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, const std::filesystem::path& shader_file, VirtualFilesystem& vfs)
+template<class... Ts>
+struct overloaded : Ts...
 {
+    using Ts::operator()...;
+};
+template<class... Ts>
+overloaded(Ts...) -> overloaded<Ts...>;
 
-    const auto source_shader = vfs.GetFilePath(shader_file).value_or(source_folder / shader_file);
-    std::string original_shader_code = [&source_shader]()
-    {
-        if (auto original_shader_file = std::ifstream{ source_shader })
-        {
-            return std::string((std::istreambuf_iterator<char>(original_shader_file)), std::istreambuf_iterator<char>());
-        }
-        return std::string{};
-    }();
+bool MergeShadersImpl(
+    const std::filesystem::path& destination_folder,
+    const std::filesystem::path& shader_file,
+    std::variant<std::filesystem::path, std::string> source_shader,
+    const std::vector<std::filesystem::path>& shader_mods)
+{
+    std::string source_shader_code = std::visit(overloaded{
+                                                    [](const std::filesystem::path& source_shader_path)
+                                                    {
+                                                        if (auto original_shader_file = std::ifstream{ source_shader_path })
+                                                        {
+                                                            return std::string((std::istreambuf_iterator<char>(original_shader_file)), std::istreambuf_iterator<char>());
+                                                        }
+                                                        return std::string{};
+                                                    },
+                                                    [](std::string& source_shader_code)
+                                                    {
+                                                        return std::move(source_shader_code);
+                                                    },
+                                                },
+                                                source_shader);
 
-    if (original_shader_code.empty())
+    if (source_shader_code.empty())
     {
         return false;
     }
-    auto find_decl_in_original = [&original_shader_code](std::string_view decl)
-    {
-        return original_shader_code.find(decl) != std::string::npos;
-    };
 
-    const auto shader_mods = vfs.GetAllFilePaths("shaders_mod.hlsl");
+    auto find_decl_in_original = [&source_shader_code](std::string_view decl)
+    {
+        return source_shader_code.find(decl) != std::string::npos;
+    };
 
     struct ModdedFunction
     {
@@ -231,22 +248,22 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 
     for (const ModdedFunction& modded_function : modded_functions)
     {
-        const auto decl_pos = original_shader_code.find(modded_function.Declaration);
+        const auto decl_pos = source_shader_code.find(modded_function.Declaration);
         if (decl_pos != std::string::npos)
         {
-            const auto opening_braces_pos = original_shader_code.find('{', decl_pos + modded_function.Declaration.size());
+            const auto opening_braces_pos = source_shader_code.find('{', decl_pos + modded_function.Declaration.size());
             if (opening_braces_pos != std::string::npos)
             {
-                const auto closing_braces = [&original_shader_code, &opening_braces_pos]() -> std::size_t
+                const auto closing_braces = [&source_shader_code, &opening_braces_pos]() -> std::size_t
                 {
                     std::size_t current_depth{ 0 };
-                    for (std::size_t i = opening_braces_pos; i < original_shader_code.size(); i++)
+                    for (std::size_t i = opening_braces_pos; i < source_shader_code.size(); i++)
                     {
-                        if (original_shader_code[i] == '{')
+                        if (source_shader_code[i] == '{')
                         {
                             current_depth++;
                         }
-                        else if (original_shader_code[i] == '}')
+                        else if (source_shader_code[i] == '}')
                         {
                             current_depth--;
                             if (current_depth == 0)
@@ -259,8 +276,8 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
                 }();
                 if (closing_braces != std::string::npos)
                 {
-                    original_shader_code.replace(opening_braces_pos, closing_braces - opening_braces_pos + 1, modded_function.Body);
-                    original_shader_code.insert(decl_pos, modded_function.Preamble);
+                    source_shader_code.replace(opening_braces_pos, closing_braces - opening_braces_pos + 1, modded_function.Body);
+                    source_shader_code.insert(decl_pos, modded_function.Preamble);
                 }
             }
         }
@@ -280,22 +297,22 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
 
     for (const ExtendedFunction& extended_function : extended_functions)
     {
-        const auto name_pos = original_shader_code.find(extended_function.FunctionName);
+        const auto name_pos = source_shader_code.find(extended_function.FunctionName);
         if (name_pos != std::string::npos)
         {
-            const auto opening_braces_pos = original_shader_code.find('{', name_pos + extended_function.FunctionName.size());
+            const auto opening_braces_pos = source_shader_code.find('{', name_pos + extended_function.FunctionName.size());
             if (opening_braces_pos != std::string::npos)
             {
-                const auto closing_braces = [&original_shader_code, &opening_braces_pos]() -> std::size_t
+                const auto closing_braces = [&source_shader_code, &opening_braces_pos]() -> std::size_t
                 {
                     std::size_t current_depth{ 0 };
-                    for (std::size_t i = opening_braces_pos; i < original_shader_code.size(); i++)
+                    for (std::size_t i = opening_braces_pos; i < source_shader_code.size(); i++)
                     {
-                        if (original_shader_code[i] == '{')
+                        if (source_shader_code[i] == '{')
                         {
                             current_depth++;
                         }
-                        else if (original_shader_code[i] == '}')
+                        else if (source_shader_code[i] == '}')
                         {
                             current_depth--;
                             if (current_depth == 0)
@@ -308,22 +325,22 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
                 }();
                 if (closing_braces != std::string::npos)
                 {
-                    const auto newline_pos = original_shader_code.rfind('\n', name_pos);
+                    const auto newline_pos = source_shader_code.rfind('\n', name_pos);
                     if (newline_pos != std::string::npos)
                     {
-                        const auto space_pos = original_shader_code.find(' ', newline_pos);
+                        const auto space_pos = source_shader_code.find(' ', newline_pos);
                         if (space_pos != std::string::npos)
                         {
-                            const auto return_type = algo::trim(original_shader_code.substr(newline_pos + 1, name_pos - newline_pos - 1));
-                            const auto arg_list = [&original_shader_code, &name_pos, &opening_braces_pos]() -> std::string
+                            const auto return_type = algo::trim(source_shader_code.substr(newline_pos + 1, name_pos - newline_pos - 1));
+                            const auto arg_list = [&source_shader_code, &name_pos, &opening_braces_pos]() -> std::string
                             {
-                                const auto opening_parens = original_shader_code.find('(', name_pos);
+                                const auto opening_parens = source_shader_code.find('(', name_pos);
                                 if (opening_parens != std::string::npos)
                                 {
-                                    const auto closing_parens = original_shader_code.rfind(')', opening_braces_pos);
+                                    const auto closing_parens = source_shader_code.rfind(')', opening_braces_pos);
                                     if (closing_parens != std::string::npos)
                                     {
-                                        const auto param_list = original_shader_code.substr(opening_parens, closing_parens - opening_parens);
+                                        const auto param_list = source_shader_code.substr(opening_parens, closing_parens - opening_parens);
                                         std::string arg_list;
                                         for (const auto param : Tokenize<','>(param_list))
                                         {
@@ -355,7 +372,7 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
                                 additional_code += fmt::format("\n\tif ({}({}return_value))\n\t\treturn return_value;", real_name, arg_list);
                             }
 
-                            original_shader_code.insert(opening_braces_pos + 1, additional_code);
+                            source_shader_code.insert(opening_braces_pos + 1, additional_code);
                             for (size_t i = 0; i < extended_function.Extensions.size(); i++)
                             {
                                 const ModdedFunction& modded_function = extended_function.Extensions[i];
@@ -366,8 +383,8 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
                                     extended_function.FunctionName.size(),
                                     real_name);
 
-                                original_shader_code.insert(newline_pos, fmt::format("{} {}\n", decl, modded_function.Body));
-                                original_shader_code.insert(newline_pos, modded_function.Preamble);
+                                source_shader_code.insert(newline_pos, fmt::format("{} {}\n", decl, modded_function.Body));
+                                source_shader_code.insert(newline_pos, modded_function.Preamble);
                             }
                         }
                     }
@@ -393,9 +410,120 @@ bool MergeShaders(const std::filesystem::path& source_folder, const std::filesys
     const auto destination_file = destination_folder / shader_file;
     if (auto merged_shader_file = std::ofstream{ destination_file, std::ios::trunc })
     {
-        merged_shader_file.write(original_shader_code.data(), original_shader_code.size());
+        merged_shader_file.write(source_shader_code.data(), source_shader_code.size());
         return true;
     }
 
     return false;
+}
+
+bool MergeShaders(
+    const std::filesystem::path& source_folder,
+    const std::filesystem::path& destination_folder,
+    const std::filesystem::path& shader_file,
+    VirtualFilesystem& vfs)
+{
+    const auto source_shader = vfs.GetFilePath(shader_file).value_or(source_folder / shader_file);
+    std::string source_shader_code = [&source_shader]()
+    {
+        if (auto original_shader_file = std::ifstream{ source_shader })
+        {
+            return std::string((std::istreambuf_iterator<char>(original_shader_file)), std::istreambuf_iterator<char>());
+        }
+        return std::string{};
+    }();
+
+    if (source_shader_code.empty())
+    {
+        return false;
+    }
+
+    const auto shader_mods = vfs.GetAllFilePaths("shaders_mod.hlsl");
+
+    return MergeShadersImpl(destination_folder, shader_file, std::move(source_shader_code), shader_mods);
+}
+
+std::uint32_t g_ReloadTimer;
+std::atomic_uint32_t g_ReloadTimerSignal;
+const auto g_ReloadTrigger = []()
+{ g_ReloadTimerSignal.store(30, std::memory_order_relaxed); };
+
+struct FileWatchInfo
+{
+    FileWatchId id;
+    std::filesystem::path file_path;
+};
+std::vector<FileWatchInfo> g_CallbackFiles;
+std::function<bool(const std::filesystem::path&, const std::vector<std::filesystem::path>&)> g_ReloadCallback;
+
+void SetupShaderHotReload(
+    const std::filesystem::path& source_folder,
+    const std::filesystem::path& destination_folder,
+    const std::filesystem::path& shader_file,
+    VirtualFilesystem& vfs)
+{
+    const auto modded_source_shader = vfs.GetFilePath(shader_file);
+    const auto source_shader = modded_source_shader.value_or(source_folder / shader_file);
+    auto shader_mods = vfs.GetAllFilePaths("shaders_mod.hlsl");
+
+    g_ReloadTimer = 0;
+    g_ReloadTimerSignal.store(0, std::memory_order_relaxed);
+    g_ReloadCallback = std::bind_front(MergeShadersImpl, destination_folder, shader_file);
+    g_CallbackFiles.clear();
+
+    if (modded_source_shader.has_value())
+    {
+        const auto id = AddFileGenericWatch(source_shader, g_ReloadTrigger);
+        g_CallbackFiles.push_back({ id, std::move(source_shader) });
+    }
+
+    for (auto&& shader_mod : shader_mods)
+    {
+        const auto id = AddFileGenericWatch(shader_mod, g_ReloadTrigger);
+        g_CallbackFiles.push_back({ id, std::move(shader_mod) });
+    }
+}
+
+void UpdateShaderHotReload(
+    const std::filesystem::path& source_folder,
+    const std::filesystem::path& shader_file,
+    VirtualFilesystem& vfs)
+{
+    g_ReloadTimer = std::max(g_ReloadTimer, g_ReloadTimerSignal.exchange(0, std::memory_order_relaxed));
+    if (g_ReloadTimer > 0 && --g_ReloadTimer == 0)
+    {
+        const auto modded_source_shader = vfs.GetFilePath(shader_file, VfsType::User);
+        const auto source_shader = modded_source_shader.value_or(source_folder / shader_file);
+        auto shader_mods = vfs.GetAllFilePaths("shaders_mod.hlsl");
+
+        if (g_ReloadCallback(source_shader, shader_mods))
+        {
+            Spelunky_ReloadShaders();
+        }
+
+        auto files = std::move(shader_mods);
+        if (modded_source_shader.has_value())
+        {
+            files.push_back(source_shader);
+        }
+
+        for (auto it = g_CallbackFiles.begin(); it != g_CallbackFiles.end(); ++it)
+        {
+            const auto& [id, file] = *it;
+            if (!algo::contains(files, file))
+            {
+                ClearFileWatch(id);
+                it = g_CallbackFiles.erase(it);
+            }
+        }
+
+        for (auto&& file : files)
+        {
+            if (!algo::contains(g_CallbackFiles, &FileWatchInfo::file_path, file))
+            {
+                const auto id = AddFileGenericWatch(file, g_ReloadTrigger);
+                g_CallbackFiles.push_back({ id, std::move(file) });
+            }
+        }
+    }
 }

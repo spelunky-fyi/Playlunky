@@ -6,4 +6,18 @@
 
 class VirtualFilesystem;
 
-bool MergeShaders(const std::filesystem::path& source_folder, const std::filesystem::path& destination_folder, const std::filesystem::path& shader_file, VirtualFilesystem& vfs);
+bool MergeShaders(
+    const std::filesystem::path& source_folder,
+    const std::filesystem::path& destination_folder,
+    const std::filesystem::path& shader_file,
+    VirtualFilesystem& vfs);
+
+void SetupShaderHotReload(
+    const std::filesystem::path& source_folder,
+    const std::filesystem::path& destination_folder,
+    const std::filesystem::path& shader_file,
+    VirtualFilesystem& vfs);
+void UpdateShaderHotReload(
+    const std::filesystem::path& source_folder,
+    const std::filesystem::path& shader_file,
+    VirtualFilesystem& vfs);

@@ -613,6 +613,11 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             }
         }
 
+        if (mDeveloperMode)
+        {
+            SetupShaderHotReload(db_original_folder, db_folder, "shaders.hlsl", vfs);
+        }
+
         LogInfo("Merging string mods...");
         if (string_merger.NeedsRegen() || !fs::exists(db_folder / "strings00.str"))
         {
@@ -912,10 +917,11 @@ bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t 
 }
 void ModManager::Update()
 {
-    if (mSpritePainter || mSpriteHotLoader)
+    if (mSpritePainter || mSpriteHotLoader || mDeveloperMode)
     {
         const auto db_folder = mModsRoot / ".db";
         const auto db_original_folder = db_folder / "Original";
+
         if (mSpritePainter)
         {
             mSpritePainter->Update(db_original_folder, db_folder);
@@ -924,6 +930,11 @@ void ModManager::Update()
         if (mSpriteHotLoader)
         {
             mSpriteHotLoader->Update(db_original_folder, db_folder, mVfs);
+        }
+
+        if (mDeveloperMode)
+        {
+            UpdateShaderHotReload(db_original_folder, "shaders.hlsl", mVfs);
         }
     }
 
