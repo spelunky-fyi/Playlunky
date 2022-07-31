@@ -36,7 +36,7 @@ struct Font
     float size;
     ImFont* font{ nullptr };
 };
-inline static std::array g_Fonts{ Font{ 14.0f }, Font{ 32.0f }, Font{ 72.0f } };
+inline static std::array g_Fonts{ Font{ 18.0f }, Font{ 36.0f }, Font{ 72.0f } };
 inline static std::string g_FontFile{ "segoeuib.ttf" };
 
 void ImGuiLoadFont()
