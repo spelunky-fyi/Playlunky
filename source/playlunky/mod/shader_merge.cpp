@@ -1,12 +1,18 @@
 #include "shader_merge.h"
 
 #include "detour/imgui.h"
+#include "known_files.h"
 #include "log.h"
 #include "util/algorithms.h"
+#include "util/file.h"
 #include "util/file_watch.h"
 #include "util/image.h"
+#include "util/on_scope_exit.h"
 #include "util/regex.h"
 #include "virtual_filesystem.h"
+
+#pragma comment(lib, "d3dcompiler")
+#include <d3dcompiler.h>
 
 #include "spel2.h"
 
@@ -500,6 +506,49 @@ void UpdateShaderHotReload(
 
         if (g_ReloadCallback(source_shader, shader_mods))
         {
+            const auto shader_code{ ReadWholeFile(vfs.GetFilePath(shader_file, VfsType::Backend).value().string().c_str()) };
+
+            ID3DBlob* shader_out;
+            ID3DBlob* errors_out;
+
+            const auto d3d_compile_shader = [&](std::string_view entry_point, const char* target)
+            {
+                char name[128]{};
+                fmt::format_to(name, "{}", entry_point);
+                return D3DCompile(shader_code.c_str(), shader_code.size(), nullptr, nullptr, nullptr, name, target, 0x800, 0x0, &shader_out, &errors_out) == S_OK;
+            };
+            const auto post_compile = [&]()
+            {
+                if (shader_out)
+                {
+                    shader_out->Release();
+                }
+                if (errors_out)
+                {
+                    errors_out->Release();
+                }
+            };
+
+            for (const auto vertex_shader : s_VertexShaders)
+            {
+                OnScopeExit cleanup{ post_compile };
+                if (!d3d_compile_shader(vertex_shader, "vs_4_0"))
+                {
+                    LogError("Failed compiling shader: {}", (const char*)errors_out->GetBufferPointer());
+                    return;
+                }
+            }
+
+            for (const auto pixel_shader : s_PixelShaders)
+            {
+                OnScopeExit cleanup{ post_compile };
+                if (!d3d_compile_shader(pixel_shader, "ps_4_0"))
+                {
+                    LogError("Failed compiling shader: {}", (const char*)errors_out->GetBufferPointer());
+                    return;
+                }
+            }
+
             Spelunky_ReloadShaders();
         }
 
