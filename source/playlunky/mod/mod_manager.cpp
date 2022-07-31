@@ -1000,4 +1000,9 @@ void ModManager::Draw()
         ImGui::TextColored(ImColor(0.3f, 0.0f, 0.0f), "Warning: savegame.sav is overriden by mod \"%s\"", mModSaveGameOverride.c_str());
         ImGui::End();
     }
+
+    if (mDeveloperMode)
+    {
+        DrawShaderHotReload();
+    }
 }

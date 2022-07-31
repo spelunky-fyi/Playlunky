@@ -1,5 +1,6 @@
 #include "shader_merge.h"
 
+#include "detour/imgui.h"
 #include "log.h"
 #include "util/algorithms.h"
 #include "util/file_watch.h"
@@ -10,6 +11,7 @@
 #include "spel2.h"
 
 #include <fstream>
+#include <imgui.h>
 #include <unordered_map>
 
 template<class... Ts>
@@ -525,5 +527,28 @@ void UpdateShaderHotReload(
                 g_CallbackFiles.push_back({ id, std::move(file) });
             }
         }
+    }
+}
+void DrawShaderHotReload()
+{
+    if (g_ReloadTimer > 0)
+    {
+        const std::string reload_shaders_msg = fmt::format("Reloading Shaders in {}...", g_ReloadTimer);
+        ImGui::PushFont(ImGuiGetBestFont(80.0f));
+        const ImVec2 size = ImGui::CalcTextSize(reload_shaders_msg.c_str());
+
+        ImGui::SetNextWindowSize({ -1, size.y * 2 });
+        ImGui::SetNextWindowPos({ ImGui::GetIO().DisplaySize.x / 2 - size.x / 2, ImGui::GetIO().DisplaySize.y / 2 - size.y / 2 });
+        ImGui::Begin(
+            "Shader Reload Overlay",
+            nullptr,
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
+                ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
+
+        ImGui::TextColored(ImColor(0.5f, 0.0f, 0.2f), "%s", reload_shaders_msg.c_str());
+        ImGui::End();
+
+        ImGui::PopFont();
     }
 }

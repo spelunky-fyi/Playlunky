@@ -21,3 +21,4 @@ void UpdateShaderHotReload(
     const std::filesystem::path& source_folder,
     const std::filesystem::path& shader_file,
     VirtualFilesystem& vfs);
+void DrawShaderHotReload();
