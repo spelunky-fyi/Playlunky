@@ -4,8 +4,11 @@
 #include "mod/virtual_filesystem.h"
 #include "playlunky.h"
 #include "playlunky_settings.h"
+#include "plfont.h"
 #include "sigscan.h"
+#include "util/algorithms.h"
 #include "util/call_once.h"
+#include "util/on_scope_exit.h"
 #include "version.h"
 
 // clang-format off
@@ -28,6 +31,58 @@ struct ErrorMessage
 };
 inline static std::deque<ErrorMessage> g_Messages;
 
+struct Font
+{
+    float size;
+    ImFont* font{ nullptr };
+};
+inline static std::array g_Fonts{ Font{ 14.0f }, Font{ 32.0f }, Font{ 72.0f } };
+inline static std::string g_FontFile{ "segoeuib.ttf" };
+
+void ImGuiLoadFont()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    io.FontAllowUserScaling = true;
+
+    if (!g_FontFile.empty())
+    {
+        PWSTR fontdir;
+        if (SHGetKnownFolderPath(FOLDERID_Fonts, 0, NULL, &fontdir) == S_OK)
+        {
+            OnScopeExit free_fontdir{ std::bind_front(CoTaskMemFree, fontdir) };
+
+            namespace fs = std::filesystem;
+            fs::path fontpath{ std::filesystem::path{ fontdir } / g_FontFile };
+            if (fs::exists(fontpath))
+            {
+                for (auto& [size, font] : g_Fonts)
+                {
+                    font = io.Fonts->AddFontFromFileTTF(fontpath.string().c_str(), size);
+                }
+            }
+            else if (SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &fontdir) == S_OK)
+            {
+                fs::path localfontpath{ std::filesystem::path{ fontdir } / "Microsoft/Windows/Fonts" / g_FontFile };
+                if (fs::exists(localfontpath))
+                {
+                    for (auto& [size, font] : g_Fonts)
+                    {
+                        font = io.Fonts->AddFontFromFileTTF(localfontpath.string().c_str(), size);
+                    }
+                }
+            }
+        }
+    }
+
+    if (algo::contains(g_Fonts, &Font::font, nullptr))
+    {
+        for (auto& [size, font] : g_Fonts)
+        {
+            font = io.Fonts->AddFontFromMemoryCompressedTTF(PLFont_compressed_data, PLFont_compressed_size, size);
+        }
+    }
+}
+
 void ImguiInit(ImGuiContext* imgui_context)
 {
     ImGui::SetCurrentContext(imgui_context);
@@ -37,41 +92,7 @@ void ImguiInit(ImGuiContext* imgui_context)
         io.IniFilename = "imgui_playlunky.ini";
     }
 
-    const bool loaded_font = []()
-    {
-        ImGuiIO& io = ImGui::GetIO();
-        io.FontAllowUserScaling = true;
-
-        bool loaded_font{ false };
-
-        PWSTR fontdir;
-        if (SHGetKnownFolderPath(FOLDERID_Fonts, 0, NULL, &fontdir) == S_OK)
-        {
-            char fontdir_conv[256]{};
-            int length = WideCharToMultiByte(CP_UTF8, 0, fontdir, -1, 0, 0, NULL, NULL);
-            assert(length < sizeof(fontdir_conv));
-            WideCharToMultiByte(CP_UTF8, 0, fontdir, -1, fontdir_conv, length, NULL, NULL);
-
-            char fontpath[256]{};
-            fmt::format_to(fontpath, "{}\\segoeuib.ttf", fontdir_conv);
-
-            if (GetFileAttributesA(fontpath) != INVALID_FILE_ATTRIBUTES)
-            {
-                loaded_font = io.Fonts->AddFontFromFileTTF(fontpath, 18.0f) || loaded_font;
-                loaded_font = io.Fonts->AddFontFromFileTTF(fontpath, 36.0f) || loaded_font;
-                loaded_font = io.Fonts->AddFontFromFileTTF(fontpath, 72.0f) || loaded_font;
-            }
-        }
-
-        CoTaskMemFree(fontdir);
-        return loaded_font;
-    }();
-
-    if (!loaded_font)
-    {
-        ImGuiIO& io = ImGui::GetIO();
-        io.Fonts->AddFontDefault();
-    }
+    ImGuiLoadFont();
 }
 
 void ImguiDraw()
@@ -115,6 +136,25 @@ void PrintInfo(std::string message, float time)
     {
         g_Messages.pop_front();
     }
+}
+
+void ImGuiSetFontFile(std::string font_file)
+{
+    g_FontFile = std::move(font_file);
+}
+ImFont* ImGuiGetBestFont(float wanted_size)
+{
+    ImFont* best_font{ nullptr };
+    for (const auto& [size, font] : g_Fonts)
+    {
+        best_font = font;
+        if (size > wanted_size)
+        {
+            break;
+        }
+    }
+
+    return best_font;
 }
 
 void DrawImguiOverlay()
