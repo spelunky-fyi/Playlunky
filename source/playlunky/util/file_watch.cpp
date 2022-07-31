@@ -5,20 +5,51 @@
 #include <FileWatch.hpp>
 #pragma warning(pop)
 
-std::vector<std::unique_ptr<filewatch::FileWatch<std::filesystem::path>>> g_FileWatchers;
+FileWatchId g_CurrentFileWatchId{};
+using FileWatcher = filewatch::FileWatch<std::filesystem::path>;
+std::unordered_map<FileWatchId, FileWatcher> g_FileWatchers;
 
-void AddFileWatch(const std::filesystem::path& file_path, std::function<void(const std::filesystem::path&, FileEvent)> cb)
+FileWatchId AddFileWatch(const std::filesystem::path& file_path, std::function<void(const std::filesystem::path&, filewatch::Event)> cb)
 {
-    g_FileWatchers.push_back(std::make_unique<filewatch::FileWatch<std::filesystem::path>>(
+    FileWatchId id = g_CurrentFileWatchId++;
+    g_FileWatchers.try_emplace(id,
+                               file_path,
+                               std::move(cb));
+    return id;
+}
+FileWatchId AddFileWatch(const std::filesystem::path& file_path, std::function<void(const std::filesystem::path&, FileEvent)> cb)
+{
+    return AddFileWatch(
         file_path,
         [cb = std::move(cb)](const std::filesystem::path& file_path, const filewatch::Event change_type)
         {
             cb(file_path, static_cast<FileEvent>(static_cast<int>(change_type)));
-        }));
+        });
 }
-void AddFileModifiedWatch(const std::filesystem::path& file_path, std::function<void()> cb)
+FileWatchId AddFileGenericWatch(const std::filesystem::path& file_path, std::function<void()> cb)
 {
-    g_FileWatchers.push_back(std::make_unique<filewatch::FileWatch<std::filesystem::path>>(
+    return AddFileWatch(
+        file_path,
+        [cb = std::move(cb)](const std::filesystem::path&, const filewatch::Event)
+        {
+            cb();
+        });
+}
+FileWatchId AddFileAddedWatch(const std::filesystem::path& file_path, std::function<void()> cb)
+{
+    return AddFileWatch(
+        file_path,
+        [cb = std::move(cb)](const std::filesystem::path&, const filewatch::Event change_type)
+        {
+            if (change_type == filewatch::Event::added)
+            {
+                cb();
+            }
+        });
+}
+FileWatchId AddFileModifiedWatch(const std::filesystem::path& file_path, std::function<void()> cb)
+{
+    return AddFileWatch(
         file_path,
         [cb = std::move(cb)](const std::filesystem::path&, const filewatch::Event change_type)
         {
@@ -26,5 +57,22 @@ void AddFileModifiedWatch(const std::filesystem::path& file_path, std::function<
             {
                 cb();
             }
-        }));
+        });
+}
+FileWatchId AddFileRemovedWatch(const std::filesystem::path& file_path, std::function<void()> cb)
+{
+    return AddFileWatch(
+        file_path,
+        [cb = std::move(cb)](const std::filesystem::path&, const filewatch::Event change_type)
+        {
+            if (change_type == filewatch::Event::removed)
+            {
+                cb();
+            }
+        });
+}
+
+void ClearFileWatch(FileWatchId id)
+{
+    g_FileWatchers.erase(id);
 }
