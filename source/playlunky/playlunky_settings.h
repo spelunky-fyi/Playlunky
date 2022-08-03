@@ -11,8 +11,9 @@ class PlaylunkySettings
     PlaylunkySettings(std::string settings_file);
     ~PlaylunkySettings();
 
-    bool GetBool(std::string category, std::string setting, bool default_value) const;
-    int GetInt(std::string category, std::string setting, int default_value) const;
+    std::string GetString(const std::string& category, const std::string& setting, const std::string& default_value) const;
+    bool GetBool(const std::string& category, const std::string& setting, bool default_value) const;
+    int GetInt(const std::string& category, const std::string& setting, int default_value) const;
 
     void SetBool(std::string category, std::string setting, bool value);
 

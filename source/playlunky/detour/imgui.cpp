@@ -37,22 +37,28 @@ struct Font
     ImFont* font{ nullptr };
 };
 inline static std::array g_Fonts{ Font{ 18.0f }, Font{ 36.0f }, Font{ 72.0f } };
-inline static std::string g_FontFile{ "segoeuib.ttf" };
+inline constexpr std::string_view g_DefaultFontFile{ "segoeuib.ttf" };
+inline static std::string g_FontFile{ g_DefaultFontFile };
 
 void ImGuiLoadFont()
 {
     ImGuiIO& io = ImGui::GetIO();
     io.FontAllowUserScaling = true;
 
-    if (!g_FontFile.empty())
+    auto load_font_file = [&io](std::string_view font_file)
     {
+        if (font_file.empty())
+        {
+            return false;
+        }
+
         PWSTR fontdir;
         if (SHGetKnownFolderPath(FOLDERID_Fonts, 0, NULL, &fontdir) == S_OK)
         {
             OnScopeExit free_fontdir{ std::bind_front(CoTaskMemFree, fontdir) };
 
             namespace fs = std::filesystem;
-            fs::path fontpath{ std::filesystem::path{ fontdir } / g_FontFile };
+            fs::path fontpath{ std::filesystem::path{ fontdir } / font_file };
             if (fs::exists(fontpath))
             {
                 for (auto& [size, font] : g_Fonts)
@@ -62,7 +68,7 @@ void ImGuiLoadFont()
             }
             else if (SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &fontdir) == S_OK)
             {
-                fs::path localfontpath{ std::filesystem::path{ fontdir } / "Microsoft/Windows/Fonts" / g_FontFile };
+                fs::path localfontpath{ std::filesystem::path{ fontdir } / "Microsoft/Windows/Fonts" / font_file };
                 if (fs::exists(localfontpath))
                 {
                     for (auto& [size, font] : g_Fonts)
@@ -72,9 +78,11 @@ void ImGuiLoadFont()
                 }
             }
         }
-    }
 
-    if (algo::contains(g_Fonts, &Font::font, nullptr))
+        return !algo::contains(g_Fonts, &Font::font, nullptr);
+    };
+
+    if (!load_font_file(g_FontFile) && (g_DefaultFontFile == g_FontFile || !load_font_file(g_DefaultFontFile)))
     {
         for (auto& [size, font] : g_Fonts)
         {

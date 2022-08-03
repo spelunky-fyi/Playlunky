@@ -20,11 +20,15 @@ PlaylunkySettings::PlaylunkySettings(std::string settings_file)
 }
 PlaylunkySettings::~PlaylunkySettings() = default;
 
-bool PlaylunkySettings::GetBool(std::string category, std::string setting, bool default_value) const
+std::string PlaylunkySettings::GetString(const std::string& category, const std::string& setting, const std::string& default_value) const
+{
+    return mSettings->Get(std::move(category), std::move(setting), default_value);
+}
+bool PlaylunkySettings::GetBool(const std::string& category, const std::string& setting, bool default_value) const
 {
     return mSettings->GetBoolean(std::move(category), std::move(setting), default_value);
 }
-int PlaylunkySettings::GetInt(std::string category, std::string setting, int default_value) const
+int PlaylunkySettings::GetInt(const std::string& category, const std::string& setting, int default_value) const
 {
     return mSettings->GetInteger(std::move(category), std::move(setting), default_value);
 }
@@ -65,6 +69,7 @@ void PlaylunkySettings::WriteToFile(std::string settings_file) const
                                                    KnownSetting{ .Name{ "use_playlunky_save" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "disable_steam_achievements" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "speedrun_mode" }, .DefaultValue{ "off" } },
+                                                   KnownSetting{ .Name{ "font_file" }, .DefaultValue{ "default" } },
                                                } },
         KnownCategory{ { "script_settings" }, {
                                                   KnownSetting{ .Name{ "enable_developer_mode" }, .AltCategory{ "settings" }, .DefaultValue{ "off" } },

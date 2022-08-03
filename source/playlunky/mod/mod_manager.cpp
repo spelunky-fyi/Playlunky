@@ -700,6 +700,12 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
         Spelunky_DisableSteamAchievements();
     }
 
+    std::string font_file = settings.GetString("general_settings", "font_file", "");
+    if (!font_file.empty() && font_file != "default")
+    {
+        ImGuiSetFontFile(font_file);
+    }
+
     Spelunky_RegisterOnLoadFileFunc(FunctionPointer<Spelunky_LoadFileFunc, struct ModManagerLoadFile>(
         [this](const char* file_path, SpelunkyAllocFun alloc_fun) -> SpelunkyFileInfo*
         {
