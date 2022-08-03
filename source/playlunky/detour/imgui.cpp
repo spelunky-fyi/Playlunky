@@ -39,6 +39,7 @@ struct Font
 inline static std::array g_Fonts{ Font{ 18.0f }, Font{ 36.0f }, Font{ 72.0f } };
 inline constexpr std::string_view g_DefaultFontFile{ "segoeuib.ttf" };
 inline static std::string g_FontFile{ g_DefaultFontFile };
+inline static float g_FontScale{ 1.0f };
 
 void ImGuiLoadFont()
 {
@@ -63,7 +64,7 @@ void ImGuiLoadFont()
             {
                 for (auto& [size, font] : g_Fonts)
                 {
-                    font = io.Fonts->AddFontFromFileTTF(fontpath.string().c_str(), size);
+                    font = io.Fonts->AddFontFromFileTTF(fontpath.string().c_str(), size * g_FontScale);
                 }
             }
             else if (SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &fontdir) == S_OK)
@@ -73,7 +74,7 @@ void ImGuiLoadFont()
                 {
                     for (auto& [size, font] : g_Fonts)
                     {
-                        font = io.Fonts->AddFontFromFileTTF(localfontpath.string().c_str(), size);
+                        font = io.Fonts->AddFontFromFileTTF(localfontpath.string().c_str(), size * g_FontScale);
                     }
                 }
             }
@@ -86,7 +87,7 @@ void ImGuiLoadFont()
     {
         for (auto& [size, font] : g_Fonts)
         {
-            font = io.Fonts->AddFontFromMemoryCompressedTTF(PLFont_compressed_data, PLFont_compressed_size, size);
+            font = io.Fonts->AddFontFromMemoryCompressedTTF(PLFont_compressed_data, PLFont_compressed_size, size * g_FontScale);
         }
     }
 }
@@ -150,6 +151,11 @@ void ImGuiSetFontFile(std::string font_file)
 {
     g_FontFile = std::move(font_file);
 }
+void ImGuiSetFontScale(float font_scale)
+{
+    g_FontScale = font_scale;
+}
+
 ImFont* ImGuiGetBestFont(float wanted_size)
 {
     ImFont* best_font{ nullptr };

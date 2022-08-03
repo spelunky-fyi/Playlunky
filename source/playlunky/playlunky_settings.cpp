@@ -32,6 +32,10 @@ int PlaylunkySettings::GetInt(const std::string& category, const std::string& se
 {
     return mSettings->GetInteger(std::move(category), std::move(setting), default_value);
 }
+float PlaylunkySettings::GetFloat(const std::string& category, const std::string& setting, float default_value) const
+{
+    return mSettings->GetFloat(std::move(category), std::move(setting), default_value);
+}
 
 void PlaylunkySettings::SetBool(std::string category, std::string setting, bool value)
 {
@@ -70,6 +74,7 @@ void PlaylunkySettings::WriteToFile(std::string settings_file) const
                                                    KnownSetting{ .Name{ "disable_steam_achievements" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "speedrun_mode" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "font_file" }, .DefaultValue{ "default" } },
+                                                   KnownSetting{ .Name{ "font_scale" }, .DefaultValue{ "1.0" } },
                                                } },
         KnownCategory{ { "script_settings" }, {
                                                   KnownSetting{ .Name{ "enable_developer_mode" }, .AltCategory{ "settings" }, .DefaultValue{ "off" } },
