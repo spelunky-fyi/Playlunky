@@ -34,7 +34,7 @@ int PlaylunkySettings::GetInt(const std::string& category, const std::string& se
 }
 float PlaylunkySettings::GetFloat(const std::string& category, const std::string& setting, float default_value) const
 {
-    return mSettings->GetFloat(std::move(category), std::move(setting), default_value);
+    return static_cast<float>(mSettings->GetReal(std::move(category), std::move(setting), default_value));
 }
 
 void PlaylunkySettings::SetBool(std::string category, std::string setting, bool value)
