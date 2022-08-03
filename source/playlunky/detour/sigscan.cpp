@@ -124,6 +124,22 @@ void* FindPattern(const char* module_name, std::string_view signature, bool code
     return nullptr;
 }
 
+void* GetFromOffset(const char* module_name, std::size_t offset)
+{
+    if (module_name == nullptr)
+        return nullptr;
+
+    if (HMODULE module = GetModuleHandleA(module_name))
+    {
+        MODULEINFO module_info = GetModuleInfo(module);
+        std::size_t base = (std::size_t)module_info.lpBaseOfDll;
+
+        return (void*)(base + offset);
+    }
+
+    return nullptr;
+}
+
 std::ptrdiff_t GetOffset(const char* module_name, const void* address)
 {
     if (module_name == nullptr || address == nullptr)
