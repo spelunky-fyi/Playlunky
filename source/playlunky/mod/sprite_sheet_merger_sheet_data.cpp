@@ -18,6 +18,14 @@ void SpriteSheetMerger::MakeItemsSheet()
                 .SourceTile{ 0, 832, 128, 960 },
                 .TargetTile{ 1920, 1792, 2048, 1920 },
             } } });
+    source_sheets.push_back(SourceSheet{
+        .Path{ "Data/Textures/Entities/Mounts/turkey" },
+        .Size{ .Width{ 1024 }, .Height{ 1472 } },
+        .TileMap = std::vector<TileMapping>{
+            TileMapping{
+                .SourceTile{ 0, 1344, 128, 1472 },
+                .TargetTile{ 1920, 1792, 2048, 1920 },
+            } } });
 
     m_TargetSheets.push_back(TargetSheet{
         .Path{ "Data/Textures/items" },
@@ -27,13 +35,21 @@ void SpriteSheetMerger::MakeItemsSheet()
 void SpriteSheetMerger::MakeJournalItemsSheet()
 {
     std::vector<SourceSheet> source_sheets;
-
+    
     source_sheets.push_back(SourceSheet{
         .Path{ "Data/Textures/Entities/turkey_full" },
         .Size{ .Width{ 2048 }, .Height{ 960 } },
         .TileMap = std::vector<TileMapping>{
             TileMapping{
                 .SourceTile{ 0, 672, 160, 832 },
+                .TargetTile{ 800, 480, 960, 640 },
+            } } });
+    source_sheets.push_back(SourceSheet{
+        .Path{ "Data/Textures/Entities/Mounts/turkey" },
+        .Size{ .Width{ 1024 }, .Height{ 1472 } },
+        .TileMap = std::vector<TileMapping>{
+            TileMapping{
+                .SourceTile{ 0, 1184, 160, 1344 },
                 .TargetTile{ 800, 480, 960, 640 },
             } } });
 
