@@ -675,10 +675,6 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
         if (Playlunky::Get().IsModTypeLoaded(ModType::Script | ModType::Level))
         {
             Spelunky_SetWriteLoadOptimization(true);
-        }
-
-        if (!vfs.HasRestrictedFiles())
-        {
             Spelunky_EnabledAdvancedHud();
             Spelunky_SetPostRenderGame(&DrawVersionOverlay);
         }
