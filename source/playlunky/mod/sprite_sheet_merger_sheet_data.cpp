@@ -35,7 +35,7 @@ void SpriteSheetMerger::MakeItemsSheet()
 void SpriteSheetMerger::MakeJournalItemsSheet()
 {
     std::vector<SourceSheet> source_sheets;
-    
+
     source_sheets.push_back(SourceSheet{
         .Path{ "Data/Textures/Entities/turkey_full" },
         .Size{ .Width{ 2048 }, .Height{ 960 } },
