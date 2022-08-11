@@ -23,6 +23,10 @@
 
 #include <deque>
 
+#include <zip_adaptor.h>
+
+using namespace std::string_view_literals;
+
 struct ErrorMessage
 {
     std::string Message;
@@ -31,14 +35,49 @@ struct ErrorMessage
 };
 inline static std::deque<ErrorMessage> g_Messages;
 
+enum class Alphabet
+{
+    Latin,
+    Japanese,
+    ChineseTraditional,
+    ChineseSimplified,
+    Korean,
+    Cyrillic,
+    Emoji,
+
+    Last,
+};
+struct FontConfig
+{
+    std::string_view default_font_file{};
+    bool load_big_fonts{ false };
+    bool fallback_is_bundled{ false };
+    std::array<ImWchar, 3> additional_glyphs{};
+};
+inline constexpr size_t g_NumFonts{ static_cast<size_t>(Alphabet::Last) };
+inline constexpr std::array g_FontConfigs{
+    FontConfig{ "segoeuib.ttf"sv, true, true },
+    FontConfig{ "YuGothB.ttc"sv, false, false },
+    FontConfig{ "simsun.ttc"sv, false, false },
+    FontConfig{ "msjh.ttc"sv, false, false },
+    FontConfig{ "malgunbd.ttf"sv, false, false },
+    FontConfig{
+        "segoeuib.ttf"sv,
+        false,
+        false,
+        { 0x2026u, 0x2026u, 0x0u }, // one of the asian fonts has a stupid huge ellipsis, we get it explicitly from this font
+    },
+    FontConfig{ "seguiemj.ttf"sv },
+};
+static_assert(g_FontConfigs.size() == g_NumFonts);
+
 struct Font
 {
     float size;
     ImFont* font{ nullptr };
 };
 inline static std::array g_Fonts{ Font{ 18.0f }, Font{ 36.0f }, Font{ 72.0f } };
-inline constexpr std::string_view g_DefaultFontFile{ "segoeuib.ttf" };
-inline static std::string g_FontFile{ g_DefaultFontFile };
+inline static std::array<std::string, g_NumFonts> g_FontFiles{};
 inline static float g_FontScale{ 1.0f };
 
 void ImGuiLoadFont()
@@ -46,44 +85,79 @@ void ImGuiLoadFont()
     ImGuiIO& io = ImGui::GetIO();
     io.FontAllowUserScaling = true;
 
-    auto load_font_file = [&io](std::string_view font_file)
+    ImFontConfig imgui_font_config;
+    imgui_font_config.EllipsisChar = u'\u2026';
+    static constexpr ImWchar emoji_range[] = { 0x1u, 0x1FFFFu, 0x0u };
+    std::array<const ImWchar*, g_NumFonts> language_glyph_ranges{
+        nullptr,
+        io.Fonts->GetGlyphRangesJapanese(),
+        io.Fonts->GetGlyphRangesChineseSimplifiedCommon(),
+        io.Fonts->GetGlyphRangesChineseFull(),
+        io.Fonts->GetGlyphRangesKorean(),
+        io.Fonts->GetGlyphRangesCyrillic(),
+        emoji_range,
+    };
+
+    PWSTR fontdir;
+    if (SHGetKnownFolderPath(FOLDERID_Fonts, 0, NULL, &fontdir) == S_OK)
     {
-        if (font_file.empty())
-        {
-            return false;
-        }
+        OnScopeExit free_fontdir{ std::bind_front(CoTaskMemFree, fontdir) };
 
-        PWSTR fontdir;
-        if (SHGetKnownFolderPath(FOLDERID_Fonts, 0, NULL, &fontdir) == S_OK)
+        for (auto& [size, font] : g_Fonts)
         {
-            OnScopeExit free_fontdir{ std::bind_front(CoTaskMemFree, fontdir) };
-
-            namespace fs = std::filesystem;
-            fs::path fontpath{ std::filesystem::path{ fontdir } / font_file };
-            if (fs::exists(fontpath))
+            auto load_font_file = [&](std::string_view font_file, const ImWchar* glyph_ranges, const FontConfig& font_config)
             {
-                for (auto& [size, font] : g_Fonts)
+                if (font_file.empty())
                 {
-                    font = io.Fonts->AddFontFromFileTTF(fontpath.string().c_str(), size * g_FontScale);
+                    return false;
                 }
-            }
-            else if (SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &fontdir) == S_OK)
-            {
-                fs::path localfontpath{ std::filesystem::path{ fontdir } / "Microsoft/Windows/Fonts" / font_file };
-                if (fs::exists(localfontpath))
+
+                auto load_font_impl = [&](const char* font_path)
                 {
-                    for (auto& [size, font] : g_Fonts)
+                    font = io.Fonts->AddFontFromFileTTF(font_path, size * g_FontScale, &imgui_font_config, glyph_ranges);
+                    if (font_config.additional_glyphs != decltype(font_config.additional_glyphs){})
                     {
-                        font = io.Fonts->AddFontFromFileTTF(localfontpath.string().c_str(), size * g_FontScale);
+                        font = io.Fonts->AddFontFromFileTTF(font_path, size * g_FontScale, &imgui_font_config, font_config.additional_glyphs.data());
+                    }
+                };
+
+                namespace fs = std::filesystem;
+                fs::path fontpath{ std::filesystem::path{ fontdir } / font_file };
+                if (fs::exists(fontpath))
+                {
+                    load_font_impl(fontpath.string().c_str());
+                }
+                else if (SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &fontdir) == S_OK)
+                {
+                    fs::path localfontpath{ std::filesystem::path{ fontdir } / "Microsoft/Windows/Fonts" / font_file };
+                    if (fs::exists(localfontpath))
+                    {
+                        load_font_impl(localfontpath.string().c_str());
+                    }
+                }
+
+                return font != nullptr;
+            };
+
+            const bool big_font = size > g_Fonts.front().size;
+            
+            for (auto [font_file, config, glyph_ranges] : zip::zip(g_FontFiles, g_FontConfigs, language_glyph_ranges))
+            {
+                imgui_font_config.MergeMode = font != nullptr;
+
+                if (!big_font || config.load_big_fonts)
+                {
+                    const bool loaded_chosen_font = !font_file.empty() && load_font_file(font_file, glyph_ranges, config);
+                    const bool loaded_font = loaded_chosen_font || load_font_file(config.default_font_file, glyph_ranges, config);
+                    if (!loaded_font && config.fallback_is_bundled)
+                    {
+                        font = io.Fonts->AddFontFromMemoryCompressedTTF(PLFont_compressed_data, PLFont_compressed_size, size * g_FontScale, &imgui_font_config, glyph_ranges);
                     }
                 }
             }
         }
-
-        return !algo::contains(g_Fonts, &Font::font, nullptr);
-    };
-
-    if (!load_font_file(g_FontFile) && (g_DefaultFontFile == g_FontFile || !load_font_file(g_DefaultFontFile)))
+    }
+    else
     {
         for (auto& [size, font] : g_Fonts)
         {
@@ -149,7 +223,7 @@ void PrintInfo(std::string message, float time)
 
 void ImGuiSetFontFile(std::string font_file)
 {
-    g_FontFile = std::move(font_file);
+    g_FontFiles[0] = std::move(font_file);
 }
 void ImGuiSetFontScale(float font_scale)
 {

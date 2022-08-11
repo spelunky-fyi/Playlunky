@@ -99,3 +99,7 @@ option(BUILD_OVERLUNKY CACHE OFF)
 option(BUILD_INFO_DUMP CACHE OFF)
 option(BUILD_SPEL2_DLL CACHE ON)
 add_subdirectory_with_folder("3rd_party" overlunky)
+
+# --------------------------------------------------
+# force imgui to use a big wchar (for emojis)
+target_compile_definitions(imgui PUBLIC IMGUI_USE_WCHAR32)
