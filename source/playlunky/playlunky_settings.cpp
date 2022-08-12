@@ -74,6 +74,12 @@ void PlaylunkySettings::WriteToFile(std::string settings_file) const
                                                    KnownSetting{ .Name{ "disable_steam_achievements" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "speedrun_mode" }, .DefaultValue{ "off" } },
                                                    KnownSetting{ .Name{ "font_file" }, .DefaultValue{ "default" } },
+                                                   KnownSetting{ .Name{ "font_file_ru" }, .DefaultValue{ "default" } },
+                                                   KnownSetting{ .Name{ "font_file_jp" }, .DefaultValue{ "default" } },
+                                                   KnownSetting{ .Name{ "font_file_ko" }, .DefaultValue{ "default" } },
+                                                   KnownSetting{ .Name{ "font_file_zhcn" }, .DefaultValue{ "default" } },
+                                                   KnownSetting{ .Name{ "font_file_zhtw" }, .DefaultValue{ "default" } },
+                                                   KnownSetting{ .Name{ "font_file_emoji" }, .DefaultValue{ "default" } },
                                                    KnownSetting{ .Name{ "font_scale" }, .DefaultValue{ "1.0" } },
                                                } },
         KnownCategory{ { "script_settings" }, {

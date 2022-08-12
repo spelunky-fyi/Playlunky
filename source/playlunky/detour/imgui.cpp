@@ -149,7 +149,7 @@ void ImGuiLoadFont()
                         font = io.Fonts->AddFontFromMemoryCompressedTTF(PLFont_compressed_data, PLFont_compressed_size, size * g_FontScale, &imgui_font_config, glyph_ranges);
                     }
 
-                    const bool loaded_font = loaded_font || config.fallback_is_bundled;
+                    const bool loaded_font = loaded_font_file || config.fallback_is_bundled;
                     supported_alphabets.push_back(config.alphabet);
                 }
             }
