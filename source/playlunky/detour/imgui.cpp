@@ -38,36 +38,38 @@ inline static std::deque<ErrorMessage> g_Messages;
 enum class Alphabet
 {
     Latin,
+    Cyrillic,
     Japanese,
     ChineseTraditional,
     ChineseSimplified,
     Korean,
-    Cyrillic,
     Emoji,
 
     Last,
 };
 struct FontConfig
 {
-    std::string_view default_font_file{};
+    Alphabet alphabet;
+    std::array<std::string_view, 2> default_font_files{};
     bool load_big_fonts{ false };
     bool fallback_is_bundled{ false };
     std::array<ImWchar, 3> additional_glyphs{};
 };
 inline constexpr size_t g_NumFonts{ static_cast<size_t>(Alphabet::Last) };
 inline constexpr std::array g_FontConfigs{
-    FontConfig{ "segoeuib.ttf"sv, true, true },
-    FontConfig{ "YuGothB.ttc"sv, false, false },
-    FontConfig{ "simsun.ttc"sv, false, false },
-    FontConfig{ "msjh.ttc"sv, false, false },
-    FontConfig{ "malgunbd.ttf"sv, false, false },
+    FontConfig{ Alphabet::Latin, { "segoeuib.ttf"sv }, true, true },
     FontConfig{
-        "segoeuib.ttf"sv,
+        Alphabet::Cyrillic,
+        { "segoeuib.ttf"sv },
         false,
         false,
         { 0x2026u, 0x2026u, 0x0u }, // one of the asian fonts has a stupid huge ellipsis, we get it explicitly from this font
     },
-    FontConfig{ "seguiemj.ttf"sv },
+    FontConfig{ Alphabet::Japanese, { "YuGothB.ttc"sv, "Meiryo.ttc"sv }, false, false },
+    FontConfig{ Alphabet::ChineseTraditional, { "simsun.ttc"sv }, false, false },
+    FontConfig{ Alphabet::ChineseSimplified, { "msjh.ttc"sv }, false, false },
+    FontConfig{ Alphabet::Korean, { "malgunbd.ttf"sv, "Gulim.ttc"sv }, false, false },
+    FontConfig{ Alphabet::Emoji, { "seguiemj.ttf"sv } },
 };
 static_assert(g_FontConfigs.size() == g_NumFonts);
 
@@ -140,7 +142,7 @@ void ImGuiLoadFont()
             };
 
             const bool big_font = size > g_Fonts.front().size;
-            
+
             for (auto [font_file, config, glyph_ranges] : zip::zip(g_FontFiles, g_FontConfigs, language_glyph_ranges))
             {
                 imgui_font_config.MergeMode = font != nullptr;
@@ -148,7 +150,9 @@ void ImGuiLoadFont()
                 if (!big_font || config.load_big_fonts)
                 {
                     const bool loaded_chosen_font = !font_file.empty() && load_font_file(font_file, glyph_ranges, config);
-                    const bool loaded_font = loaded_chosen_font || load_font_file(config.default_font_file, glyph_ranges, config);
+                    const bool loaded_default_font_a = !loaded_chosen_font && load_font_file(config.default_font_files[0], glyph_ranges, config);
+                    const bool loaded_default_font_b = !loaded_default_font_a && load_font_file(config.default_font_files[1], glyph_ranges, config);
+                    const bool loaded_font = loaded_chosen_font || loaded_default_font_a || loaded_default_font_b;
                     if (!loaded_font && config.fallback_is_bundled)
                     {
                         font = io.Fonts->AddFontFromMemoryCompressedTTF(PLFont_compressed_data, PLFont_compressed_size, size * g_FontScale, &imgui_font_config, glyph_ranges);
