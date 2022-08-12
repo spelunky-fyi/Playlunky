@@ -1,3 +1,5 @@
+#include "imgui.h"
+
 #include "detour_entry.h"
 #include "detour_helper.h"
 #include "log.h"
@@ -35,18 +37,6 @@ struct ErrorMessage
 };
 inline static std::deque<ErrorMessage> g_Messages;
 
-enum class Alphabet
-{
-    Latin,
-    Cyrillic,
-    Japanese,
-    ChineseTraditional,
-    ChineseSimplified,
-    Korean,
-    Emoji,
-
-    Last,
-};
 struct FontConfig
 {
     Alphabet alphabet;
@@ -77,6 +67,7 @@ struct Font
 {
     float size;
     ImFont* font{ nullptr };
+    std::vector<Alphabet> supported_alphabets;
 };
 inline static std::array g_Fonts{ Font{ 18.0f }, Font{ 36.0f }, Font{ 72.0f } };
 inline static std::array<std::string, g_NumFonts> g_FontFiles{};
@@ -92,11 +83,11 @@ void ImGuiLoadFont()
     static constexpr ImWchar emoji_range[] = { 0x1u, 0x1FFFFu, 0x0u };
     std::array<const ImWchar*, g_NumFonts> language_glyph_ranges{
         nullptr,
+        io.Fonts->GetGlyphRangesCyrillic(),
         io.Fonts->GetGlyphRangesJapanese(),
         io.Fonts->GetGlyphRangesChineseSimplifiedCommon(),
         io.Fonts->GetGlyphRangesChineseFull(),
         io.Fonts->GetGlyphRangesKorean(),
-        io.Fonts->GetGlyphRangesCyrillic(),
         emoji_range,
     };
 
@@ -105,7 +96,7 @@ void ImGuiLoadFont()
     {
         OnScopeExit free_fontdir{ std::bind_front(CoTaskMemFree, fontdir) };
 
-        for (auto& [size, font] : g_Fonts)
+        for (auto& [size, font, supported_alphabets] : g_Fonts)
         {
             auto load_font_file = [&](std::string_view font_file, const ImWchar* glyph_ranges, const FontConfig& font_config)
             {
@@ -152,20 +143,24 @@ void ImGuiLoadFont()
                     const bool loaded_chosen_font = !font_file.empty() && load_font_file(font_file, glyph_ranges, config);
                     const bool loaded_default_font_a = !loaded_chosen_font && load_font_file(config.default_font_files[0], glyph_ranges, config);
                     const bool loaded_default_font_b = !loaded_default_font_a && load_font_file(config.default_font_files[1], glyph_ranges, config);
-                    const bool loaded_font = loaded_chosen_font || loaded_default_font_a || loaded_default_font_b;
-                    if (!loaded_font && config.fallback_is_bundled)
+                    const bool loaded_font_file = loaded_chosen_font || loaded_default_font_a || loaded_default_font_b;
+                    if (!loaded_font_file && config.fallback_is_bundled)
                     {
                         font = io.Fonts->AddFontFromMemoryCompressedTTF(PLFont_compressed_data, PLFont_compressed_size, size * g_FontScale, &imgui_font_config, glyph_ranges);
                     }
+
+                    const bool loaded_font = loaded_font || config.fallback_is_bundled;
+                    supported_alphabets.push_back(config.alphabet);
                 }
             }
         }
     }
     else
     {
-        for (auto& [size, font] : g_Fonts)
+        for (auto& [size, font, supported_alphabets] : g_Fonts)
         {
             font = io.Fonts->AddFontFromMemoryCompressedTTF(PLFont_compressed_data, PLFont_compressed_size, size * g_FontScale);
+            supported_alphabets.push_back(Alphabet::Latin);
         }
     }
 }
@@ -225,24 +220,26 @@ void PrintInfo(std::string message, float time)
     }
 }
 
-void ImGuiSetFontFile(std::string font_file)
+void ImGuiSetFontFile(std::string font_file, Alphabet alphabet)
 {
-    g_FontFiles[0] = std::move(font_file);
+    g_FontFiles[static_cast<size_t>(alphabet)] = std::move(font_file);
 }
 void ImGuiSetFontScale(float font_scale)
 {
     g_FontScale = font_scale;
 }
-
-ImFont* ImGuiGetBestFont(float wanted_size)
+ImFont* ImGuiGetBestFont(float wanted_size, Alphabet alphabet)
 {
     ImFont* best_font{ nullptr };
-    for (const auto& [size, font] : g_Fonts)
+    for (const auto& [size, font, supported_alphabets] : g_Fonts)
     {
-        best_font = font;
-        if (size > wanted_size)
+        if (algo::contains(supported_alphabets, alphabet))
         {
-            break;
+            best_font = font;
+            if (size > wanted_size)
+            {
+                break;
+            }
         }
     }
 
