@@ -136,8 +136,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
                                        {
                                            has_loose_files = true;
                                        }
-                                   }
-                               });
+                                   } });
 
             mod_db.UpdateDatabase();
             mod_db.ForEachFolder([&mods_root_path](const fs::path& rel_folder_path, [[maybe_unused]] bool outdated, [[maybe_unused]] bool deleted, [[maybe_unused]] std::optional<bool> new_enabled_state)
@@ -146,8 +145,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
                                      if (fs::exists(folder_path))
                                      {
                                          FixModFolderStructure(folder_path);
-                                     }
-                                 });
+                                     } });
 
             mod_db.WriteDatabase();
 
@@ -365,8 +363,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
                                                    mod_info.ReadFromDatabase(mod_db);
                                                    mod_db.SetInfo(mod_info.Dump());
                                                    mSpriteSheetMerger->RegisterCustomImages(mod_name, mod_load_paths, db_original_folder, prio, mod_info.GetCustomImages());
-                                               }
-                                           });
+                                               } });
                     }
                     else
                     {
@@ -520,8 +517,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
                                                {
                                                    LogError("Mod {} appears to contain multiple main.lua files... {} will be ignored...", mod_name, full_asset_path_string);
                                                }
-                                           }
-                                       });
+                                           } });
                     mod_db.WriteDatabase();
                 }
             }
@@ -883,8 +879,7 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
                                       .format{ static_cast<Spelunky_SoundFormat>(buffer.Format) },
                                       .data{ reinterpret_cast<const char*>(buffer.Data.release()) },
                                       .data_size{ buffer.DataSize }
-                                  };
-                              });
+                                  }; });
 
     const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
     if (!speedrun_mode)
@@ -904,8 +899,7 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
                                       {
                                           auto fmt_res = fmt::format_to_n(out_buffer, out_buffer_size - 1, "{}/save.dat", std::string_view{ script_path, script_path_size });
                                           out_buffer[fmt_res.size] = '\0';
-                                          return true;
-                                      });
+                                          return true; });
 }
 
 bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t /*l_param*/)
