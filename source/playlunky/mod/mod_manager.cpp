@@ -60,12 +60,13 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
 
     LogInfo("Scanning for mods...");
 
+    const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
     Spelunky_InitMemoryDatabase();
+    Spelunky_SetDoHooks(!speedrun_mode);
     Spelunky_SetWriteLoadOptimization(false);
 
     const bool disable_asset_caching = settings.GetBool("general_settings", "disable_asset_caching", false);
 
-    const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
     const bool enable_raw_string_loading = !speedrun_mode && settings.GetBool("script_settings", "enable_raw_string_loading", false);
     const bool enable_customizable_sheets = !speedrun_mode && settings.GetBool("sprite_settings", "enable_customizable_sheets", true);
 
@@ -631,8 +632,11 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             }
         }
 
-        // Mounting early to maintain guarantees about VFS immutability
-        BugFixesMount(vfs, db_folder);
+        if (!speedrun_mode)
+        {
+            // Mounting early to maintain guarantees about VFS immutability
+            BugFixesMount(vfs, db_folder);
+        }
 
         vfs.MountFolder(db_folder.string(), -1, VfsType::Backend);
         vfs.MountFolder("", -2, VfsType::Backend);
