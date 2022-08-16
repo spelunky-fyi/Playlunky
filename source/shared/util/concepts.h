@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <type_traits>
 
 namespace algo
@@ -94,5 +95,19 @@ using range_value_t = std::remove_reference_t<decltype(*get_begin(std::declval<T
 
 template<class T, class U>
 requires range<T>
-inline constexpr bool range_contains_v = std::is_same_v<std::decay_t<range_element_t<T>>, std::decay_t<U>>;
+struct range_contains
+{
+    using value_t = std::decay_t<range_element_t<T>>;
+    using expec_t = std::decay_t<U>;
+    // clang-format off
+    inline static constexpr bool value =
+           std::is_same_v<value_t, expec_t>
+        || std::is_same_v<value_t, expec_t*>
+        || std::is_same_v<value_t, std::unique_ptr<expec_t>>
+        || std::is_same_v<value_t, std::shared_ptr<expec_t>>;
+    // clang-format on
+};
+template<class T, class U>
+requires range<T>
+inline constexpr bool range_contains_v = range_contains<T, U>::value;
 } // namespace algo

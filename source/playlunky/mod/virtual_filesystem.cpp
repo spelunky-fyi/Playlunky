@@ -129,6 +129,7 @@ class VfsFolderMount : public IVfsMountImpl
 struct VirtualFilesystem::VfsMount
 {
     std::int64_t Priority;
+    std::vector<VfsMount*> LinkedMounts;
     std::unique_ptr<IVfsMountImpl> MountImpl;
 };
 
@@ -138,7 +139,7 @@ VirtualFilesystem::VirtualFilesystem()
 }
 VirtualFilesystem::~VirtualFilesystem() = default;
 
-void VirtualFilesystem::MountFolder(std::string_view path, std::int64_t priority, VfsType type)
+VirtualFilesystem::VfsMount* VirtualFilesystem::MountFolder(std::string_view path, std::int64_t priority, VfsType type)
 {
     namespace fs = std::filesystem;
 
@@ -146,7 +147,33 @@ void VirtualFilesystem::MountFolder(std::string_view path, std::int64_t priority
 
     auto it = std::upper_bound(mMounts.begin(), mMounts.end(), priority, [](std::int64_t prio, const auto& mount)
                                { return mount->Priority > prio; });
-    mMounts.emplace(it, new VfsMount{ .Priority = priority, .MountImpl = std::make_unique<VfsFolderMount>(path, type) });
+    VfsMount* new_mount = new VfsMount{ .Priority = priority, .MountImpl = std::make_unique<VfsFolderMount>(path, type) };
+    mMounts.emplace(it, new_mount);
+
+    return new_mount;
+}
+void VirtualFilesystem::LinkMounts(struct VfsMount* lhs_mount, struct VfsMount* rhs_mount)
+{
+    if (!algo::contains(lhs_mount->LinkedMounts, lhs_mount))
+    {
+        lhs_mount->LinkedMounts.push_back(lhs_mount);
+    }
+    if (!algo::contains(rhs_mount->LinkedMounts, rhs_mount))
+    {
+        rhs_mount->LinkedMounts.push_back(rhs_mount);
+    }
+    if (!algo::contains(lhs_mount->LinkedMounts, rhs_mount))
+    {
+        lhs_mount->LinkedMounts.push_back(rhs_mount);
+        rhs_mount->LinkedMounts.push_back(lhs_mount);
+        auto index_sort_pred = [this](const VfsMount* lhs, const VfsMount* rhs) {
+            size_t lhs_index = algo::find(mMounts, &std::unique_ptr<VfsMount>::get, lhs) - &mMounts.front();
+            size_t rhs_index = algo::find(mMounts, &std::unique_ptr<VfsMount>::get, rhs) - &mMounts.front();
+            return lhs_index < rhs_index;
+        };
+        algo::sort(lhs_mount->LinkedMounts, index_sort_pred);
+        algo::sort(rhs_mount->LinkedMounts, index_sort_pred);
+    }
 }
 
 void VirtualFilesystem::RestrictFiles(std::span<const std::string_view> files)
@@ -265,12 +292,12 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(con
 
     if (const VfsMount* linked_mount = GetLinkedMount(path, path_view, allowed_extensions, type))
     {
-        return linked_mount->MountImpl->GetFilePath(path);
+        return GetFilePath(linked_mount, path);
     }
 
     if (const VfsMount* loading_mount = GetLoadingMount(path, path_view, allowed_extensions, type))
     {
-        return loading_mount->MountImpl->GetFilePath(path);
+        return GetFilePath(loading_mount, path);
     }
 
     return std::nullopt;
@@ -307,12 +334,12 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
 
     if (const VfsMount* linked_mount = GetRandomLinkedMount(path, path_view, allowed_extensions, type))
     {
-        return linked_mount->MountImpl->GetFilePath(path);
+        return GetFilePath(linked_mount, path);
     }
 
     if (const VfsMount* loading_mount = GetRandomLoadingMount(path, path_view, allowed_extensions, type))
     {
-        return loading_mount->MountImpl->GetFilePath(path);
+        return GetFilePath(loading_mount, path);
     }
 
     return std::nullopt;
@@ -342,6 +369,26 @@ std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std:
     }
 
     return file_paths;
+}
+
+std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const VfsMount* mount, const std::filesystem::path& path) const
+{
+    if (mount->LinkedMounts.empty())
+    {
+        return mount->MountImpl->GetFilePath(path);
+    }
+    else
+    {
+        for (const VfsMount* linked_mount : mount->LinkedMounts)
+        {
+            if (const auto return_path = linked_mount->MountImpl->GetFilePath(path))
+            {
+                return return_path;
+            }
+        }
+    }
+
+    return std::nullopt;
 }
 
 const VirtualFilesystem::VfsMount* VirtualFilesystem::GetLinkedMount(

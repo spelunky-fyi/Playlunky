@@ -30,7 +30,9 @@ class VirtualFilesystem
     VirtualFilesystem& operator=(const VirtualFilesystem&) = delete;
     VirtualFilesystem& operator=(VirtualFilesystem&&) = delete;
 
-    void MountFolder(std::string_view path, std::int64_t priority, VfsType vfs_type);
+    struct VfsMount;
+    VfsMount* MountFolder(std::string_view path, std::int64_t priority, VfsType vfs_type);
+    void LinkMounts(struct VfsMount* lhs, struct VfsMount* rhs);
 
     // Allow loading only files specified in this list
     void RestrictFiles(std::span<const std::string_view> files);
@@ -68,9 +70,10 @@ class VirtualFilesystem
     std::vector<std::filesystem::path> GetAllFilePaths(const std::filesystem::path& path, VfsType type = VfsType::Any) const;
 
   private:
-    struct VfsMount;
     using BoundPathes = std::vector<std::string_view>;
     using LinkedPathes = std::vector<LinkedPathesElement>;
+
+    std::optional<std::filesystem::path> GetFilePath(const VfsMount* mount, const std::filesystem::path& path) const;
 
     const VfsMount* GetLinkedMount(const std::filesystem::path& path, std::string_view path_view, std::span<const std::filesystem::path> allowed_extensions, VfsType type) const;
     const VfsMount* GetLoadingMount(const std::filesystem::path& path, std::string_view path_view, std::span<const std::filesystem::path> allowed_extensions, VfsType type) const;

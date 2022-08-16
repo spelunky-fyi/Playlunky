@@ -530,8 +530,9 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             {
                 if (enabled)
                 {
-                    vfs.MountFolder(this_db_folder.string(), prio, VfsType::Backend);
-                    vfs.MountFolder(mod_folder.string(), prio, VfsType::User);
+                    auto* db_mount = vfs.MountFolder(this_db_folder.string(), prio, VfsType::Backend);
+                    auto* user_mount = vfs.MountFolder(mod_folder.string(), prio, VfsType::User);
+                    vfs.LinkMounts(db_mount, user_mount);
                 }
 
                 mMods.push_back(std::move(mod_info));

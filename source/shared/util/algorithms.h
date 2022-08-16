@@ -56,8 +56,8 @@ template<class ContainerT, class T, class U, class V>
 requires range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>
 void erase(ContainerT&& container, U T::*member, V&& val)
 {
-    erase_if(std::forward<ContainerT>(container), [member, val = std::forward<V>(val)](auto& element)
-             { return element.*member == val; });
+    erase_if(std::forward<ContainerT>(container), [member = std::mem_fn(member), val = std::forward<V>(val)](auto& element)
+             { return member(element) == val; });
 }
 
 template<class ContainerT, class FunT>
@@ -90,8 +90,15 @@ template<class ContainerT, class T, class U, class V>
 requires range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>
 auto find(ContainerT&& container, U T::*member, V&& val) -> range_value_t<ContainerT>*
 {
-    return find_if(std::forward<ContainerT>(container), [member, val = std::forward<V>(val)](auto& element)
-                   { return element.*member == val; });
+    return find_if(std::forward<ContainerT>(container), [member = std::mem_fn(member), val = std::forward<V>(val)](auto& element)
+                   { return member(element) == val; });
+}
+template<class ContainerT, class T, class U, class V>
+requires range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>
+auto find(ContainerT&& container, U (T::*member)() const noexcept, V&& val) -> range_value_t<ContainerT>*
+{
+    return find_if(std::forward<ContainerT>(container), [member = std::mem_fn(member), val = std::forward<V>(val)](auto& element)
+                   { return member(element) == val; });
 }
 
 template<class ContainerT, class FunT>
@@ -104,15 +111,15 @@ template<class ContainerT, class T, class U, class V>
 requires range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>
 bool contains(ContainerT&& container, U T::*member, V&& val)
 {
-    return contains_if(std::forward<ContainerT>(container), [member, val = std::forward<V>(val)](auto& element)
-                       { return element.*member == val; });
+    return contains_if(std::forward<ContainerT>(container), [member = std::mem_fn(member), val = std::forward<V>(val)](auto& element)
+                       { return member(element) == val; });
 }
 template<class ContainerT, class T, class U, class V>
 requires range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>
 bool contains(ContainerT&& container, U (T::*member)() const, V&& val)
 {
-    return contains_if(std::forward<ContainerT>(container), [member, val = std::forward<V>(val)](auto& element)
-                       { return (element.*member)() == val; });
+    return contains_if(std::forward<ContainerT>(container), [member = std::mem_fn(member), val = std::forward<V>(val)](auto& element)
+                       { return member(element) == val; });
 }
 template<class ContainerT, class ValueT>
 requires range<ContainerT> && is_comparable<range_element_t<ContainerT>, ValueT>
@@ -141,17 +148,17 @@ void sort(ContainerT&& container, FunT&& fun)
 }
 template<class ContainerT, class T, class U>
 requires range<ContainerT> && range_contains_v<ContainerT, T>
-bool sort(ContainerT&& container, U T::*member)
+void sort(ContainerT&& container, U T::*member)
 {
-    sort(std::forward<ContainerT>(container), [member](auto& lhs, auto& rhs)
-         { return lhs.*member == rhs.*member; });
+    sort(std::forward<ContainerT>(container), [member = std::mem_fn(member)](auto& lhs, auto& rhs)
+         { return member(lhs) < member(rhs); });
 }
 template<class ContainerT, class T, class U>
 requires range<ContainerT> && range_contains_v<ContainerT, T>
-bool sort(ContainerT&& container, U (T::*member)() const)
+void sort(ContainerT&& container, U (T::*member)() const)
 {
-    sort(std::forward<ContainerT>(container), [member](auto& lhs, auto& rhs)
-         { return (lhs.*member)() == (rhs.*member)(); });
+    sort(std::forward<ContainerT>(container), [member = std::mem_fn(member)](auto& lhs, auto& rhs)
+         { return member(lhs) < member(rhs); });
 }
 
 template<class ContainerT>
