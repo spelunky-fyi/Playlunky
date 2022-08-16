@@ -391,7 +391,10 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
 
                                            if (algo::is_same_path(rel_asset_path.extension(), ".lvl"))
                                            {
-                                               Playlunky::Get().RegisterModType(ModType::Level);
+                                               if (!speedrun_mode && !deleted && new_enabled_state.value_or(true))
+                                               {
+                                                   Playlunky::Get().RegisterModType(ModType::Level);
+                                               }
                                            }
                                            else if (algo::is_same_path(rel_asset_path.extension(), ".dds"))
                                            {
