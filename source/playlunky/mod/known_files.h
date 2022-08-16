@@ -5445,7 +5445,7 @@ inline constexpr std::string_view s_SpeedrunFiles[]{
     "Data/Textures/Entities/char_hired_full",
     "Data/Textures/char_eggchild",
     "Data/Textures/Entities/char_eggchild_full",
-    "Data/Textures/pets",
+    "Data/Textures/monsters_pets",
     "Data/Textures/Entities/Pets/monty",
     "Data/Textures/Entities/Pets/percy",
     "Data/Textures/Entities/Pets/poochi",
