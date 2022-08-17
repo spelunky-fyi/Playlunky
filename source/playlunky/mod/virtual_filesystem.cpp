@@ -166,7 +166,8 @@ void VirtualFilesystem::LinkMounts(struct VfsMount* lhs_mount, struct VfsMount* 
     {
         lhs_mount->LinkedMounts.push_back(rhs_mount);
         rhs_mount->LinkedMounts.push_back(lhs_mount);
-        auto index_sort_pred = [this](const VfsMount* lhs, const VfsMount* rhs) {
+        auto index_sort_pred = [this](const VfsMount* lhs, const VfsMount* rhs)
+        {
             size_t lhs_index = algo::find(mMounts, &std::unique_ptr<VfsMount>::get, lhs) - &mMounts.front();
             size_t rhs_index = algo::find(mMounts, &std::unique_ptr<VfsMount>::get, rhs) - &mMounts.front();
             return lhs_index < rhs_index;
@@ -292,12 +293,12 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(con
 
     if (const VfsMount* linked_mount = GetLinkedMount(path, path_view, allowed_extensions, type))
     {
-        return GetFilePath(linked_mount, path);
+        return GetFilePath(linked_mount, path, type);
     }
 
     if (const VfsMount* loading_mount = GetLoadingMount(path, path_view, allowed_extensions, type))
     {
-        return GetFilePath(loading_mount, path);
+        return GetFilePath(loading_mount, path, type);
     }
 
     return std::nullopt;
@@ -334,12 +335,12 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterE
 
     if (const VfsMount* linked_mount = GetRandomLinkedMount(path, path_view, allowed_extensions, type))
     {
-        return GetFilePath(linked_mount, path);
+        return GetFilePath(linked_mount, path, type);
     }
 
     if (const VfsMount* loading_mount = GetRandomLoadingMount(path, path_view, allowed_extensions, type))
     {
-        return GetFilePath(loading_mount, path);
+        return GetFilePath(loading_mount, path, type);
     }
 
     return std::nullopt;
@@ -371,15 +372,11 @@ std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std:
     return file_paths;
 }
 
-std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const VfsMount* mount, const std::filesystem::path& path) const
+std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const VfsMount* mount, const std::filesystem::path& path, VfsType type) const
 {
-    if (mount->LinkedMounts.empty())
+    for (const VfsMount* linked_mount : mount->LinkedMounts)
     {
-        return mount->MountImpl->GetFilePath(path);
-    }
-    else
-    {
-        for (const VfsMount* linked_mount : mount->LinkedMounts)
+        if (linked_mount->MountImpl->IsType(type))
         {
             if (const auto return_path = linked_mount->MountImpl->GetFilePath(path))
             {
@@ -388,7 +385,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const VfsMou
         }
     }
 
-    return std::nullopt;
+    return mount->MountImpl->GetFilePath(path);
 }
 
 const VirtualFilesystem::VfsMount* VirtualFilesystem::GetLinkedMount(
