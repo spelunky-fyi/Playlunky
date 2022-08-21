@@ -22,7 +22,15 @@ PlaylunkySettings::~PlaylunkySettings() = default;
 
 std::string PlaylunkySettings::GetString(const std::string& category, const std::string& setting, const std::string& default_value) const
 {
-    return mSettings->Get(std::move(category), std::move(setting), default_value);
+    std::string value = mSettings->Get(std::move(category), std::move(setting), default_value);
+    std::string_view value_view{ value };
+    if (value_view.starts_with('"') && value_view.ends_with('"'))
+    {
+        value_view.remove_prefix(1);
+        value_view.remove_suffix(1);
+        value = value_view;
+    }
+    return value;
 }
 bool PlaylunkySettings::GetBool(const std::string& category, const std::string& setting, bool default_value) const
 {
@@ -65,48 +73,48 @@ void PlaylunkySettings::WriteToFile(std::string settings_file) const
     };
     std::array known_categories{
         KnownCategory{ { "general_settings" }, {
-                                                   KnownSetting{ .Name{ "enable_loose_file_warning" }, .AltCategory{ "settings" }, .DefaultValue{ "on" } },
-                                                   KnownSetting{ .Name{ "enable_raw_string_loading" }, .DefaultValue{ "off" } },
-                                                   KnownSetting{ .Name{ "disable_asset_caching" }, .DefaultValue{ "off" } },
-                                                   KnownSetting{ .Name{ "block_save_game" }, .DefaultValue{ "off" } },
-                                                   KnownSetting{ .Name{ "allow_save_game_mods" }, .DefaultValue{ "on" } },
-                                                   KnownSetting{ .Name{ "use_playlunky_save" }, .DefaultValue{ "off" } },
-                                                   KnownSetting{ .Name{ "disable_steam_achievements" }, .DefaultValue{ "off" } },
-                                                   KnownSetting{ .Name{ "speedrun_mode" }, .DefaultValue{ "off" } },
+                                                   KnownSetting{ .Name{ "enable_loose_file_warning" }, .AltCategory{ "settings" }, .DefaultValue{ "true" } },
+                                                   KnownSetting{ .Name{ "enable_raw_string_loading" }, .DefaultValue{ "false" } },
+                                                   KnownSetting{ .Name{ "disable_asset_caching" }, .DefaultValue{ "false" } },
+                                                   KnownSetting{ .Name{ "block_save_game" }, .DefaultValue{ "false" } },
+                                                   KnownSetting{ .Name{ "allow_save_game_mods" }, .DefaultValue{ "true" } },
+                                                   KnownSetting{ .Name{ "use_playlunky_save" }, .DefaultValue{ "false" } },
+                                                   KnownSetting{ .Name{ "disable_steam_achievements" }, .DefaultValue{ "false" } },
+                                                   KnownSetting{ .Name{ "speedrun_mode" }, .DefaultValue{ "false" } },
                                                    KnownSetting{ .Name{ "font_file" }, .DefaultValue{ "default" } },
-                                                   KnownSetting{ .Name{ "font_file_ru" }, .DefaultValue{ "default" } },
-                                                   KnownSetting{ .Name{ "font_file_jp" }, .DefaultValue{ "default" } },
-                                                   KnownSetting{ .Name{ "font_file_ko" }, .DefaultValue{ "default" } },
-                                                   KnownSetting{ .Name{ "font_file_zhcn" }, .DefaultValue{ "default" } },
-                                                   KnownSetting{ .Name{ "font_file_zhtw" }, .DefaultValue{ "default" } },
-                                                   KnownSetting{ .Name{ "font_file_emoji" }, .DefaultValue{ "default" } },
+                                                   KnownSetting{ .Name{ "font_file_ru" }, .DefaultValue{ "\"default\"" } },
+                                                   KnownSetting{ .Name{ "font_file_jp" }, .DefaultValue{ "\"default\"" } },
+                                                   KnownSetting{ .Name{ "font_file_ko" }, .DefaultValue{ "\"default\"" } },
+                                                   KnownSetting{ .Name{ "font_file_zhcn" }, .DefaultValue{ "\"default\"" } },
+                                                   KnownSetting{ .Name{ "font_file_zhtw" }, .DefaultValue{ "\"default\"" } },
+                                                   KnownSetting{ .Name{ "font_file_emoji" }, .DefaultValue{ "\"default\"" } },
                                                    KnownSetting{ .Name{ "font_scale" }, .DefaultValue{ "1.0" } },
                                                } },
         KnownCategory{ { "script_settings" }, {
-                                                  KnownSetting{ .Name{ "enable_developer_mode" }, .AltCategory{ "settings" }, .DefaultValue{ "off" } },
-                                                  KnownSetting{ .Name{ "enable_developer_console" }, .DefaultValue{ "off" } },
+                                                  KnownSetting{ .Name{ "enable_developer_mode" }, .AltCategory{ "settings" }, .DefaultValue{ "false" } },
+                                                  KnownSetting{ .Name{ "enable_developer_console" }, .DefaultValue{ "false" } },
                                                   KnownSetting{ .Name{ "console_history_size" }, .DefaultValue{ "20" } },
                                               } },
         KnownCategory{ { "audio_settings" }, {
-                                                 KnownSetting{ .Name{ "enable_loose_audio_files" }, .AltCategory{ "settings" }, .DefaultValue{ "on" } },
-                                                 KnownSetting{ .Name{ "cache_decoded_audio_files" }, .AltCategory{ "settings" }, .DefaultValue{ "off" } },
-                                                 KnownSetting{ .Name{ "synchronous_update" }, .DefaultValue{ "on" } },
+                                                 KnownSetting{ .Name{ "enable_loose_audio_files" }, .AltCategory{ "settings" }, .DefaultValue{ "true" } },
+                                                 KnownSetting{ .Name{ "cache_decoded_audio_files" }, .AltCategory{ "settings" }, .DefaultValue{ "false" } },
+                                                 KnownSetting{ .Name{ "synchronous_update" }, .DefaultValue{ "true" } },
                                              } },
         KnownCategory{ { "sprite_settings" }, {
-                                                  KnownSetting{ .Name{ "random_character_select" }, .AltCategory{ "settings" }, .DefaultValue{ "off" } },
-                                                  KnownSetting{ .Name{ "link_related_files" }, .DefaultValue{ "on" }, .Comment{ "Makes sure that related files, e.g. char_black.png and char_black.json are always loaded from the same mod" } },
-                                                  KnownSetting{ .Name{ "generate_character_journal_stickers" }, .DefaultValue{ "on" } },
-                                                  KnownSetting{ .Name{ "generate_character_journal_entries" }, .DefaultValue{ "on" } },
-                                                  KnownSetting{ .Name{ "generate_sticker_pixel_art" }, .DefaultValue{ "on" } },
-                                                  KnownSetting{ .Name{ "enable_sprite_hot_loading" }, .DefaultValue{ "off" } },
+                                                  KnownSetting{ .Name{ "random_character_select" }, .AltCategory{ "settings" }, .DefaultValue{ "false" } },
+                                                  KnownSetting{ .Name{ "link_related_files" }, .DefaultValue{ "true" }, .Comment{ "Makes sure that related files, e.g. char_black.png and char_black.json are always loaded from the same mod" } },
+                                                  KnownSetting{ .Name{ "generate_character_journal_stickers" }, .DefaultValue{ "true" } },
+                                                  KnownSetting{ .Name{ "generate_character_journal_entries" }, .DefaultValue{ "true" } },
+                                                  KnownSetting{ .Name{ "generate_sticker_pixel_art" }, .DefaultValue{ "true" } },
+                                                  KnownSetting{ .Name{ "enable_sprite_hot_loading" }, .DefaultValue{ "false" } },
                                                   KnownSetting{ .Name{ "sprite_hot_load_delay" }, .DefaultValue{ "400" }, .Comment{ "Increase this value if you experience crashes when a sprite is reloaded" } },
-                                                  KnownSetting{ .Name{ "enable_customizable_sheets" }, .DefaultValue{ "on" }, .Comment{ "Enables the customizable sprite sheets feature, does not work in speedrun mode" } },
-                                                  KnownSetting{ .Name{ "enable_luminance_scaling" }, .DefaultValue{ "on" }, .Comment{ "Scales luminance of customized images based on the color" } },
+                                                  KnownSetting{ .Name{ "enable_customizable_sheets" }, .DefaultValue{ "true" }, .Comment{ "Enables the customizable sprite sheets feature, does not work in speedrun mode" } },
+                                                  KnownSetting{ .Name{ "enable_luminance_scaling" }, .DefaultValue{ "true" }, .Comment{ "Scales luminance of customized images based on the color" } },
                                               } },
         KnownCategory{ { "bug_fixes" }, {
-                                            KnownSetting{ .Name{ "out_of_bounds_liquids" }, .DefaultValue{ "on" }, .Comment{ "Removes liquids that go out of bounds, otherwise the game would crash" } },
-                                            KnownSetting{ .Name{ "missing_thorns" }, .DefaultValue{ "on" }, .Comment{ "Adds textures for the missing jungle thorns configurations" } },
-                                            KnownSetting{ .Name{ "missing_pipes" }, .DefaultValue{ "off" }, .Comment{ "May cause issues in multiplayer. Adds textures for the missing sunken city pipes configurations and makes those pipes work, some requiring user input" } },
+                                            KnownSetting{ .Name{ "out_of_bounds_liquids" }, .DefaultValue{ "true" }, .Comment{ "Removes liquids that go out of bounds, otherwise the game would crash" } },
+                                            KnownSetting{ .Name{ "missing_thorns" }, .DefaultValue{ "true" }, .Comment{ "Adds textures for the missing jungle thorns configurations" } },
+                                            KnownSetting{ .Name{ "missing_pipes" }, .DefaultValue{ "false" }, .Comment{ "May cause issues in multiplayer. Adds textures for the missing sunken city pipes configurations and makes those pipes work, some requiring user input" } },
                                         } },
         KnownCategory{ { "key_bindings" }, {
                                                KnownSetting{ .Name{ "console" }, .DefaultValue{ "0xc0" }, .Comment{ "Default 0xc0 == ~ for US" } },
@@ -133,7 +141,25 @@ void PlaylunkySettings::WriteToFile(std::string settings_file) const
             if (const OverriddenSetting* overridden = algo::find_if(mOverriddenSettings, [&](const OverriddenSetting& overridden)
                                                                     { return overridden.Category == known_category.Name && overridden.Setting == known_setting.Name; }))
             {
-                value = overridden->Value ? "on" : "off";
+                value = overridden->Value ? "true" : "false";
+            }
+
+            // transition to toml-compatible values
+            {
+                if (value == "on")
+                {
+                    value = "true";
+                }
+                else if (value == "off")
+                {
+                    value = "false";
+                }
+
+                std::string_view value_view{ value };
+                if (known_setting.Name.starts_with("font_file") && !value_view.starts_with('"') && !value_view.ends_with('"'))
+                {
+                    value = fmt::format("\"{}\"", value);
+                }
             }
 
             if (const char* comment = algo::find(value, '#'))
