@@ -242,8 +242,7 @@ void ScriptManager::Draw()
     ImGuiIO& io = ImGui::GetIO();
 
     if (SpelunkyState_GetScreen() == SpelunkyScreen::Online &&
-        algo::contains(mMods, &RegisteredMainScript::ScriptEnabled, true) &&
-        algo::contains(mMods, &RegisteredMainScript::OnlineSafe, false))
+        algo::contains(mMods, &RegisteredMainScript::EnabledNotOnlineSafe, true))
     {
         ImGui::SetNextWindowSize({ -1, -1 });
         ImGui::Begin(

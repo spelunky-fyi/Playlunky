@@ -46,6 +46,10 @@ class ScriptManager
         std::string LastResult;
         SpelunkyScriptPointer Script;
 
+        bool EnabledNotOnlineSafe() const
+        {
+            return Enabled && !OnlineSafe;
+        }
         void TestScriptResult();
     };
     std::vector<RegisteredMainScript> mMods;
