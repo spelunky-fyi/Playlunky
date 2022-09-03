@@ -50,6 +50,14 @@ bool CreateConsole()
     std::cerr.clear();
     std::cin.clear();
 
+    HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD console_mode;
+    if (GetConsoleMode(console, &console_mode) == TRUE)
+    {
+        console_mode &= ~(ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS);
+        SetConsoleMode(console, console_mode);
+    }
+
     return true;
 }
 
