@@ -4,19 +4,22 @@ libzip/1.8.0
 ctre/3.3.4
 xz_utils/5.2.5
 zstd/1.4.8
-zlib/1.2.11
-opencv/4.5.1
+zlib/1.2.12
+opencv/4.5.5
 nlohmann_json/3.9.1
+freetype/2.12.1
 
 [generators]
-cmake_multi
 cmake_find_package_multi
 
 [options]
-opencv:with_jpeg=libjpeg
-opencv:with_jpeg2000=jasper
 opencv:with_png=True
 opencv:with_tiff=True
 opencv:with_webp=True
+opencv:with_jpeg=False
+opencv:with_jpeg2000=False
 opencv:with_openexr=False
 opencv:with_quirc=False
+opencv:with_ade=False
+opencv:with_ffmpeg=False
+opencv:dnn=False

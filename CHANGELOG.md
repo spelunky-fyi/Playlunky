@@ -6,6 +6,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] - 2021-09-??
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.25.2-orange">
+
+### Added
+- Force related files to always be loaded from the same mod when randomly selecting character, e.g. load `char_black.png` and `char_black.name` from the same mod
+- Support for Korean, Simplified Chinese, Traditional Chinese, Japanese, Russian and emoji fonts for the ImGui overlay
+- Add automatic shader hot-loading for all types of shader mods
+
+### Changed
+- In speedrun mode explicitly disables all unnecessary hooks to reduce the chance of bugs sneaking into speedrun mode
+
+### Fixed
+- Potential crashes on some CPUs when mods use `.wav` files
+- Several issues related to random character select and customizable character sheets
+- Issue that caused some turkey sprites from the turkey sprite sheet not to be used
+- Issue that would result in vanilla pet sprites not being loaded in speedrun mode
+- Issue that made Playlunky think a level mod was loaded the first time it is started after disabling said mod
+
+### Removed
+- Dropped support for jpg and jpg2000
+
 ## [0.14.1] - 2021-05-23
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.25.2-orange">

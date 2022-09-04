@@ -19,6 +19,7 @@
 #include <Shlwapi.h>
 #include <d3d11.h>
 #include <imgui.h>
+#include <misc/freetype/imgui_freetype.h>
 // clang-format on
 
 #include <spel2.h>
@@ -41,6 +42,7 @@ struct FontConfig
 {
     Alphabet alphabet;
     std::array<std::string_view, 2> default_font_files{};
+    bool colored_glyphs{ false };
     bool load_big_fonts{ false };
     bool fallback_is_bundled{ false };
     std::array<ImWchar, 3> additional_glyphs{};
@@ -53,13 +55,14 @@ inline constexpr std::array g_FontConfigs{
         { "segoeuib.ttf"sv },
         false,
         false,
+        false,
         { 0x2026u, 0x2026u, 0x0u }, // one of the asian fonts has a stupid huge ellipsis, we get it explicitly from this font
     },
-    FontConfig{ Alphabet::Japanese, { "YuGothB.ttc"sv, "Meiryo.ttc"sv }, false, false },
-    FontConfig{ Alphabet::ChineseTraditional, { "simsun.ttc"sv }, false, false },
-    FontConfig{ Alphabet::ChineseSimplified, { "msjh.ttc"sv }, false, false },
-    FontConfig{ Alphabet::Korean, { "malgunbd.ttf"sv, "Gulim.ttc"sv }, false, false },
-    FontConfig{ Alphabet::Emoji, { "seguiemj.ttf"sv } },
+    FontConfig{ Alphabet::Japanese, { "YuGothB.ttc"sv, "Meiryo.ttc"sv } },
+    FontConfig{ Alphabet::ChineseTraditional, { "simsun.ttc"sv } },
+    FontConfig{ Alphabet::ChineseSimplified, { "msjh.ttc"sv } },
+    FontConfig{ Alphabet::Korean, { "malgunbd.ttf"sv, "Gulim.ttc"sv } },
+    FontConfig{ Alphabet::Emoji, { "seguiemj.ttf"sv }, true },
 };
 static_assert(g_FontConfigs.size() == g_NumFonts);
 
@@ -107,6 +110,14 @@ void ImGuiLoadFont()
 
                 auto load_font_impl = [&](const char* font_path)
                 {
+                    if (font_config.colored_glyphs)
+                    {
+                        imgui_font_config.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags_LoadColor;
+                    }
+                    else
+                    {
+                        imgui_font_config.FontBuilderFlags &= ~ImGuiFreeTypeBuilderFlags_LoadColor;
+                    }
                     font = io.Fonts->AddFontFromFileTTF(font_path, size * g_FontScale, &imgui_font_config, glyph_ranges);
                     if (font_config.additional_glyphs != decltype(font_config.additional_glyphs){})
                     {

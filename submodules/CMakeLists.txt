@@ -102,4 +102,8 @@ add_subdirectory_with_folder("3rd_party" overlunky)
 
 # --------------------------------------------------
 # force imgui to use a big wchar (for emojis)
-target_compile_definitions(imgui PUBLIC IMGUI_USE_WCHAR32)
+target_compile_definitions(imgui PUBLIC IMGUI_USE_WCHAR32 IMGUI_ENABLE_FREETYPE)
+target_sources(imgui PRIVATE
+    overlunky/src/imgui/misc/freetype/imgui_freetype.h
+    overlunky/src/imgui/misc/freetype/imgui_freetype.cpp)
+target_link_libraries(imgui PRIVATE Freetype::Freetype)

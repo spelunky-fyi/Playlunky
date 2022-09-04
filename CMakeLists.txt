@@ -5,24 +5,20 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/publish")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR} ${CMAKE_MODULE_PATH})
+set(CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR} ${CMAKE_PREFIX_PATH})
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
 
 # --------------------------------------------------
 # Add formatting target
 include(cmake/clang-format.cmake)
 setup_format_target(format_playlunky)
 
-
-# --------------------------------------------------
-# Add submodules
-add_subdirectory(submodules)
-
-
 # --------------------------------------------------
 # Get version tag
 find_package(Git)
-if (NOT GIT_FOUND)
+
+if(NOT GIT_FOUND)
 	SET(GIT_EXECUTABLE git)
 endif()
 
@@ -34,35 +30,29 @@ execute_process(
 	ECHO_ERROR_VARIABLE
 	COMMAND_ERROR_IS_FATAL ANY)
 
-
 # --------------------------------------------------
 # Run conan
-set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR} ${CMAKE_MODULE_PATH})
-set(CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR} ${CMAKE_PREFIX_PATH})
-get_property(IS_MULTI_GENERATOR GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-if(NOT IS_MULTI_GENERATOR)
-	# The default option is only useful to write package functions for binary libraries
-	# Unsetting the default here does not make any difference for multi-generators, yet causes CI to fail
-	SET(CONAN_EXTRA_OPTIONS NO_OUTPUT_DIRS)
-endif()
-
 include(cmake/conan.cmake)
 run_conan()
 
-
 # --------------------------------------------------
 # Find packages
-find_package(structopt REQUIRED)
-find_package(libzip REQUIRED)
-find_package(ctre REQUIRED)
-find_package(zstd REQUIRED)
-find_package(opencv REQUIRED)
-find_package(nlohmann_json REQUIRED)
+find_package(structopt CONFIG REQUIRED)
+find_package(libzip CONFIG REQUIRED)
+find_package(ctre CONFIG REQUIRED)
+find_package(zstd CONFIG REQUIRED)
+find_package(opencv CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(freetype CONFIG REQUIRED)
 
+# --------------------------------------------------
+# Add submodules
+add_subdirectory(submodules)
 
 # --------------------------------------------------
 # Create interface libs
 add_library(playlunky_warnings INTERFACE)
+
 if(MSVC)
 	target_compile_options(playlunky_warnings INTERFACE /W4 /WX /permissive-)
 else()
@@ -76,6 +66,7 @@ target_compile_definitions(playlunky_definitions INTERFACE
 	NOMINMAX)
 
 option(PLAYLUNKY_UNITY_BUILD "Build batch sources for faster builds." OFF)
+
 if(PLAYLUNKY_UNITY_BUILD)
 	set_property(
 		TARGET playlunky_definitions
@@ -83,7 +74,7 @@ if(PLAYLUNKY_UNITY_BUILD)
 endif()
 
 add_library(playlunky_version STATIC
-		"source/version/version.h" "source/version/version.cpp")
+	"source/version/version.h" "source/version/version.cpp")
 target_include_directories(playlunky_version PUBLIC source/version)
 target_compile_definitions(playlunky_version PRIVATE
 	PLAYLUNKY_VERSION=${PLAYLUNKY_GIT_VERSION})
@@ -131,18 +122,15 @@ target_precompile_headers(playlunky_pch INTERFACE
 	<locale>
 	<mutex>)
 
-
 # --------------------------------------------------
 # Glob for 3rd-party sources
 file(GLOB_RECURSE 3rd_party_sources CONFIGURE_DEPENDS "source/3rd-party/*.cpp")
 file(GLOB_RECURSE 3rd_party_headers CONFIGURE_DEPENDS "source/3rd-party/*.h" "source/3rd-party/*.inl")
 
-
 # --------------------------------------------------
 # Glob for shared sources
 file(GLOB_RECURSE shared_sources CONFIGURE_DEPENDS "source/shared/*.cpp")
 file(GLOB_RECURSE shared_headers CONFIGURE_DEPENDS "source/shared/*.h" "source/shared/*.inl")
-
 
 # --------------------------------------------------
 # Create shared lib
@@ -162,7 +150,6 @@ target_include_directories(playlunky64 PRIVATE "source/playlunky" "source/shared
 target_precompile_headers(playlunky64 PRIVATE
 	<imgui.h>)
 
-
 # --------------------------------------------------
 # Create launcher executbale
 file(GLOB_RECURSE playlunky_launcher_sources CONFIGURE_DEPENDS "source/launcher/*.cpp")
@@ -178,7 +165,6 @@ target_link_libraries(playlunky_launcher PRIVATE
 	structopt::structopt)
 target_include_directories(playlunky_launcher PRIVATE "source/launcher" "source/shared" "res")
 
-
 # --------------------------------------------------
 # Create installer executbale
 file(GLOB_RECURSE playlunky_installer_sources CONFIGURE_DEPENDS "source/installer/*.cpp")
@@ -190,7 +176,6 @@ target_link_libraries(playlunky_installer PRIVATE
 	playlunky_definitions
 	playlunky_dependencies)
 target_include_directories(playlunky_installer PRIVATE "source/installer" "source/shared" "res")
-
 
 # --------------------------------------------------
 # Merge files from source and include in the IDE
@@ -218,25 +203,30 @@ function(group_files sources)
 		source_group("${GROUP}" FILES "${FILE}")
 	endforeach()
 endfunction()
-group_files("${playlunky64_sources};${playlunky_launcher_sources};${shared_sources};${playlunky64_headers};${playlunky_launcher_headers};${shared_headers};${playlunky_launcher_resources}")
 
+group_files("${playlunky64_sources};${playlunky_launcher_sources};${shared_sources};${playlunky64_headers};${playlunky_launcher_headers};${shared_headers};${playlunky_launcher_resources}")
 
 # --------------------------------------------------
 # Find the Spel2.exe, if not passed to cmake and set it for debugging in MSVC
 if(NOT EXISTS ${SPELUNKY_INSTALL_DIR}/Spel2.exe)
 	get_filename_component(STEAM_INSTALL_DIR "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Valve\\Steam;InstallPath]" ABSOLUTE)
 	set(SPELUNKY_INSTALL_DIR "${STEAM_INSTALL_DIR}/SteamApps/common/Spelunky 2")
+
 	if(NOT EXISTS ${SPELUNKY_INSTALL_DIR}/Spel2.exe)
 		set(STEAM_LIBRARY_FOLDERS_CONFIG "${STEAM_INSTALL_DIR}/SteamApps/libraryfolders.vdf")
+
 		if(EXISTS ${STEAM_LIBRARY_FOLDERS_CONFIG})
 			FILE(READ "${STEAM_LIBRARY_FOLDERS_CONFIG}" STEAM_LIBRARY_FOLDERS_CONFIG_CONTENT)
 			STRING(REGEX MATCHALL "\"[A-Z]\:[^\"]*\"" POTENTIAL_STEAM_LIBRARY_FOLDERS ${STEAM_LIBRARY_FOLDERS_CONFIG_CONTENT})
+
 			foreach(STEAM_LIBRARY_FOLDER ${POTENTIAL_STEAM_LIBRARY_FOLDERS})
 				string(REGEX REPLACE "\^\"" "" STEAM_LIBRARY_FOLDER ${STEAM_LIBRARY_FOLDER})
 				string(REGEX REPLACE "\"$" "" STEAM_LIBRARY_FOLDER ${STEAM_LIBRARY_FOLDER})
 				string(REGEX REPLACE "\\\\\\\\" "/" STEAM_LIBRARY_FOLDER ${STEAM_LIBRARY_FOLDER}) # double slash, escaped for cmake string then escaped for regex, requires a total of 8 backslashes
+
 				if(EXISTS ${STEAM_LIBRARY_FOLDER})
 					set(SPELUNKY_INSTALL_DIR "${STEAM_LIBRARY_FOLDER}/SteamApps/common/Spelunky 2")
+
 					if(EXISTS ${SPELUNKY_INSTALL_DIR}/Spel2.exe)
 						break()
 					endif()
@@ -244,13 +234,13 @@ if(NOT EXISTS ${SPELUNKY_INSTALL_DIR}/Spel2.exe)
 			endforeach()
 		endif()
 	endif()
+
 	if(NOT EXISTS ${SPELUNKY_INSTALL_DIR})
 		message(STATUS "Could not find Spelunky 2 installation, pass it to cmake via -DSPELUNKY_INSTALL_DIR='Path/To/Install/Folder' or place the Spelunky 2 folder into the publish folder")
 	else()
 		message(STATUS "Found Spelunky 2 installation at '${SPELUNKY_INSTALL_DIR}'")
 	endif()
 endif()
-
 
 # --------------------------------------------------
 # Set debugging properties
@@ -264,7 +254,6 @@ if(EXISTS ${SPELUNKY_INSTALL_DIR})
 	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT playlunky_launcher)
 endif()
 
-
 # --------------------------------------------------
 # Install shared lib and launcher
 install(TARGETS
@@ -277,12 +266,12 @@ install(TARGETS
 install(FILES
 	res/readme.txt
 	DESTINATION .)
+
 if(EXISTS ${SPELUNKY_INSTALL_DIR})
 	install(FILES
 		DESTINATION ${SPELUNKY_INSTALL_DIR})
 endif()
 
-	
 # --------------------------------------------------
 # Map Release config to MinSizeRel and RelWithDebInfo because conant is borked
 set_target_properties(playlunky64 PROPERTIES
