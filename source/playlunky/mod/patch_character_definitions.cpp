@@ -15,24 +15,11 @@
 #include <array>
 #include <cassert>
 #include <charconv>
-#include <codecvt>
 #include <fstream>
 #include <span>
 #include <unordered_map>
 
-template<typename T>
-std::string toUTF8(const std::basic_string<T, std::char_traits<T>>& source)
-{
-    std::wstring_convert<std::codecvt_utf8_utf16<T>, T> convertor;
-    return convertor.to_bytes(source);
-}
-
-template<typename T>
-std::basic_string<T, std::char_traits<T>, std::allocator<T>> fromUTF8(const std::string& source)
-{
-    std::wstring_convert<std::codecvt_utf8_utf16<T>, T> convertor;
-    return convertor.from_bytes(source);
-}
+#include "util/algorithms.h"
 
 struct CharacterDefinition
 {
@@ -209,12 +196,12 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
                 }
 
                 {
-                    std::u16string full_name = fromUTF8<char16_t>(full_name_narrow);
+                    std::u16string full_name = algo::from_utf8<char16_t>(full_name_narrow);
                     Spelunky_SetCharacterFullName(i, full_name.c_str());
                 }
 
                 {
-                    std::u16string short_name = fromUTF8<char16_t>(short_name_narrow);
+                    std::u16string short_name = algo::from_utf8<char16_t>(short_name_narrow);
                     Spelunky_SetCharacterShortName(i, short_name.c_str());
                 }
             }
@@ -278,11 +265,11 @@ void PatchCharacterDefinitions(VirtualFilesystem& vfs, const PlaylunkySettings& 
                     CharacterDefinition char_def = char_def_json;
                     if (char_def.FullName)
                     {
-                        Spelunky_SetCharacterFullName(i, fromUTF8<char16_t>(char_def.FullName.value()).c_str());
+                        Spelunky_SetCharacterFullName(i, algo::from_utf8<char16_t>(char_def.FullName.value()).c_str());
                     }
                     if (char_def.ShortName)
                     {
-                        Spelunky_SetCharacterShortName(i, fromUTF8<char16_t>(char_def.ShortName.value()).c_str());
+                        Spelunky_SetCharacterShortName(i, algo::from_utf8<char16_t>(char_def.ShortName.value()).c_str());
                     }
                     if (char_def.Color)
                     {

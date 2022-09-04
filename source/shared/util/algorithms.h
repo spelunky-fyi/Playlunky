@@ -226,6 +226,11 @@ inline bool case_insensitive_equal(char (&lhs)[N], char (&rhs)[M])
     return case_insensitive_equal(std::string_view{ lhs, N }, std::string_view{ rhs, M });
 }
 
+template<typename T>
+std::string to_utf8(const std::basic_string<T>& source);
+template<typename T>
+std::basic_string<T> from_utf8(const std::string& source);
+
 // Intentionally copies args, require std::reference_wrapper if people want references
 // https://github.com/lefticus/tools/blob/main/include/lefticus/tools/curry.hpp
 constexpr decltype(auto) curry(auto f, auto... ps)

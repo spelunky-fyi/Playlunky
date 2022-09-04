@@ -1,6 +1,7 @@
 #include "algorithms.h"
 
 #include <cctype>
+#include <codecvt>
 
 namespace algo
 {
@@ -119,4 +120,28 @@ bool case_insensitive_equal(std::string_view lhs, std::string_view rhs)
     using case_insensitive_string_view = std::basic_string_view<char, case_insensitive_char_traits>;
     return case_insensitive_string_view{ lhs.data(), lhs.size() } == case_insensitive_string_view{ rhs.data(), rhs.size() };
 }
+
+template<typename T>
+std::string to_utf8(const std::basic_string<T>& source)
+{
+    std::wstring_convert<std::codecvt_utf8_utf16<T>, T> convertor;
+    return convertor.to_bytes(source);
+}
+
+template<typename T>
+std::basic_string<T> from_utf8(const std::string& source)
+{
+    std::wstring_convert<std::codecvt_utf8_utf16<T>, T> convertor;
+    return convertor.from_bytes(source);
+}
+
+template std::string to_utf8<char8_t>(const std::basic_string<char8_t>&);
+template std::string to_utf8<char16_t>(const std::basic_string<char16_t>&);
+template std::string to_utf8<char32_t>(const std::basic_string<char32_t>&);
+template std::string to_utf8<wchar_t>(const std::basic_string<wchar_t>&);
+
+template std::basic_string<char8_t> from_utf8(const std::string&);
+template std::basic_string<char16_t> from_utf8(const std::string&);
+template std::basic_string<char32_t> from_utf8(const std::string&);
+template std::basic_string<wchar_t> from_utf8(const std::string&);
 } // namespace algo
