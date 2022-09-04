@@ -62,7 +62,7 @@ inline constexpr std::array g_FontConfigs{
     FontConfig{ Alphabet::ChineseTraditional, { "simsun.ttc"sv } },
     FontConfig{ Alphabet::ChineseSimplified, { "msjh.ttc"sv } },
     FontConfig{ Alphabet::Korean, { "malgunbd.ttf"sv, "Gulim.ttc"sv } },
-    FontConfig{ Alphabet::Emoji, { "seguiemj.ttf"sv }, true },
+    FontConfig{ Alphabet::Emoji, { "seguiemj.ttf"sv }, true, true },
 };
 static_assert(g_FontConfigs.size() == g_NumFonts);
 

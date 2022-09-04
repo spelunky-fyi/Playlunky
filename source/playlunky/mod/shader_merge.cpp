@@ -1,4 +1,4 @@
-#include "shader_merge.h"
+﻿#include "shader_merge.h"
 
 #include "detour/imgui.h"
 #include "known_files.h"
@@ -582,12 +582,16 @@ void DrawShaderHotReload()
 {
     if (g_ReloadTimer > 0)
     {
-        const std::string reload_shaders_msg = fmt::format("Reloading Shaders in {}...", g_ReloadTimer);
-        ImGui::PushFont(ImGuiGetBestFont(80.0f));
-        const ImVec2 size = ImGui::CalcTextSize(reload_shaders_msg.c_str());
+        ImGui::PushFont(ImGuiGetBestFont(80.0f, Alphabet::Emoji));
 
-        ImGui::SetNextWindowSize({ -1, size.y * 2 });
-        ImGui::SetNextWindowPos({ ImGui::GetIO().DisplaySize.x / 2 - size.x / 2, ImGui::GetIO().DisplaySize.y / 2 - size.y / 2 });
+        using namespace std::string_literals;
+        std::string reload_shaders_str = algo::to_utf8(fmt::format(L"🦥 Reloading Shaders in {} 🦥", g_ReloadTimer));
+        const char* reload_shaders_msg = reload_shaders_str.c_str();
+
+        const ImVec2 size = ImGui::CalcTextSize(reload_shaders_msg);
+
+        ImGui::SetNextWindowSize({ -1, size.y * 3 });
+        ImGui::SetNextWindowPos({ ImGui::GetIO().DisplaySize.x / 2 - size.x / 2, ImGui::GetIO().DisplaySize.y / 2 - size.y * 2.0f });
         ImGui::Begin(
             "Shader Reload Overlay",
             nullptr,
@@ -595,7 +599,8 @@ void DrawShaderHotReload()
                 ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
                 ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
 
-        ImGui::TextColored(ImColor(0.5f, 0.0f, 0.2f), "%s", reload_shaders_msg.c_str());
+        ImGui::NewLine();
+        ImGui::TextUnformatted(reload_shaders_msg);
         ImGui::End();
 
         ImGui::PopFont();
