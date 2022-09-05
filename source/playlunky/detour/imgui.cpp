@@ -72,7 +72,7 @@ struct Font
     ImFont* font{ nullptr };
     std::vector<Alphabet> supported_alphabets;
 };
-inline static std::array g_Fonts{ Font{ 18.0f }, Font{ 36.0f }, Font{ 72.0f } };
+inline static std::array g_Fonts{ Font{ 18.0f }, Font{ 36.0f }, Font{ 84.0f } };
 inline static std::array<std::string, g_NumFonts> g_FontFiles{};
 inline static float g_FontScale{ 1.0f };
 
