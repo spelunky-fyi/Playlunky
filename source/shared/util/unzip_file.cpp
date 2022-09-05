@@ -1,5 +1,6 @@
 #include "unzip_file.h"
 
+#include "util/format.h"
 #include "util/on_scope_exit.h"
 
 #include <string>
@@ -37,26 +38,43 @@ ZipError UnzipFile(const std::filesystem::path& source_file, const std::filesyst
                 {
                     if (zip_file_t* zipped_file = zip_fopen_index(archive, i, 0))
                     {
+                        OnScopeExit close_zipped_file([zipped_file]()
+                                                      { zip_fclose(zipped_file); });
+
                         const fs::path file_path_in_zip{ entry_stat.name };
-                        const fs::path file_path_on_disk = destination_folder / file_path_in_zip.filename();
+                        const fs::path file_path_on_disk = destination_folder / file_path_in_zip;
                         const std::string file_path_on_disk_string = file_path_on_disk.string();
+
+                        {
+                            const fs::path folder_path_on_disk = file_path_on_disk.parent_path();
+                            if (!fs::exists(folder_path_on_disk) || !fs::is_directory(folder_path_on_disk))
+                            {
+                                if (fs::exists(folder_path_on_disk))
+                                {
+                                    fs::remove_all(folder_path_on_disk);
+                                }
+                                fs::create_directories(folder_path_on_disk);
+                            }
+                        }
 
                         FILE* disk_file{ nullptr };
                         if (fopen_s(&disk_file, file_path_on_disk_string.c_str(), "wb") == 0 && disk_file != nullptr)
                         {
+                            OnScopeExit close_file([disk_file]()
+                                                   { fclose(disk_file); });
+
                             const std::size_t zipped_file_size = entry_stat.size;
 
                             std::vector<std::byte> zipped_file_contents(zipped_file_size);
                             const std::size_t read_size = zip_fread(zipped_file, zipped_file_contents.data(), zipped_file_size);
-                            // TODO: Error
+                            if (read_size != zipped_file_size)
+                            {
+                                return fmt::format("Failed unzipping file {}, aborting unzip procedure...", file_path_in_zip.string());
+                            }
 
                             fwrite(zipped_file_contents.data(), 1, zipped_file_size, disk_file);
                             fflush(disk_file);
-
-                            fclose(disk_file);
                         }
-
-                        zip_fclose(zipped_file);
                     }
                 }
             }
