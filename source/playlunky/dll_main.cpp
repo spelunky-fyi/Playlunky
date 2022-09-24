@@ -13,14 +13,14 @@ __declspec(dllexport) int __stdcall _(void)
     return 0;
 }
 
-inline constexpr std::string_view s_SupportedSpelunkyVersion = "1.25.2";
+inline constexpr std::string_view s_SupportedSpelunkyVersion = "1.27";
 
 BOOL WINAPI DllMain([[maybe_unused]] HINSTANCE hinst, DWORD dwReason, [[maybe_unused]] LPVOID reserved)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
     {
         using namespace std::string_view_literals;
-        if (void* version_address = SigScan::FindPattern("Spel2.exe", "1.**.**"sv, false))
+        if (void* version_address = SigScan::FindPattern("Spel2.exe", "1.2*"sv, false))
         {
             const char* version_string = static_cast<const char*>(version_address);
             if (version_string != s_SupportedSpelunkyVersion)
