@@ -1,6 +1,5 @@
 # Playlunky
 <p align="center">
-    <img src="https://img.shields.io/badge/Spelunky 2-1.25.2-orange">
     <a href="https://isocpp.org/">
         <img src="https://img.shields.io/badge/language-C%2B%2B20-blue.svg">
     </a>
@@ -16,6 +15,9 @@
     <a href="https://opensource.org/licenses/MIT" >
         <img src="https://img.shields.io/apm/l/vim-mode.svg">
     </a>
+    <br>
+    <img src="https://img.shields.io/badge/Stable: Spelunky 2-1.25.2-orange">
+    <img src="https://img.shields.io/badge/Nightly: Spelunky 2-1.27-orange">
 </p>
 
 This is a launcher for Spelunky 2 that injects a dll for extended mod management. It currently supports string, shader, sprite and string mods, with some extended features for more fine grained modding. See the [Wiki](https://github.com/spelunky-fyi/Playlunky/wiki) for details.
