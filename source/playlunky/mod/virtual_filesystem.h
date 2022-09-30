@@ -73,7 +73,7 @@ class VirtualFilesystem
     using BoundPathes = std::vector<std::string_view>;
     using LinkedPathes = std::vector<LinkedPathesElement>;
 
-    bool IsRestrictedFile(const std::filesystem::path& path) const;
+    bool IsAllowedFile(const std::filesystem::path& path) const;
 
     std::optional<std::filesystem::path> GetFilePath(const VfsMount* mount, const std::filesystem::path& path, std::string_view path_view, std::span<const std::filesystem::path> allowed_extensions, VfsType type) const;
 

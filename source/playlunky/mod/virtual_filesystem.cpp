@@ -232,7 +232,7 @@ VirtualFilesystem::FileInfo* VirtualFilesystem::LoadFile(const char* path, void*
 
     std::string_view path_view{ path };
 
-    if (IsRestrictedFile(path))
+    if (!IsAllowedFile(path))
     {
         return nullptr;
     }
@@ -276,7 +276,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetFilePathFilterExt(con
     const std::string path_string = path.string();
     std::string_view path_view{ path_string };
 
-    if (IsRestrictedFile(path))
+    if (!IsAllowedFile(path))
     {
         return std::nullopt;
     }
@@ -311,7 +311,7 @@ std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePath(const 
 }
 std::optional<std::filesystem::path> VirtualFilesystem::GetRandomFilePathFilterExt(const std::filesystem::path& path, std::span<const std::filesystem::path> allowed_extensions, VfsType type) const
 {
-    if (IsRestrictedFile(path))
+    if (!IsAllowedFile(path))
     {
         return std::nullopt;
     }
@@ -335,7 +335,7 @@ std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std:
 {
     std::vector<std::filesystem::path> file_paths;
 
-    if (IsRestrictedFile(path))
+    if (!IsAllowedFile(path))
     {
         return file_paths;
     }
@@ -354,7 +354,7 @@ std::vector<std::filesystem::path> VirtualFilesystem::GetAllFilePaths(const std:
     return file_paths;
 }
 
-bool VirtualFilesystem::IsRestrictedFile(const std::filesystem::path& path) const
+bool VirtualFilesystem::IsAllowedFile(const std::filesystem::path& path) const
 {
     if (!m_RestrictedFiles.empty())
     {
@@ -362,7 +362,7 @@ bool VirtualFilesystem::IsRestrictedFile(const std::filesystem::path& path) cons
         return algo::contains(m_RestrictedFiles, path_no_extension);
     }
 
-    return false;
+    return true;
 }
 
 std::optional<std::filesystem::path> VirtualFilesystem::GetFilePath(const VfsMount* mount,
