@@ -79,7 +79,7 @@ void ScriptManager::CommitScripts(const class PlaylunkySettings& settings)
                                 }
                                 else
                                 {
-                                    SpelunkyScipt_SetEnabled(mod.Script.get(), mod.ScriptEnabled);
+                                    SpelunkyScript_SetEnabled(mod.Script.get(), mod.ScriptEnabled);
                                 }
                             }));
                 }
@@ -186,7 +186,7 @@ void ScriptManager::WindowDraw()
                         ImGui::Separator();
                         if (ImGui::Checkbox(meta.name, &mod.ScriptEnabled))
                         {
-                            SpelunkyScipt_SetEnabled(mod.Script.get(), mod.ScriptEnabled);
+                            SpelunkyScript_SetEnabled(mod.Script.get(), mod.ScriptEnabled);
                         }
 
                         if (meta.version != nullptr && std::strlen(meta.version) > 0)
