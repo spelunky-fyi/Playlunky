@@ -178,17 +178,6 @@ void ScriptManager::WindowDraw()
                 FunctionPointer<SpelunkyScript_MetaFun, struct ScriptManagerGetScriptMetaAtDraw>(
                     [&](const SpelunkyScriptMeta& meta)
                     {
-                        mod.Unsafe = meta.unsafe;
-                        mod.OnlineSafe = meta.online_safe;
-                        if (meta.unsafe)
-                        {
-                            mod.ScriptEnabled = false;
-                        }
-                        else
-                        {
-                            SpelunkyScipt_SetEnabled(mod.Script.get(), mod.ScriptEnabled);
-                        }
-
                         char by_author[128]{};
                         fmt::format_to(by_author, "by {}", meta.author);
                         const auto author_cursor_pos =
