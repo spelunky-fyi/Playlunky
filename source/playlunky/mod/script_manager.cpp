@@ -208,6 +208,13 @@ void ScriptManager::WindowDraw()
                             ImGui::PopStyleColor();
                         }
 
+                        if (mod.OnlineSafe && mod.ScriptEnabled)
+                        {
+                            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.4f, 0.0f, 1.0f));
+                            ImGui::TextWrapped("Note: This mod is tagged as online-safe, but caution is still advised. Likely all players require the mod and other caveats may apply. For example a restart of the whole game is advised before switching back to local play.");
+                            ImGui::PopStyleColor();
+                        }
+
                         if (meta.description != nullptr && std::strlen(meta.description) > 0)
                         {
                             ImGui::TextWrapped("%s", meta.description);
