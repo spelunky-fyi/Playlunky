@@ -43,7 +43,7 @@ before_build:
       mkdir build
 
       cd build
-  - cmd: cmake c:/playlunky/ -G"Visual Studio 16 2019" -A x64 -T %TOOLSET%
+  - cmd: cmake c:/playlunky/ -G"Visual Studio 16 2019" -A x64 -T %TOOLSET% -DPLAYLUNKY_CONAN_VERBOSE=ON
 
 build_script:
   - SET PATH=%PYTHON%;%PYTHON_SCRIPTS%;%PATH%
