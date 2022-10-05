@@ -136,7 +136,7 @@ bool ExtractGameAssets(std::span<const std::filesystem::path> files, const std::
                         assert(decompressed_size != ZSTD_CONTENTSIZE_UNKNOWN);
 
                         ChaCha::bytes_t decompressed_data(decompressed_size);
-                        const std::size_t decompressed_read_size = ZSTD_decompress(decompressed_data.data(), decompressed_data.size(), decryped_data.data(), decryped_data.size());
+                        [[maybe_unused]] const std::size_t decompressed_read_size = ZSTD_decompress(decompressed_data.data(), decompressed_data.size(), decryped_data.data(), decryped_data.size());
 
                         decryped_data = std::move(decompressed_data);
                         asset_data = decryped_data;

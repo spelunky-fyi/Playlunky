@@ -348,8 +348,8 @@ struct DetourFmodSystemLoadBankMemory
                     const auto num_samples_in_fsb = ReadFromBuffer<std::uint32_t>(fsb_data);
                     const auto sample_headers_size = ReadFromBuffer<std::uint32_t>(fsb_data);
                     const auto sample_names_size = ReadFromBuffer<std::uint32_t>(fsb_data);
-                    const auto sample_datas_size = ReadFromBuffer<std::uint32_t>(fsb_data);
-                    const auto bank_flags = ReadFromBuffer<std::uint32_t>(fsb_data);
+                    [[maybe_unused]] const auto sample_datas_size = ReadFromBuffer<std::uint32_t>(fsb_data);
+                    [[maybe_unused]] const auto bank_flags = ReadFromBuffer<std::uint32_t>(fsb_data);
                     (void)ReadFromBuffer<char[32]>(fsb_data);
 
                     const auto header_size = fsb_data - fsb_begin;

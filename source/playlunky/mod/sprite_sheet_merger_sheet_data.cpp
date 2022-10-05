@@ -802,7 +802,6 @@ void SpriteSheetMerger::MakeCharacterTargetSheet(std::string_view color)
 {
     const bool is_npc = color == "hired" || color == "eggchild";
     const std::uint32_t old_image_height = is_npc ? 2080 : 2160;
-    const std::uint32_t image_height = is_npc ? 2080 : 2224;
     std::vector<SourceSheet> source_sheets{
         SourceSheet{
             .Path{ fmt::format("Data/Textures/Entities/char_{}_full", color) },

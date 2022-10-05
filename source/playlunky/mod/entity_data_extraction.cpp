@@ -260,7 +260,6 @@ void EntityDataExtractor::PreloadEntityMappings()
                     const std::uint32_t tile_width = texture_data.TileWidth;
                     const std::uint32_t tile_height = texture_data.TileHeight;
                     const std::uint32_t num_tiles_width = texture_data.NumTilesWidth;
-                    const std::uint32_t num_tiles_height = texture_data.NumTilesHeight;
                     const std::uint32_t offset_width = texture_data.OffsetWidth;
                     const std::uint32_t offset_height = texture_data.OffsetHeight;
 

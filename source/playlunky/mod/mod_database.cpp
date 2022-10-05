@@ -235,6 +235,7 @@ void ModDatabase::UpdateDatabase()
         {
             auto iter_recurse = [&do_iteration](const auto& path, auto& self) -> void
             {
+                namespace fs = std::filesystem;
                 for (auto& sub_path : fs::directory_iterator(path))
                 {
                     if (do_iteration(sub_path))

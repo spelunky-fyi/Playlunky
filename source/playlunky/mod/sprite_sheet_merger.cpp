@@ -333,7 +333,7 @@ bool SpriteSheetMerger::GenerateRequiredSheets(const std::filesystem::path& sour
                 .x{ static_cast<std::uint32_t>(adjusted_upscaling * target_sheet.Size.Width) },
                 .y{ static_cast<std::uint32_t>(adjusted_upscaling * target_sheet.Size.Height) } });
 
-            const float target_width_scaling = static_cast<float>(target_image.GetWidth()) / target_sheet.Size.Width;
+            [[maybe_unused]] const float target_width_scaling = static_cast<float>(target_image.GetWidth()) / target_sheet.Size.Width;
             const float target_height_scaling = static_cast<float>(target_image.GetHeight()) / target_sheet.Size.Height;
 
             for (const auto [source_sheet, source_file_path] : zip::zip(target_sheet.SourceSheets, target_sheet_paths))

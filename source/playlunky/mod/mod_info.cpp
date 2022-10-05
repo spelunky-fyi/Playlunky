@@ -76,7 +76,7 @@ void ModInfo::ReadExtendedInfoFromJson(std::string_view path)
 {
     try
     {
-        if (auto json_file = std::ifstream(path))
+        if (auto json_file = std::ifstream(std::string{ path }))
         {
             mExtendedVersionAvailable = true;
 

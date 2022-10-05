@@ -199,7 +199,8 @@ bool ConvertDdsToPng(const std::filesystem::path& source, const std::filesystem:
 
         if (auto data = std::make_unique<std::uint8_t[]>(file_size))
         {
-            const auto size_read = fread(data.get(), 1, file_size, file);
+            [[maybe_unused]] const auto size_read = fread(data.get(), 1, file_size, file);
+            // TODO: Verify!
             return ConvertDdsToPng({ data.get(), file_size }, destination);
         }
     }
