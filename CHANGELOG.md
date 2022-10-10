@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
-## [0.15.0] - 2021-10-??
+## [0.15.0] - 2021-10-10
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.27-orange">
 
