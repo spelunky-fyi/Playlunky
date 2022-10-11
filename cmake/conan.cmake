@@ -10,7 +10,7 @@ macro(run_conan)
         file(
             DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/0.18.1/conan.cmake"
             "${CMAKE_BINARY_DIR}/conan.cmake"
-            EXPECTED_HASH SHA256=3bef79da16c2e031dc429e1dac87a08b9226418b300ce004cc125a82687baeef
+            EXPECTED_HASH SHA256=5cdb3042632da3efff558924eecefd580a0e786863a857ca097c3d1d43df5dcd
             TLS_VERIFY ON)
     endif()
 
@@ -68,7 +68,7 @@ macro(run_conan)
             BUILD
             missing
             ${OUTPUT_QUIET}
-            ENV ${CONAN_ENV} # Pass CMake compilers to Conan
+            #ENV ${CONAN_ENV} # Pass CMake compilers to Conan
             SETTINGS ${CONAN_SETTINGS} # Pass autodetected settings
         )
     endforeach()
