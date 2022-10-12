@@ -67,9 +67,12 @@ macro(run_conan)
             ${CMAKE_SOURCE_DIR}
             BUILD
             missing
-            ${OUTPUT_QUIET}
-            ENV ${CONAN_ENV} # Pass CMake compilers to Conan
-            SETTINGS ${CONAN_SETTINGS} # Pass autodetected settings
-        )
+
+            # Pass CMake compilers to Conan
+            ${CONAN_ENV}
+
+            # Pass autodetected settings
+            ${CONAN_SETTINGS}
+            ${OUTPUT_QUIET})
     endforeach()
 endmacro()
