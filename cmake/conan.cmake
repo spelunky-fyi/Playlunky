@@ -10,7 +10,7 @@ macro(run_conan)
         file(
             DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/0.18.1/conan.cmake"
             "${CMAKE_BINARY_DIR}/conan.cmake"
-            EXPECTED_HASH SHA256=3bef79da16c2e031dc429e1dac87a08b9226418b300ce004cc125a82687baeef
+            EXPECTED_HASH SHA256=5cdb3042632da3efff558924eecefd580a0e786863a857ca097c3d1d43df5dcd
             TLS_VERIFY ON)
     endif()
 
@@ -57,7 +57,6 @@ macro(run_conan)
         # Detects current build settings to pass into conan
         conan_cmake_autodetect(settings BUILD_TYPE ${TYPE})
         set(CONAN_SETTINGS SETTINGS ${settings})
-        set(CONAN_ENV ENV "CC=${CMAKE_C_COMPILER}" "CXX=${CMAKE_CXX_COMPILER}")
 
         # PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR} is used to tell conan to process
         # the external "conanfile.py" provided with the project
@@ -67,11 +66,6 @@ macro(run_conan)
             ${CMAKE_SOURCE_DIR}
             BUILD
             missing
-
-            # Pass CMake compilers to Conan
-            ${CONAN_ENV}
-
-            # Pass autodetected settings
             ${CONAN_SETTINGS}
             ${OUTPUT_QUIET})
     endforeach()
