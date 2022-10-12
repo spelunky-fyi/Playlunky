@@ -38,7 +38,7 @@ jobs:
           pip install conan
 
       - name: Cache conan
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             c:/Users/runneradmin/.conan
