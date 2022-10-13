@@ -400,7 +400,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
                                                    Playlunky::Get().RegisterModType(ModType::Level);
 
                                                    const auto rel_asset_file_name = rel_asset_path.filename().string();
-                                                   if (ctre::match<s_DmLevel>(rel_asset_file_name))
+                                                   if (ctre::match<s_DmLevel>(rel_asset_file_name) || algo::is_same_path(rel_asset_path, "Data/Levels/Arena/dmpreview.tok"))
                                                    {
                                                        dmpreview_merger.RegisterDmLevel(full_asset_path, outdated, deleted);
                                                    }
