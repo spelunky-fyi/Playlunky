@@ -4,6 +4,7 @@
 #include "cache_audio_file.h"
 #include "dds_conversion.h"
 #include "decode_audio_file.h"
+#include "dm_preview_merger.h"
 #include "extract_game_assets.h"
 #include "fix_mod_structure.h"
 #include "known_files.h"
@@ -39,6 +40,7 @@
 #include <unordered_map>
 #include <zip.h>
 
+static constexpr ctll::fixed_string s_DmLevel{ "Data/Levels/Arena/dm([0-9]-[0-9])\\.lvl" };
 static constexpr ctll::fixed_string s_ColorTextureRule{ ".*_col\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
 static constexpr ctll::fixed_string s_LuminosityTextureRule{ ".*_lumin\\.(dds|bmp|dib|jpeg|jpg|jpe|jp2|png|webp|pbm|pgm|ppm|sr|ras|tiff|tif)" };
 static constexpr ctll::fixed_string s_StringFileRule{ "strings([0-9]{2})\\.str" };
@@ -221,6 +223,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
                 fs::path{ "strings10.str" },
                 fs::path{ "strings11.str" },
                 fs::path{ "strings12.str" },
+                fs::path{ "Data/Levels/Arena/dmpreview.tok" },
             };
             if (ExtractGameAssets(files, db_original_folder))
             {
@@ -318,6 +321,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
 
         mSpriteSheetMerger->GatherSheetData(journal_gen_settings_change, sticker_gen_settings_change);
         StringMerger string_merger;
+        DmPreviewMerger dmpreview_merger{ settings };
         bool has_outdated_shaders{ false };
 
         for (const fs::path& mod_folder : mod_folders)
@@ -394,6 +398,12 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
                                                if (!speedrun_mode && !deleted && new_enabled_state.value_or(true))
                                                {
                                                    Playlunky::Get().RegisterModType(ModType::Level);
+
+                                                   const auto rel_asset_file_name = rel_asset_path.filename().string();
+                                                   if (ctre::match<s_DmLevel>(rel_asset_file_name))
+                                                   {
+                                                       dmpreview_merger.RegisterDmLevel(full_asset_path, outdated, deleted);
+                                                   }
                                                }
                                            }
                                            else if (algo::is_same_path(rel_asset_path.extension(), ".dds"))
@@ -633,6 +643,19 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             else
             {
                 LogError("Failed generating a full string file from installed string mods...");
+            }
+        }
+
+        LogInfo("Generating arena previews...");
+        if (dmpreview_merger.NeedsRegeneration(db_folder))
+        {
+            if (dmpreview_merger.GenerateDmPreview(db_original_folder, db_folder, vfs))
+            {
+                LogInfo("Successfully generated arena previews...");
+            }
+            else
+            {
+                LogError("Failed generating arena previews...");
             }
         }
 
