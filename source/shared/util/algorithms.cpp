@@ -53,12 +53,12 @@ std::string trim(std::string str)
               str.end());
     return std::move(str);
 }
-std::string trim(std::string str, char to_strip)
+std::string trim(std::string str, char to_trim)
 {
-    str.erase(str.begin(), std::find_if(str.begin(), str.end(), [to_strip](unsigned char ch)
-                                        { return ch != to_strip; }));
-    str.erase(std::find_if(str.rbegin(), str.rend(), [to_strip](unsigned char ch)
-                           { return ch != to_strip; })
+    str.erase(str.begin(), std::find_if(str.begin(), str.end(), [to_trim](unsigned char ch)
+                                        { return ch != to_trim; }));
+    str.erase(std::find_if(str.rbegin(), str.rend(), [to_trim](unsigned char ch)
+                           { return ch != to_trim; })
                   .base(),
               str.end());
     return std::move(str);

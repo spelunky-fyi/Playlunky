@@ -1,7 +1,6 @@
 #pragma once
 
 #include "concepts.h"
-#include "tokenize.h"
 
 #include <filesystem>
 #include <functional>
@@ -193,17 +192,66 @@ bool is_end_of_path(const std::filesystem::path& path, const std::filesystem::pa
 std::filesystem::path strip_end_of_path(const std::filesystem::path& path, const std::filesystem::path& base);
 
 std::string trim(std::string str);
-std::string trim(std::string str, char to_strip);
+std::string trim(std::string str, char to_trim);
 
-template<char Delimeter>
-std::vector<std::string_view> split(std::string_view str)
+constexpr std::string_view trim(std::string_view str)
 {
-    std::vector<std::string_view> sub_strings;
-    for (auto&& sub_string : Tokenize<Delimeter>{ str })
+    constexpr auto isspace = [](char c)
     {
-        sub_strings.push_back(sub_string);
+        constexpr char spaces[]{
+            ' ',
+            '\f',
+            '\n',
+            '\r',
+            '\t',
+            '\v',
+        };
+        return contains(spaces, c);
+    };
+
+    auto left = str.begin();
+    for (;; ++left)
+    {
+        if (left == str.end())
+        {
+            return {};
+        }
+
+        if (!isspace(*left))
+        {
+            break;
+        }
     }
-    return sub_strings;
+
+    auto right = str.end() - 1;
+    // clang-format off
+    for (; right > left && isspace(*right); --right);
+    // clang-format on
+
+    return std::string_view{ &*left, static_cast<size_t>(std::distance(left, right) + 1) };
+}
+constexpr std::string_view trim(std::string_view str, char to_trim)
+{
+    auto left = str.begin();
+    for (;; ++left)
+    {
+        if (left == str.end())
+        {
+            return {};
+        }
+
+        if (*left != to_trim)
+        {
+            break;
+        }
+    }
+
+    auto right = str.end() - 1;
+    // clang-format off
+    for (; right > left && *right != to_trim; --right);
+    // clang-format on
+
+    return std::string_view{ &*left, static_cast<size_t>(std::distance(left, right) + 1) };
 }
 
 std::string to_lower(std::string str);

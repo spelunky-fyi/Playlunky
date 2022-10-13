@@ -9,6 +9,7 @@
 #include "util/image.h"
 #include "util/on_scope_exit.h"
 #include "util/regex.h"
+#include "util/tokenize.h"
 #include "virtual_filesystem.h"
 
 #pragma comment(lib, "d3dcompiler")
