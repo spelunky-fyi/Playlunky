@@ -34,7 +34,7 @@ jobs:
           path: |
             c:/Users/runneradmin/.conan
             c:/.conan
-          key: ${{ matrix.build_type }}-conan-${{ hashFiles('**/conanfile.txt') }}
+          key: ${{ matrix.build_type }}-conan-cpp23-${{ hashFiles('**/conanfile.txt') }}
 
       - name: Configure
         run: |
