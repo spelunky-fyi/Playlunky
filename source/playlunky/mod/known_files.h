@@ -5452,6 +5452,7 @@ inline constexpr std::string_view s_SpeedrunFiles[]{
     "Data/Textures/Entities/Pets/monty_v2",
     "Data/Textures/Entities/Pets/percy_v2",
     "Data/Textures/Entities/Pets/poochi_v2",
+    "Data/Textures/menu_deathmatch2",
     "strings00_mod",
     "strings01_mod",
     "strings02_mod",
