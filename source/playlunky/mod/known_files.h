@@ -199,6 +199,7 @@ inline constexpr std::string_view s_BigMonstersEntityFiles[]{
     "lavamander",
     "madame_tusk",
     "mummy",
+    "olmec",
     "osiris",
     "queen_bee",
     "quill_back",

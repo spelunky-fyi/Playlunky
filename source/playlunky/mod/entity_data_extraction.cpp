@@ -217,6 +217,7 @@ void EntityDataExtractor::PreloadEntityMappings()
         EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/giant_frog", { "ENT_TYPE_MONS_GIANTFROG" }, 320 },
         EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/giant_fish", { "ENT_TYPE_MONS_GIANTFISH" }, 320 },
         EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/waddler", { "ENT_TYPE_MONS_STORAGEGUY" }, 320 },
+        EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/olmec", {}, 320 + 160, 1792 },
         EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/osiris", { "ENT_TYPE_MONS_OSIRIS_HEAD", "ENT_TYPE_MONS_OSIRIS_HAND" }, 320 + 160 },
         EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/alien_queen", { "ENT_TYPE_MONS_ALIENQUEEN", "ENT_TYPE_FX_ALIENQUEEN_EYE", "ENT_TYPE_FX_ALIENQUEEN_EYEBALL" }, 320 + 160 },
 
