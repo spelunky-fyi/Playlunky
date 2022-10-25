@@ -124,6 +124,7 @@ void EntityDataExtractor::PreloadEntityMappings()
         std::vector<std::string_view> EntityNames;
         std::uint32_t AdditionalHeight;
         std::uint32_t InitialHeight;
+        std::uint32_t InitialWidth;
     };
     std::array entity_mapping_info{
         EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/alien_queen", { "ENT_TYPE_MONS_ALIENQUEEN", "ENT_TYPE_FX_ALIENQUEEN_EYE", "ENT_TYPE_FX_ALIENQUEEN_EYEBALL" }, 320 + 160 },
@@ -217,7 +218,7 @@ void EntityDataExtractor::PreloadEntityMappings()
         EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/giant_frog", { "ENT_TYPE_MONS_GIANTFROG" }, 320 },
         EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/giant_fish", { "ENT_TYPE_MONS_GIANTFISH" }, 320 },
         EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/waddler", { "ENT_TYPE_MONS_STORAGEGUY" }, 320 },
-        EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/olmec", {}, 320 + 160, 1792 },
+        EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/olmec", {}, 320 + 160, 1792, 2048 },
         EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/osiris", { "ENT_TYPE_MONS_OSIRIS_HEAD", "ENT_TYPE_MONS_OSIRIS_HAND" }, 320 + 160 },
         EntityMappingInfo{ "Data/Textures/Entities/BigMonsters/alien_queen", { "ENT_TYPE_MONS_ALIENQUEEN", "ENT_TYPE_FX_ALIENQUEEN_EYE", "ENT_TYPE_FX_ALIENQUEEN_EYEBALL" }, 320 + 160 },
 
@@ -246,7 +247,7 @@ void EntityDataExtractor::PreloadEntityMappings()
 
     for (const EntityMappingInfo& mapping_info : entity_mapping_info)
     {
-        SheetSize size{ .Width{ 0 }, .Height{ mapping_info.InitialHeight } };
+        SheetSize size{ .Width{ mapping_info.InitialWidth }, .Height{ mapping_info.InitialHeight } };
         std::vector<TileMapping> tile_map{};
 
         for (const std::string_view entity_name : mapping_info.EntityNames)
