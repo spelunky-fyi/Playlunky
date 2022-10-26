@@ -5447,12 +5447,15 @@ inline constexpr std::string_view s_SpeedrunFiles[]{
     "Data/Textures/char_eggchild",
     "Data/Textures/Entities/char_eggchild_full",
     "Data/Textures/monsters_pets",
+    "Data/Textures/Entities/BigMonsters/olmec",
+    "olmec",
     "Data/Textures/Entities/Pets/monty",
     "Data/Textures/Entities/Pets/percy",
     "Data/Textures/Entities/Pets/poochi",
     "Data/Textures/Entities/Pets/monty_v2",
     "Data/Textures/Entities/Pets/percy_v2",
     "Data/Textures/Entities/Pets/poochi_v2",
+    "Data/Textures/menu_deathmatch2",
     "strings00_mod",
     "strings01_mod",
     "strings02_mod",
@@ -5469,6 +5472,7 @@ inline constexpr std::string_view s_SpeedrunFiles[]{
     "Data/Textures/menu_leader",          // char banners
     "Data/Textures/menu_basic",           // pet heads
     "Data/Textures/journal_entry_mons",   // pet journal entries
+    "Data/Textures/monsters_olmec",       // olmec
     "strings00",
     "strings01",
     "strings02",
@@ -5487,6 +5491,7 @@ inline constexpr std::string_view s_SpeedrunDbFiles[]{
     "Data/Textures/menu_leader",
     "Data/Textures/menu_basic",
     "Data/Textures/journal_entry_mons",
+    "Data/Textures/monsters_olmec",
     "strings00",
     "strings01",
     "strings02",
