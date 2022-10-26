@@ -45,31 +45,31 @@ constexpr bool operator&(TokenizeBehavior rhs, TokenizeBehavior lhs)
     return ((int)lhs & (int)rhs) != 0;
 }
 
-template<TokenizeDelimiter Delimiter, TokenizeBehavior Behavior = TokenizeBehavior::None, size_t MaxTokens = std::string_view::npos>
+template<TokenizeDelimiter Delimiter,
+         TokenizeBehavior Behavior = TokenizeBehavior::None,
+         size_t MaxTokens = std::string_view::npos>
 class Tokenize
 {
   public:
-    Tokenize() = delete;
+    constexpr Tokenize() = default;
     constexpr Tokenize(const Tokenize&) = default;
-    constexpr Tokenize(Tokenize&&) = default;
+    constexpr Tokenize(Tokenize&&) noexcept = default;
     constexpr Tokenize& operator=(const Tokenize&) = default;
-    constexpr Tokenize& operator=(Tokenize&&) = default;
+    constexpr Tokenize& operator=(Tokenize&&) noexcept = default;
+    constexpr ~Tokenize() = default;
 
     explicit constexpr Tokenize(std::nullptr_t)
-        : m_Source{}
     {
     }
     explicit constexpr Tokenize(const char* source)
         : m_Source{ source }
     {
         GetNext();
-        m_NumTokens++;
     }
     explicit constexpr Tokenize(std::string_view source)
         : m_Source{ source }
     {
         GetNext();
-        m_NumTokens++;
     }
 
     constexpr bool operator==(const Tokenize& rhs) const = default;
@@ -121,7 +121,9 @@ class Tokenize
     constexpr decltype(auto) operator++()
     {
         if (!Advance())
+        {
             *this = end();
+        }
         return *this;
     }
     constexpr auto operator++(int)
@@ -168,11 +170,6 @@ class Tokenize
                 ++m_Next;
             }
         }
-    }
-    constexpr bool Advance()
-    {
-        m_Position = m_Next + 1;
-        GetNext();
 
         if constexpr (Behavior & TokenizeBehavior::SkipEmpty)
         {
@@ -181,16 +178,29 @@ class Tokenize
                 m_Position = m_Next + 1;
                 GetNext();
             }
-        }
 
-        m_NumTokens++;
+            if (m_Position != m_Next)
+            {
+                ++m_NumTokens;
+            }
+        }
+        else
+        {
+            ++m_NumTokens;
+        }
+    }
+
+    constexpr bool Advance()
+    {
+        m_Position = m_Next + 1;
+        GetNext();
         return m_Position < m_Source.size();
     }
 
     std::string_view m_Source;
     size_t m_Position{ 0 };
     size_t m_Next{ 0 };
-    size_t m_NumTokens{ 1 };
+    size_t m_NumTokens{ 0 };
 };
 
 namespace algo
