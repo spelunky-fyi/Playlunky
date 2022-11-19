@@ -11,7 +11,7 @@
 namespace algo
 {
 template<class ContainerT, class FunT>
-requires range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>
+requires(range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>)
 auto all_of(ContainerT&& container, FunT&& fun)
 {
     const auto begin_it = get_begin(container);
@@ -19,7 +19,7 @@ auto all_of(ContainerT&& container, FunT&& fun)
     return std::all_of(begin_it, end_it, std::forward<FunT>(fun));
 }
 template<class ContainerT, class FunT>
-requires range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>
+requires(range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>)
 auto any_of(ContainerT&& container, FunT&& fun)
 {
     const auto begin_it = get_begin(container);
@@ -27,7 +27,7 @@ auto any_of(ContainerT&& container, FunT&& fun)
     return std::any_of(begin_it, end_it, std::forward<FunT>(fun));
 }
 template<class ContainerT, class FunT>
-requires range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>
+requires(range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>)
 auto none_of(ContainerT&& container, FunT&& fun)
 {
     const auto begin_it = get_begin(container);
@@ -36,7 +36,7 @@ auto none_of(ContainerT&& container, FunT&& fun)
 }
 
 template<class ContainerT, class FunT>
-requires range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>
+requires(range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>)
 void erase_if(ContainerT&& container, FunT&& fun)
 {
     const auto begin_it = get_begin(container);
@@ -44,7 +44,7 @@ void erase_if(ContainerT&& container, FunT&& fun)
     container.erase(std::remove_if(begin_it, end_it, std::forward<FunT>(fun)), end_it);
 }
 template<class ContainerT, class ValueT>
-requires range<ContainerT> && is_comparable<range_element_t<ContainerT>, ValueT>
+requires(range<ContainerT> && is_comparable<range_element_t<ContainerT>, ValueT>)
 void erase(ContainerT&& container, ValueT&& value)
 {
     const auto begin_it = get_begin(container);
@@ -52,7 +52,7 @@ void erase(ContainerT&& container, ValueT&& value)
     container.erase(std::remove(begin_it, end_it, std::forward<ValueT>(value)), end_it);
 }
 template<class ContainerT, class T, class U, class V>
-requires range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>
+requires(range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>)
 void erase(ContainerT&& container, U T::*member, V&& val)
 {
     erase_if(std::forward<ContainerT>(container), [member = std::mem_fn(member), val = std::forward<V>(val)](auto& element)
@@ -60,7 +60,7 @@ void erase(ContainerT&& container, U T::*member, V&& val)
 }
 
 template<class ContainerT, class FunT>
-requires range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>
+requires(range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>)
 auto find_if(ContainerT&& container, FunT&& fun) -> range_value_t<ContainerT>*
 {
     const auto begin_it = get_begin(container);
@@ -73,7 +73,7 @@ auto find_if(ContainerT&& container, FunT&& fun) -> range_value_t<ContainerT>*
     return nullptr;
 }
 template<class ContainerT, class ValueT>
-requires range<ContainerT> && is_comparable<range_element_t<ContainerT>, ValueT>
+requires(range<ContainerT> && is_comparable<range_element_t<ContainerT>, ValueT>)
 auto find(ContainerT&& container, ValueT&& value) -> range_value_t<ContainerT>*
 {
     const auto begin_it = get_begin(container);
@@ -86,14 +86,14 @@ auto find(ContainerT&& container, ValueT&& value) -> range_value_t<ContainerT>*
     return nullptr;
 }
 template<class ContainerT, class T, class U, class V>
-requires range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>
+requires(range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>)
 auto find(ContainerT&& container, U T::*member, V&& val) -> range_value_t<ContainerT>*
 {
     return find_if(std::forward<ContainerT>(container), [member = std::mem_fn(member), val = std::forward<V>(val)](auto& element)
                    { return member(element) == val; });
 }
 template<class ContainerT, class T, class U, class V>
-requires range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>
+requires(range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>)
 auto find(ContainerT&& container, U (T::*member)() const noexcept, V&& val) -> range_value_t<ContainerT>*
 {
     return find_if(std::forward<ContainerT>(container), [member = std::mem_fn(member), val = std::forward<V>(val)](auto& element)
@@ -101,28 +101,28 @@ auto find(ContainerT&& container, U (T::*member)() const noexcept, V&& val) -> r
 }
 
 template<class ContainerT, class FunT>
-requires range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>
-bool contains_if(ContainerT&& container, FunT&& fun)
+requires(range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>)
+auto contains_if(ContainerT&& container, FunT&& fun)
 {
     return find_if(std::forward<ContainerT>(container), std::forward<FunT>(fun)) != nullptr;
 }
 template<class ContainerT, class T, class U, class V>
-requires range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>
-bool contains(ContainerT&& container, U T::*member, V&& val)
+requires(range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>)
+auto contains(ContainerT&& container, U T::*member, V&& val)
 {
     return contains_if(std::forward<ContainerT>(container), [member = std::mem_fn(member), val = std::forward<V>(val)](auto& element)
                        { return member(element) == val; });
 }
 template<class ContainerT, class T, class U, class V>
-requires range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>
-bool contains(ContainerT&& container, U (T::*member)() const, V&& val)
+requires(range<ContainerT> && range_contains_v<ContainerT, T> && is_comparable<U, V>)
+auto contains(ContainerT&& container, U (T::*member)() const, V&& val)
 {
     return contains_if(std::forward<ContainerT>(container), [member = std::mem_fn(member), val = std::forward<V>(val)](auto& element)
                        { return member(element) == val; });
 }
 template<class ContainerT, class ValueT>
-requires range<ContainerT> && is_comparable<range_element_t<ContainerT>, ValueT>
-bool contains(ContainerT&& container, ValueT&& value)
+requires(range<ContainerT> && is_comparable<range_element_t<ContainerT>, ValueT>)
+auto contains(ContainerT&& container, ValueT&& value)
 {
     const auto begin_it = get_begin(container);
     const auto end_it = get_end(container);
@@ -130,7 +130,7 @@ bool contains(ContainerT&& container, ValueT&& value)
 }
 
 template<class ContainerT>
-requires range<ContainerT>
+requires(range<ContainerT>)
 void sort(ContainerT&& container)
 {
     const auto begin_it = get_begin(container);
@@ -138,7 +138,7 @@ void sort(ContainerT&& container)
     std::sort(begin_it, end_it);
 }
 template<class ContainerT, class FunT>
-requires range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>, range_element_t<ContainerT>>
+requires(range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>, range_element_t<ContainerT>>)
 void sort(ContainerT&& container, FunT&& fun)
 {
     const auto begin_it = get_begin(container);
@@ -146,14 +146,14 @@ void sort(ContainerT&& container, FunT&& fun)
     std::sort(begin_it, end_it, std::forward<FunT>(fun));
 }
 template<class ContainerT, class T, class U>
-requires range<ContainerT> && range_contains_v<ContainerT, T>
+requires(range<ContainerT> && range_contains_v<ContainerT, T>)
 void sort(ContainerT&& container, U T::*member)
 {
     sort(std::forward<ContainerT>(container), [member = std::mem_fn(member)](auto& lhs, auto& rhs)
          { return member(lhs) < member(rhs); });
 }
 template<class ContainerT, class T, class U>
-requires range<ContainerT> && range_contains_v<ContainerT, T>
+requires(range<ContainerT> && range_contains_v<ContainerT, T>)
 void sort(ContainerT&& container, U (T::*member)() const)
 {
     sort(std::forward<ContainerT>(container), [member = std::mem_fn(member)](auto& lhs, auto& rhs)
@@ -161,15 +161,15 @@ void sort(ContainerT&& container, U (T::*member)() const)
 }
 
 template<class ContainerT>
-requires range<ContainerT>
-bool is_sub_set(ContainerT&& sub_set, ContainerT&& container)
+requires(range<ContainerT>)
+auto is_sub_set(ContainerT&& sub_set, ContainerT&& container)
 {
     return all_of(std::forward<ContainerT>(sub_set), [container = std::forward<ContainerT>(container)](const auto& val)
                   { return contains(container, val); });
 }
 
 template<class ContainerT, class ValueT>
-requires range<ContainerT> && is_comparable<range_element_t<ContainerT>, ValueT>
+requires(range<ContainerT> && is_comparable<range_element_t<ContainerT>, ValueT>)
 auto count(ContainerT&& container, ValueT&& value)
 {
     const auto begin_it = get_begin(container);
@@ -177,7 +177,7 @@ auto count(ContainerT&& container, ValueT&& value)
     return static_cast<std::size_t>(std::count(begin_it, end_it, std::forward<ValueT>(value)));
 }
 template<class ContainerT, class FunT>
-requires range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>
+requires(range<ContainerT> && std::is_invocable_r_v<bool, FunT, range_element_t<ContainerT>>)
 auto count_if(ContainerT&& container, FunT&& fun)
 {
     const auto begin_it = get_begin(container);

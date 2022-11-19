@@ -8,7 +8,7 @@
 #include <libnyquist/Decoders.h>
 #pragma warning(pop)
 
-//#define SHOW_AUDIO_WAVEFORM_ON_LOAD
+// #define SHOW_AUDIO_WAVEFORM_ON_LOAD
 
 #ifdef SHOW_AUDIO_WAVEFORM_ON_LOAD
 #include <cmath>

@@ -15,3 +15,5 @@ AllowShortBlocksOnASingleLine: Always
 AllowShortFunctionsOnASingleLine: None
 PointerAlignment: Left
 SpaceAfterTemplateKeyword: false
+RequiresClausePosition: OwnLine
+IndentRequiresClause: false

@@ -6,42 +6,43 @@
 namespace algo
 {
 template<class T, class U>
-concept is_comparable = requires(T&& lhs, T&& rhs)
-{
-    lhs == rhs;
-    rhs == lhs;
-};
+concept is_comparable =
+    requires(T&& lhs, T&& rhs) {
+        lhs == rhs;
+        rhs == lhs;
+    };
 
 template<class T>
-concept std_range = requires(T&& cont)
-{
-    std::begin(cont);
-    std::end(cont);
-};
+concept std_range =
+    requires(T&& cont) {
+        std::begin(cont);
+        std::end(cont);
+    };
 template<class T>
-concept not_std_range = !requires(T && cont)
-{
-    std::begin(cont);
-    std::end(cont);
-};
+concept not_std_range =
+    !requires(T && cont) {
+         std::begin(cont);
+         std::end(cont);
+     };
 template<class T>
-concept adl_range = requires(T&& cont)
-{
-    begin(cont);
-    end(cont);
-};
+concept adl_range =
+    requires(T&& cont) {
+        begin(cont);
+        end(cont);
+    };
 template<class T>
-concept not_adl_range = !requires(T && cont)
-{
-    begin(cont);
-    end(cont);
-};
+concept not_adl_range =
+    !requires(T && cont) {
+         begin(cont);
+         end(cont);
+     };
 template<class T>
-concept member_range = requires(T&& cont)
-{
-    cont.begin();
-    cont.end();
-};
+concept member_range =
+    requires(T&& cont) {
+        cont.begin();
+        cont.end();
+    };
+
 template<class ContainerT>
 requires member_range<ContainerT> && not_adl_range<ContainerT> && not_std_range<ContainerT>
 constexpr auto get_begin(ContainerT&& cont)
@@ -80,11 +81,11 @@ constexpr auto get_end(ContainerT&& cont)
 }
 
 template<class T>
-concept range = requires(T&& cont)
-{
-    get_begin(cont);
-    get_end(cont);
-};
+concept range =
+    requires(T&& cont) {
+        get_begin(cont);
+        get_end(cont);
+    };
 
 template<class T>
 requires range<T>
