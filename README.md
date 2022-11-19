@@ -1,10 +1,7 @@
 # Playlunky
 <p align="center">
     <a href="https://isocpp.org/">
-        <img src="https://img.shields.io/badge/language-C%2B%2B20-blue.svg">
-    </a>
-    <a href="https://ci.appveyor.com/project/ZeroCostGoods/playlunky">
-        <img src="https://ci.appveyor.com/api/projects/status/3kobi9p0n277q9qd/branch/main?svg=true">
+        <img src="https://img.shields.io/badge/language-C%2B%2B23-blue.svg">
     </a>
     <a href="https://github.com/spelunky-fyi/playlunky/actions">
         <img src="https://github.com/spelunky-fyi/playlunky/workflows/Github%20Actions%20CI/badge.svg">

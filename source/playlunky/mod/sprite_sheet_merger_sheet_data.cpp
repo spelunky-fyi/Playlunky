@@ -230,7 +230,7 @@ void SpriteSheetMerger::MakeJournalMonstersBigSheet()
             { "BigMonsters/ammit", { 1280, 960, 1600, 1280 } },
             { "BigMonsters/osiris", { 960, 1280, 1280, 1600 } },
             { "BigMonsters/giant_fly", { 0, 1600, 320, 1920 } },
-            //{ "BigMonsters/olmec", { 320, 0, 640, 320 } },
+            { "BigMonsters/olmec", { 320, 0, 640, 320 } },
             //{ "BigMonsters/celestial_jellyfish", { 1280, 640, 1600, 960 } },
             //{ "Mounts/mech", { 320, 960, 640, 1280 } },
             //{ "BigMonsters/anubis", { 960, 0, 1280, 320 } },
@@ -479,7 +479,7 @@ void SpriteSheetMerger::MakeJournalStickerSheet(bool force_regen)
             //{ "BigMonsters/anubis", { 320, 480, 480, 640 } },
             { "BigMonsters/osiris", { 480, 480, 640, 640 } },
             { "BigMonsters/alien_queen", { 640, 480, 800, 640 } },
-            //{ "BigMonsters/olmec", { 0, 640, 160, 800 } },
+            { "BigMonsters/olmec", { 0, 640, 160, 800 } },
             //{ "BigMonsters/tiamat", { 160, 640, 320, 800 } },
             //{ "BigMonsters/yama", { 320, 640, 480, 800 } },
             //{ "BigMonsters/hundun", { 480, 640, 640, 800 } },
@@ -723,6 +723,7 @@ void SpriteSheetMerger::MakeBigMonstersTargetSheet()
         std::string_view TargetFile;
         std::vector<std::string_view> SourceFiles;
         std::vector<AdditionalMapping> AdditionalTileMaps;
+        std::vector<SourceSheet> AdditionalSources;
         SheetSize TargetSize{ .Width{ 2048 }, .Height{ 2048 } };
     };
     std::vector<BigMonsterSheet> sheets{
@@ -775,11 +776,36 @@ void SpriteSheetMerger::MakeBigMonstersTargetSheet()
           {
               { "Ghost/ghist", { TileMapping{ .SourceTile{ 0, 0, 384, 128 }, .TargetTile{ 896, 1408, 1280, 1536 } }, TileMapping{ .SourceTile{ 0, 128, 384, 258 }, .TargetTile{ 1280, 1408, 1664, 1536 } }, TileMapping{ .SourceTile{ 0, 256, 128, 384 }, .TargetTile{ 1664, 1408, 1792, 1536 } } } },
           } },
+        { "Data/Textures/monsters_olmec", {
+                                              "BigMonsters/olmec",
+                                          },
+          { { "BigMonsters/olmec", {
+                                       TileMapping{ .SourceTile{ 0, 0, 512, 512 }, .TargetTile{ 0, 0, 512, 512 } },
+                                       TileMapping{ .SourceTile{ 512, 0, 1024, 512 }, .TargetTile{ 512, 0, 1024, 512 } },
+                                       TileMapping{ .SourceTile{ 1024, 0, 1536, 512 }, .TargetTile{ 1024, 0, 1536, 512 } },
+                                       TileMapping{ .SourceTile{ 1536, 0, 2048, 512 }, .TargetTile{ 1536, 0, 2048, 512 } },
+                                       TileMapping{ .SourceTile{ 0, 512, 512, 768 }, .TargetTile{ 0, 512, 512, 768 } },
+                                       TileMapping{ .SourceTile{ 0, 768, 512, 1024 }, .TargetTile{ 0, 768, 512, 1024 } },
+                                       TileMapping{ .SourceTile{ 0, 1024, 512, 1280 }, .TargetTile{ 0, 1024, 512, 1280 } },
+                                       TileMapping{ .SourceTile{ 0, 1280, 512, 1536 }, .TargetTile{ 0, 1280, 512, 1536 } },
+                                       TileMapping{ .SourceTile{ 0, 1536, 512, 1792 }, .TargetTile{ 0, 1536, 512, 1792 } },
+                                       TileMapping{ .SourceTile{ 512, 512, 1024, 768 }, .TargetTile{ 512, 512, 1024, 768 } },
+                                       TileMapping{ .SourceTile{ 512, 768, 1024, 1024 }, .TargetTile{ 512, 768, 1024, 1024 } },
+                                       TileMapping{ .SourceTile{ 512, 1024, 1024, 1280 }, .TargetTile{ 512, 1024, 1024, 1280 } },
+                                       TileMapping{ .SourceTile{ 1024, 512, 1280, 768 }, .TargetTile{ 1024, 512, 1280, 768 } },
+                                       TileMapping{ .SourceTile{ 1024, 768, 1280, 1024 }, .TargetTile{ 1024, 768, 1280, 1024 } },
+                                       TileMapping{ .SourceTile{ 1280, 512, 1536, 640 }, .TargetTile{ 1280, 512, 1536, 640 } },
+                                       TileMapping{ .SourceTile{ 1536, 512, 1792, 640 }, .TargetTile{ 1536, 512, 1792, 640 } },
+                                       TileMapping{ .SourceTile{ 1792, 512, 2048, 640 }, .TargetTile{ 1792, 512, 2048, 640 } },
+                                   } } },
+          {
+              SourceSheet{ .Path{ "Data/Textures/Entities/BigMonsters/olmec" }, .Size{ 2048, 2272 }, .TileMap = std::vector<TileMapping>{ { { 0, 0, 512, 512 }, { 0, 0, 512, 512 } }, { { 512, 0, 1024, 512 }, { 512, 0, 1024, 512 } }, { { 1024, 0, 1536, 512 }, { 1024, 0, 1536, 512 } }, { { 1536, 0, 2048, 512 }, { 1536, 0, 2048, 512 } }, { { 0, 512, 512, 768 }, { 0, 512, 512, 768 } }, { { 0, 768, 512, 1024 }, { 0, 768, 512, 1024 } }, { { 0, 1024, 512, 1280 }, { 0, 1024, 512, 1280 } }, { { 0, 1280, 512, 1536 }, { 0, 1280, 512, 1536 } }, { { 0, 1536, 512, 1792 }, { 0, 1536, 512, 1792 } }, { { 512, 512, 1024, 768 }, { 512, 512, 1024, 768 } }, { { 512, 768, 1024, 1024 }, { 512, 768, 1024, 1024 } }, { { 512, 1024, 1024, 1280 }, { 512, 1024, 1024, 1280 } }, { { 1024, 512, 1280, 768 }, { 1024, 512, 1280, 768 } }, { { 1024, 768, 1280, 1024 }, { 1024, 768, 1280, 1024 } }, { { 1280, 512, 1536, 640 }, { 1280, 512, 1536, 640 } }, { { 1536, 512, 1792, 640 }, { 1536, 512, 1792, 640 } }, { { 1792, 512, 2048, 640 }, { 1792, 512, 2048, 640 } } } },
+          } },
     };
 
     for (const auto& sheet : sheets)
     {
-        std::vector<SourceSheet> source_sheets;
+        std::vector<SourceSheet> source_sheets = sheet.AdditionalSources;
         for (std::string_view source_file : sheet.SourceFiles)
         {
             if (auto mapping = m_EntityDataExtractor->GetEntitySourceSheet(fmt::format("Data/Textures/Entities/{}", source_file)))
