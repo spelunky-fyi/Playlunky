@@ -17,14 +17,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: SK83RJOSH/clang-format-lint-action@master
+      - uses: DoozyX/clang-format-lint-action@v0.15
         if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.do_formatting != 'true' }}
         with:
           source: "source"
           extensions: "inl,h,hpp,cpp"
           clangFormatVersion: 15
 
-      - uses: SK83RJOSH/clang-format-lint-action@master
+      - uses: DoozyX/clang-format-lint-action@v0.15
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.do_formatting == 'true' }}
         with:
           source: "source"
