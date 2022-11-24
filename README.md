@@ -13,7 +13,7 @@
         <img src="https://img.shields.io/apm/l/vim-mode.svg">
     </a>
     <br>
-    <img src="https://img.shields.io/badge/Stable: Spelunky 2-1.27-orange">
+    <img src="https://img.shields.io/badge/Stable: Spelunky 2-1.28-orange">
     <img src="https://img.shields.io/badge/Nightly: Spelunky 2-1.28-orange">
 </p>
 
