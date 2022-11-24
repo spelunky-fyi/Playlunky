@@ -14,7 +14,7 @@
     </a>
     <br>
     <img src="https://img.shields.io/badge/Stable: Spelunky 2-1.27-orange">
-    <img src="https://img.shields.io/badge/Nightly: Spelunky 2-1.27-orange">
+    <img src="https://img.shields.io/badge/Nightly: Spelunky 2-1.28-orange">
 </p>
 
 This is a launcher for Spelunky 2 that injects a dll for extended mod management. It currently supports string, shader, sprite and string mods, with some extended features for more fine grained modding. See the [Wiki](https://github.com/spelunky-fyi/Playlunky/wiki) for details.
