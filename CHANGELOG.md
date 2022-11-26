@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.1] - 2021-11-26
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.28-orange">
+
+### Changed
+- Fix some bugs by reverting to OL-main
+
 ## [0.16.0] - 2021-11-24
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.28-orange">
