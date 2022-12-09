@@ -111,7 +111,7 @@ int WinMain(
         sprintf_s(playlunky_dll_path, MAX_PATH, "%s/playlunky64.dll", dir_path);
 
         char overlunky_dll_path[MAX_PATH] = {};
-        sprintf_s(overlunky_dll_path, MAX_PATH, "%s/Overlunky/injected.dll", dir_path);
+        sprintf_s(overlunky_dll_path, MAX_PATH, "%s/Overlunky/Overlunky.dll", dir_path);
 
         const char* dll_paths[] = {
             spel2_dll_path,
