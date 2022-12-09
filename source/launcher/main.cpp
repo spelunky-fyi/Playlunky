@@ -110,20 +110,20 @@ int WinMain(
         char playlunky_dll_path[MAX_PATH] = {};
         sprintf_s(playlunky_dll_path, MAX_PATH, "%s/playlunky64.dll", dir_path);
 
+        if (!options.exe_dir.has_value())
+        {
+            options.exe_dir = dir_path;
+        }
+        const char* cwd_path = options.exe_dir.value().c_str();
+
         char overlunky_dll_path[MAX_PATH] = {};
-        sprintf_s(overlunky_dll_path, MAX_PATH, "%s/Overlunky/Overlunky.dll", dir_path);
+        sprintf_s(overlunky_dll_path, MAX_PATH, "%s/Overlunky/Overlunky.dll", cwd_path);
 
         const char* dll_paths[] = {
             spel2_dll_path,
             playlunky_dll_path,
             overlunky_dll_path
         };
-
-        if (!options.exe_dir.has_value())
-        {
-            options.exe_dir = dir_path;
-        }
-        const char* cwd_path = options.exe_dir.value().c_str();
 
         char exe_path[MAX_PATH] = {};
         sprintf_s(exe_path, MAX_PATH, "%s/Spel2.exe", cwd_path);
