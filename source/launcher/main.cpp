@@ -21,8 +21,9 @@ struct CommandLineOptions
 {
     std::optional<std::string> exe_dir;
     std::optional<bool> console = false;
+    std::optional<bool> overlunky = false;
 };
-VISITABLE_STRUCT(CommandLineOptions, exe_dir, console);
+VISITABLE_STRUCT(CommandLineOptions, exe_dir, console, overlunky);
 
 static HANDLE s_Process = NULL;
 static FILE* s_ConsoleStdOut = NULL;
@@ -98,6 +99,8 @@ int WinMain(
     {
         auto options = structopt::app("playlunky_launcher").parse<CommandLineOptions>(__argc, __argv);
 
+        const bool load_overlunky = options.overlunky.value_or(false);
+
         char dir_path[MAX_PATH] = {};
         GetCurrentDirectoryA(MAX_PATH, dir_path);
 
@@ -107,16 +110,20 @@ int WinMain(
         char playlunky_dll_path[MAX_PATH] = {};
         sprintf_s(playlunky_dll_path, MAX_PATH, "%s/playlunky64.dll", dir_path);
 
-        const char* dll_paths[] = {
-            spel2_dll_path,
-            playlunky_dll_path
-        };
-
         if (!options.exe_dir.has_value())
         {
             options.exe_dir = dir_path;
         }
         const char* cwd_path = options.exe_dir.value().c_str();
+
+        char overlunky_dll_path[MAX_PATH] = {};
+        sprintf_s(overlunky_dll_path, MAX_PATH, "%s/Overlunky/Overlunky.dll", cwd_path);
+
+        const char* dll_paths[] = {
+            spel2_dll_path,
+            playlunky_dll_path,
+            overlunky_dll_path
+        };
 
         char exe_path[MAX_PATH] = {};
         sprintf_s(exe_path, MAX_PATH, "%s/Spel2.exe", cwd_path);
@@ -162,8 +169,12 @@ int WinMain(
             return child_env;
         }();
 
+        DWORD num_dlls = sizeof(dll_paths) / sizeof(const char*);
+        if (!load_overlunky)
+            num_dlls--;
+
         PROCESS_INFORMATION pi{};
-        if (DetourCreateProcessWithDlls(NULL, exe_path, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE, (LPVOID)child_env.c_str(), cwd_path, &si, &pi, sizeof(dll_paths) / sizeof(const char*), dll_paths, NULL))
+        if (DetourCreateProcessWithDlls(NULL, exe_path, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE, (LPVOID)child_env.c_str(), cwd_path, &si, &pi, num_dlls, dll_paths, NULL))
         {
             fmt::print("Spawned process: {}, PID: {}\n", exe_path, pi.dwProcessId);
 
