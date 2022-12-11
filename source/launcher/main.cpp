@@ -1,7 +1,9 @@
 #include "util/format.h"
 
 #include <Windows.h>
+#include <array>
 #include <fstream>
+#include <span>
 
 #include <detours.h>
 #include <structopt/app.hpp>
@@ -99,8 +101,6 @@ int WinMain(
     {
         auto options = structopt::app("playlunky_launcher").parse<CommandLineOptions>(__argc, __argv);
 
-        const bool load_overlunky = options.overlunky.value_or(false);
-
         char dir_path[MAX_PATH] = {};
         GetCurrentDirectoryA(MAX_PATH, dir_path);
 
@@ -119,11 +119,20 @@ int WinMain(
         char overlunky_dll_path[MAX_PATH] = {};
         sprintf_s(overlunky_dll_path, MAX_PATH, "%s/Overlunky/Overlunky.dll", cwd_path);
 
-        const char* dll_paths[] = {
+        std::array<const char*, 3> all_dll_paths{
             spel2_dll_path,
             playlunky_dll_path,
             overlunky_dll_path
         };
+
+        const bool load_overlunky = options.overlunky.value_or(false);
+        std::span<const char*> dll_paths{
+            all_dll_paths.data(),
+            load_overlunky
+                ? all_dll_paths.size()
+                : all_dll_paths.size() - 1,
+        };
+        DWORD num_dlls = static_cast<DWORD>(dll_paths.size());
 
         char exe_path[MAX_PATH] = {};
         sprintf_s(exe_path, MAX_PATH, "%s/Spel2.exe", cwd_path);
@@ -169,12 +178,8 @@ int WinMain(
             return child_env;
         }();
 
-        DWORD num_dlls = sizeof(dll_paths) / sizeof(const char*);
-        if (!load_overlunky)
-            num_dlls--;
-
         PROCESS_INFORMATION pi{};
-        if (DetourCreateProcessWithDlls(NULL, exe_path, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE, (LPVOID)child_env.c_str(), cwd_path, &si, &pi, num_dlls, dll_paths, NULL))
+        if (DetourCreateProcessWithDlls(NULL, exe_path, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE, (LPVOID)child_env.c_str(), cwd_path, &si, &pi, num_dlls, dll_paths.data(), NULL))
         {
             fmt::print("Spawned process: {}, PID: {}\n", exe_path, pi.dwProcessId);
 
