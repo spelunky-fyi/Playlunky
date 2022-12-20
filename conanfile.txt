@@ -7,7 +7,7 @@ zstd/1.4.8
 zlib/1.2.12
 opencv/4.5.5
 libpng/1.6.38
-nlohmann_json/3.9.1
+nlohmann_json/3.11.2
 freetype/2.12.1
 
 [generators]
@@ -24,3 +24,6 @@ opencv:with_quirc=False
 opencv:with_ade=False
 opencv:with_ffmpeg=False
 opencv:dnn=False
+libtiff:jpeg=False
+libtiff:libdeflate=False
+freetype:with_brotli=False

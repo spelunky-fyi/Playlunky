@@ -62,6 +62,11 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
 
     LogInfo("Scanning for mods...");
 
+    if (std::setlocale(LC_CTYPE, ".UTF-8") == nullptr)
+    {
+        LogInfo("Can not set code-page to utf-8, some mods may cause a crash...");
+    }
+
     const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
     Spelunky_InitMemoryDatabase();
     Spelunky_SetDoHooks(!speedrun_mode);
