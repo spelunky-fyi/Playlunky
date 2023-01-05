@@ -2,6 +2,7 @@
 
 #include "sprite_sheet_merger_types.h"
 
+#include <set>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -59,6 +60,15 @@ class ModInfo
         return mCustomImages.contains(relative_path);
     }
 
+    const std::set<std::string>& GetBugFixes() const
+    {
+        return mBugFixes;
+    }
+    bool IsBugFixEnabled(const std::string& name) const
+    {
+        return mBugFixes.contains(name);
+    }
+
   private:
     std::string mNameInternal;
     std::string mName;
@@ -69,4 +79,5 @@ class ModInfo
     std::string mVersion;
 
     CustomImages mCustomImages;
+    std::set<std::string> mBugFixes;
 };
