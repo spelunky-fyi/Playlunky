@@ -222,7 +222,7 @@ bool BugFixesInit(const PlaylunkySettings& settings,
         }
     }
 
-    if (settings.GetBool("bug_fixes", "missing_pipes", true))
+    if (settings.GetBool("bug_fixes", "missing_pipes", false))
     {
         const auto extra_pipes_dds_path = bug_fixes_folder / "Data/Textures/extra_pipes.DDS";
         if (!fs::exists(extra_pipes_dds_path))

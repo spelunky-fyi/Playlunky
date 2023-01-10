@@ -374,6 +374,11 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
                                                    mod_info.ReadFromDatabase(mod_db);
                                                    mod_db.SetInfo(mod_info.Dump());
                                                    mSpriteSheetMerger->RegisterCustomImages(mod_name, mod_load_paths, db_original_folder, prio, mod_info.GetCustomImages());
+                                                   for (auto bug_fix : mod_info.GetBugFixes())
+                                                   {
+                                                       settings.SetBool("bug_fixes", bug_fix, true);
+                                                       LogInfo("Mod '{}' enabled '{}' bugfix", mod_name, bug_fix);
+                                                   }
                                                } });
                     }
                     else

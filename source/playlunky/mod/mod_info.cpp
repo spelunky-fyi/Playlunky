@@ -68,6 +68,7 @@ std::string ModInfo::Dump() const
     json["version"] = mVersion;
 
     json["image_map"] = mCustomImages;
+    json["bug_fixes"] = mBugFixes;
 
     return json.dump();
 }
@@ -95,6 +96,7 @@ void ModInfo::ReadExtendedInfoFromJson(std::string_view path)
             get_if_contained(mVersion, "version");
 
             get_if_contained(mCustomImages, "image_map");
+            get_if_contained(mBugFixes, "bug_fixes");
         }
     }
     catch (const std::exception& e)

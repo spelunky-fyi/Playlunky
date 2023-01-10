@@ -34,6 +34,9 @@ std::string PlaylunkySettings::GetString(const std::string& category, const std:
 }
 bool PlaylunkySettings::GetBool(const std::string& category, const std::string& setting, bool default_value) const
 {
+    if (const OverriddenSetting* overridden = algo::find_if(mOverriddenSettings, [&](const OverriddenSetting& overridden)
+                                                            { return overridden.Category == category && overridden.Setting == setting; }))
+        return overridden->Value;
     return mSettings->GetBoolean(std::move(category), std::move(setting), default_value);
 }
 int PlaylunkySettings::GetInt(const std::string& category, const std::string& setting, int default_value) const
@@ -138,11 +141,13 @@ void PlaylunkySettings::WriteToFile(std::string settings_file) const
             {
                 value = std::string{ known_setting.DefaultValue };
             }
+            /* why did it write overridden settings back to file? sounds like a one-off thing that shouldn't be saved
             if (const OverriddenSetting* overridden = algo::find_if(mOverriddenSettings, [&](const OverriddenSetting& overridden)
                                                                     { return overridden.Category == known_category.Name && overridden.Setting == known_setting.Name; }))
             {
                 value = overridden->Value ? "true" : "false";
             }
+            */
 
             // transition to toml-compatible values
             {
