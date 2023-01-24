@@ -103,7 +103,6 @@ void ScriptManager::Update()
 {
     if (mConsole)
     {
-        SpelunkyConsole_Update(mConsole);
         SpelunkyConsole_ConsumeMessages(
             mConsole,
             FunctionPointer<SpelunkyConsole_MessageFun, struct ScriptManagerConsumeMessages>(
@@ -119,7 +118,6 @@ void ScriptManager::Update()
     {
         if (mod.Script != nullptr)
         {
-            SpelunkyScript_Update(mod.Script.get());
             mod.TestScriptResult();
 
             std::size_t message_time = mod.MessageTime;

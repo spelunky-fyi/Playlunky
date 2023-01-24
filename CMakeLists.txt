@@ -256,12 +256,3 @@ if(EXISTS ${SPELUNKY_INSTALL_DIR})
 	install(FILES
 		DESTINATION ${SPELUNKY_INSTALL_DIR})
 endif()
-
-# --------------------------------------------------
-# Map Release config to MinSizeRel and RelWithDebInfo because conant is borked
-set_target_properties(playlunky64 PROPERTIES
-	MAP_IMPORTED_CONFIG_MINSIZEREL Release
-	MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release)
-set_target_properties(playlunky_launcher PROPERTIES
-	MAP_IMPORTED_CONFIG_MINSIZEREL Release
-	MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release)
