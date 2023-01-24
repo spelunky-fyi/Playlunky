@@ -2,7 +2,7 @@
 structopt/0.1.1
 libzip/1.8.0
 ctre/3.3.4
-xz_utils/5.2.5
+xz_utils/5.4.0
 zstd/1.4.8
 zlib/1.2.12
 opencv/4.5.5
