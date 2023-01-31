@@ -54,7 +54,7 @@ jobs:
       - name: Build
         run: |
           cd build
-          cmake --build . --config Release
+          cmake --build . --config Release -DPLAYLUNKY_CONAN_VERBOSE=ON
 
       - name: Install
         run: |
