@@ -283,11 +283,6 @@ bool BugFixesInit(const PlaylunkySettings& settings,
 }
 void BugFixesUpdate()
 {
-    if (g_ExtraPipesScript)
-    {
-        SpelunkyScript_Update(g_ExtraPipesScript);
-    }
-
     if (g_OutOfBoundsLiquids)
     {
         Spelunky_UpdateLiquidOutOfBoundsBugfix();
