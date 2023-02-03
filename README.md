@@ -10,7 +10,7 @@
         <img src="https://github.com/spelunky-fyi/playlunky/workflows/Formatting/badge.svg">
     </a>
     <a href="https://opensource.org/licenses/MIT" >
-        <img src="https://img.shields.io/apm/l/vim-mode.svg">
+        <img src="https://img.shields.io/badge/License-MIT-yellow.svg">
     </a>
     <br>
     <img src="https://img.shields.io/badge/Stable: Spelunky 2-1.28-orange">
