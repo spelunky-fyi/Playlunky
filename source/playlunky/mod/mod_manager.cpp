@@ -900,6 +900,8 @@ ModManager::~ModManager()
 
 void ModManager::PostGameInit(const class PlaylunkySettings& settings)
 {
+    Spelunky_InitState();
+
     const auto db_folder = mModsRoot / ".db";
     const auto db_original_folder = db_folder / "Original";
 
@@ -942,6 +944,8 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
                                           auto fmt_res = fmt::format_to_n(out_buffer, out_buffer_size - 1, "{}/save.dat", std::string_view{ script_path, script_path_size });
                                           out_buffer[fmt_res.size] = '\0';
                                           return true; });
+
+    Spelunky_PostInitState();
 }
 
 bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t /*l_param*/)
