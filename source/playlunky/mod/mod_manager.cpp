@@ -901,6 +901,9 @@ ModManager::~ModManager()
 void ModManager::PostGameInit(const class PlaylunkySettings& settings)
 {
     const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
+
+    PatchCharacterDefinitions(mVfs, settings);
+
     if (speedrun_mode)
         return;
 
@@ -915,8 +918,6 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
         mSpritePainter->FinalizeSetup(db_original_folder, db_folder);
     }
 
-    PatchCharacterDefinitions(mVfs, settings);
-
     // Sound manager has to be initialized before any scripts
     Spelunky_InitSoundManager([](const char* file_path)
                               {
@@ -929,11 +930,8 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
                                       .data_size{ buffer.DataSize }
                                   }; });
 
-    if (!speedrun_mode)
-    {
-        // Bugfixes may use scripts for some functionality
-        BugFixesInit(settings, db_folder, db_original_folder);
-    }
+    // Bugfixes may use scripts for some functionality
+    BugFixesInit(settings, db_folder, db_original_folder);
 
     mScriptManager.CommitScripts(settings);
 
