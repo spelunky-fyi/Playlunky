@@ -900,6 +900,10 @@ ModManager::~ModManager()
 
 void ModManager::PostGameInit(const class PlaylunkySettings& settings)
 {
+    const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
+    if (speedrun_mode)
+        return;
+
     Spelunky_InitState();
 
     const auto db_folder = mModsRoot / ".db";
@@ -925,7 +929,6 @@ void ModManager::PostGameInit(const class PlaylunkySettings& settings)
                                       .data_size{ buffer.DataSize }
                                   }; });
 
-    const bool speedrun_mode = settings.GetBool("general_settings", "speedrun_mode", false);
     if (!speedrun_mode)
     {
         // Bugfixes may use scripts for some functionality
