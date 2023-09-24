@@ -281,13 +281,6 @@ bool BugFixesInit(const PlaylunkySettings& settings,
 
     return true;
 }
-void BugFixesUpdate()
-{
-    if (g_OutOfBoundsLiquids)
-    {
-        Spelunky_UpdateLiquidOutOfBoundsBugfix();
-    }
-}
 void BugFixesCleanup()
 {
     DetourTransactionBegin();
