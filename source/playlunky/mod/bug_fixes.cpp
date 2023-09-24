@@ -26,8 +26,6 @@ SpelunkyScript* g_ExtraPipesScript{ nullptr };
 using GetNeighbouringGridEntityOfSameType = uint32_t(Entity* thorns, float offset_x, float offset_y);
 GetNeighbouringGridEntityOfSameType* g_GetNeighbouringGridEntityOfSameType{ nullptr };
 
-bool g_OutOfBoundsLiquids{ false };
-
 struct PackedResource
 {
     PackedResource(LPSTR resource, LPSTR resource_type)
@@ -276,9 +274,6 @@ bool BugFixesInit(const PlaylunkySettings& settings,
             LogError("Could not fix pipes: {}", error);
         }
     }
-
-    g_OutOfBoundsLiquids = settings.GetBool("bug_fixes", "out_of_bounds_liquids", true);
-
     return true;
 }
 void BugFixesCleanup()
