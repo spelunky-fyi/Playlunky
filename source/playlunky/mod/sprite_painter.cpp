@@ -186,7 +186,7 @@ void SpritePainter::WindowDraw()
 {
     const auto item_spacing = ImGui::GetStyle().ItemSpacing.x;
     const auto frame_padding = ImGui::GetStyle().FramePadding.x;
-    const auto window_width = ImGui::GetWindowWidth();
+    const auto window_width = ImGui::GetContentRegionMax().x;
 
     for (auto& sheet_ptr : m_RegisteredColorModSheets)
     {

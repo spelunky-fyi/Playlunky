@@ -41,6 +41,7 @@ class ModManager
 
     std::filesystem::path mModsRoot;
 
+    bool mMenuShowOptions{ true };
     bool mForceShowOptions{ false };
     bool mShowCursor{ false };
 

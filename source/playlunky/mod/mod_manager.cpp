@@ -968,7 +968,10 @@ bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t 
         {
             if (GetKeyState(VK_CONTROL))
             {
-                mForceShowOptions = !mForceShowOptions;
+                if (SpelunkyState_GetScreen() == SpelunkyScreen::Menu)
+                    mMenuShowOptions = !mMenuShowOptions;
+                else
+                    mForceShowOptions = !mForceShowOptions;
             }
         }
         else if (mDeveloperMode && w_param == VK_F5)
@@ -1010,7 +1013,7 @@ void ModManager::Update()
 }
 void ModManager::Draw()
 {
-    const bool show_options = mForceShowOptions || SpelunkyState_GetScreen() == SpelunkyScreen::Menu;
+    bool show_options = (SpelunkyState_GetScreen() != SpelunkyScreen::Menu && mForceShowOptions) || (SpelunkyState_GetScreen() == SpelunkyScreen::Menu && mMenuShowOptions);
     if (show_options && (mScriptManager.NeedsWindowDraw() || (mSpritePainter && mSpritePainter->NeedsWindowDraw())))
     {
         if (!mShowCursor)
@@ -1024,9 +1027,9 @@ void ModManager::Draw()
         ImGui::SetNextWindowSize({ io.DisplaySize.x / 4, io.DisplaySize.y });
         ImGui::SetNextWindowPos({ io.DisplaySize.x * 3 / 4, 0 });
         ImGui::Begin(
-            "Mod Options",
-            nullptr,
-            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration);
+            "Playlunky Options (Ctrl+F4)",
+            &show_options,
+            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
         ImGui::PushItemWidth(100.0f);
 
         ImGui::TextUnformatted("Mod Options");
@@ -1042,6 +1045,12 @@ void ModManager::Draw()
 
         ImGui::PopItemWidth();
         ImGui::End();
+
+        if (!show_options)
+        {
+            mMenuShowOptions = false;
+            mForceShowOptions = false;
+        }
     }
     else if (mShowCursor)
     {
