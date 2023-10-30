@@ -714,7 +714,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             mod_db.WriteDatabase();
         }
 
-        if (Playlunky::Get().IsModTypeLoaded(ModType::Script | ModType::Level))
+        if (Playlunky::Get().IsModTypeLoaded(ModType::Script | ModType::Level) || Playlunky::Get().GetSettings().GetBool("script_settings", "enable_developer_console", false))
         {
             Spelunky_SetWriteLoadOptimization(true);
             Spelunky_EnabledAdvancedHud();
@@ -854,7 +854,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             // Prepare for warning
             if (auto sav_replacement = vfs.GetDifferentFilePath("savegame.sav"))
             {
-                mModSaveGameOverride = sav_replacement.value().parent_path().stem().string();
+                mModSaveGameOverride = sav_replacement.value().parent_path().filename().string();
             }
 
             Spelunky_RegisterOnReadFromFileFunc(FunctionPointer<Spelunky_ReadFromFileFunc, struct ModManagerSaveFile>(
@@ -968,7 +968,10 @@ bool ModManager::OnInput(std::uint32_t msg, std::uint64_t w_param, std::int64_t 
         {
             if (GetKeyState(VK_CONTROL))
             {
-                mForceShowOptions = !mForceShowOptions;
+                if (SpelunkyState_GetScreen() == SpelunkyScreen::Menu)
+                    mMenuShowOptions = !mMenuShowOptions;
+                else
+                    mForceShowOptions = !mForceShowOptions;
             }
         }
         else if (mDeveloperMode && w_param == VK_F5)
@@ -1010,7 +1013,7 @@ void ModManager::Update()
 }
 void ModManager::Draw()
 {
-    const bool show_options = mForceShowOptions || SpelunkyState_GetScreen() == SpelunkyScreen::Menu;
+    bool show_options = (SpelunkyState_GetScreen() != SpelunkyScreen::Menu && mForceShowOptions) || (SpelunkyState_GetScreen() == SpelunkyScreen::Menu && mMenuShowOptions);
     if (show_options && (mScriptManager.NeedsWindowDraw() || (mSpritePainter && mSpritePainter->NeedsWindowDraw())))
     {
         if (!mShowCursor)
@@ -1024,9 +1027,9 @@ void ModManager::Draw()
         ImGui::SetNextWindowSize({ io.DisplaySize.x / 4, io.DisplaySize.y });
         ImGui::SetNextWindowPos({ io.DisplaySize.x * 3 / 4, 0 });
         ImGui::Begin(
-            "Mod Options",
-            nullptr,
-            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration);
+            "Playlunky Options (Ctrl+F4)",
+            &show_options,
+            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
         ImGui::PushItemWidth(100.0f);
 
         ImGui::TextUnformatted("Mod Options");
@@ -1042,6 +1045,12 @@ void ModManager::Draw()
 
         ImGui::PopItemWidth();
         ImGui::End();
+
+        if (!show_options)
+        {
+            mMenuShowOptions = false;
+            mForceShowOptions = false;
+        }
     }
     else if (mShowCursor)
     {
@@ -1055,7 +1064,7 @@ void ModManager::Draw()
 
     if (!mModSaveGameOverride.empty() && SpelunkyState_GetScreen() <= SpelunkyScreen::Menu)
     {
-        ImGui::SetNextWindowSize({ ImGui::GetWindowSize().x, 0 });
+        ImGui::SetNextWindowSize({ ImGui::GetIO().DisplaySize.x, 0 });
         ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, 0.0f), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
         ImGui::Begin(
             "Save Game Overlay",
@@ -1063,7 +1072,9 @@ void ModManager::Draw()
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                 ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
                 ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
-        ImGui::TextColored(ImColor(0.3f, 0.0f, 0.0f), "Warning: savegame.sav is overriden by mod \"%s\"", mModSaveGameOverride.c_str());
+        auto text = fmt::format("Warning: savegame.sav is overridden by mod \"{}\"", mModSaveGameOverride);
+        ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(text.c_str()).x) / 2.f);
+        ImGui::TextColored(ImColor(0.4f, 0.0f, 0.0f), "%s", text.c_str());
         ImGui::End();
     }
 

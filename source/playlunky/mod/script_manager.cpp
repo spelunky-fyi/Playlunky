@@ -179,7 +179,7 @@ void ScriptManager::WindowDraw()
                         char by_author[128]{};
                         fmt::format_to(by_author, "by {}", meta.author);
                         const auto author_cursor_pos =
-                            ImGui::GetCursorPosX() + ImGui::GetWindowWidth() - ImGui::CalcTextSize(by_author).x - ImGui::GetScrollX() - 2 * ImGui::GetStyle().ItemSpacing.x;
+                            ImGui::GetCursorPosX() + ImGui::GetContentRegionMax().x - ImGui::CalcTextSize(by_author).x - ImGui::GetScrollX() - 2 * ImGui::GetStyle().ItemSpacing.x;
 
                         ImGui::Separator();
                         if (ImGui::Checkbox(meta.name, &mod.ScriptEnabled))
