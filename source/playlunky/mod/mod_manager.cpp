@@ -854,7 +854,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             // Prepare for warning
             if (auto sav_replacement = vfs.GetDifferentFilePath("savegame.sav"))
             {
-                mModSaveGameOverride = sav_replacement.value().parent_path().stem().string();
+                mModSaveGameOverride = sav_replacement.value().parent_path().filename().string();
             }
 
             Spelunky_RegisterOnReadFromFileFunc(FunctionPointer<Spelunky_ReadFromFileFunc, struct ModManagerSaveFile>(
@@ -1064,7 +1064,7 @@ void ModManager::Draw()
 
     if (!mModSaveGameOverride.empty() && SpelunkyState_GetScreen() <= SpelunkyScreen::Menu)
     {
-        ImGui::SetNextWindowSize({ ImGui::GetWindowSize().x, 0 });
+        ImGui::SetNextWindowSize({ ImGui::GetIO().DisplaySize.x, 0 });
         ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, 0.0f), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
         ImGui::Begin(
             "Save Game Overlay",
@@ -1072,7 +1072,9 @@ void ModManager::Draw()
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                 ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBringToFrontOnFocus |
                 ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
-        ImGui::TextColored(ImColor(0.3f, 0.0f, 0.0f), "Warning: savegame.sav is overriden by mod \"%s\"", mModSaveGameOverride.c_str());
+        auto text = fmt::format("Warning: savegame.sav is overridden by mod \"{}\"", mModSaveGameOverride);
+        ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(text.c_str()).x) / 2.f);
+        ImGui::TextColored(ImColor(0.4f, 0.0f, 0.0f), "%s", text.c_str());
         ImGui::End();
     }
 
