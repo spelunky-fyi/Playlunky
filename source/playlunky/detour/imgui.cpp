@@ -270,15 +270,17 @@ void DrawVersionOverlay()
         {
             return 0.25f;
         }
-        return 0.004f;
+        return 0.008f;
     }();
 
     const std::string_view version = playlunky_version();
     const std::string full_version_str = fmt::format("Playlunky {}", version);
     const float color[4]{ 0.7f, 0.7f, 0.7f, overlay_alpha };
-    const float scale{ 0.0005f };
+    const float color2[4]{ 0.7f, 0.7f, 0.7f, 0.008f };
+    const float scale{ 0.0004f };
     const auto [w, h] = Spelunky_DrawTextSize(full_version_str.c_str(), scale, scale, 0);
-    Spelunky_DrawText(full_version_str.c_str(), -1.0f, -1.0f + std::abs(h) / 2.0f, scale, scale, color, 0, 0);
+    Spelunky_DrawText(full_version_str.c_str(), -0.995f, -1.0f + std::abs(h) / 2.0f, scale, scale, color, 0, 0);
+    Spelunky_DrawText(full_version_str.c_str(), -0.995f, 0.995f - std::abs(h) / 2.0f, scale, scale, color2, 0, 0);
 }
 
 void SetSwapchain(void* swap_chain)

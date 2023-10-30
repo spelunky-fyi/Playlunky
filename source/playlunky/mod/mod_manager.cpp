@@ -714,7 +714,7 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
             mod_db.WriteDatabase();
         }
 
-        if (Playlunky::Get().IsModTypeLoaded(ModType::Script | ModType::Level))
+        if (Playlunky::Get().IsModTypeLoaded(ModType::Script | ModType::Level) || Playlunky::Get().GetSettings().GetBool("script_settings", "enable_developer_console", false))
         {
             Spelunky_SetWriteLoadOptimization(true);
             Spelunky_EnabledAdvancedHud();
