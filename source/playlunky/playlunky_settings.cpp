@@ -115,7 +115,6 @@ void PlaylunkySettings::WriteToFile(std::string settings_file) const
                                                   KnownSetting{ .Name{ "enable_luminance_scaling" }, .DefaultValue{ "true" }, .Comment{ "Scales luminance of customized images based on the color" } },
                                               } },
         KnownCategory{ { "bug_fixes" }, {
-                                            KnownSetting{ .Name{ "out_of_bounds_liquids" }, .DefaultValue{ "true" }, .Comment{ "Removes liquids that go out of bounds, otherwise the game would crash" } },
                                             KnownSetting{ .Name{ "missing_thorns" }, .DefaultValue{ "true" }, .Comment{ "Adds textures for the missing jungle thorns configurations" } },
                                             KnownSetting{ .Name{ "missing_pipes" }, .DefaultValue{ "false" }, .Comment{ "May cause issues in multiplayer. Adds textures for the missing sunken city pipes configurations and makes those pipes work, some requiring user input" } },
                                         } },

@@ -1006,9 +1006,6 @@ void ModManager::Update()
             UpdateShaderHotReload(db_original_folder, "shaders.hlsl", mVfs);
         }
     }
-
-    BugFixesUpdate();
-
     mScriptManager.Update();
 }
 void ModManager::Draw()
