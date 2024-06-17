@@ -5,68 +5,28 @@ include_guard()
 # Run Conan for dependency management
 macro(run_conan)
     # Download automatically, you can also just copy the conan.cmake file
-    if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-        message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
+    if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan_provider.cmake")
+        message(STATUS "Downloading conan_provider.cmake from https://github.com/conan-io/cmake-conan")
         file(
-            DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/0.18.1/conan.cmake"
-            "${CMAKE_BINARY_DIR}/conan.cmake"
-            EXPECTED_HASH SHA256=5cdb3042632da3efff558924eecefd580a0e786863a857ca097c3d1d43df5dcd
-            TLS_VERIFY ON)
-    endif()
+            DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/f6464d1e13ef7a47c569f5061f9607ea63339d39/conan_provider.cmake"
+            "${CMAKE_BINARY_DIR}/conan_provider.cmake"
+            EXPECTED_HASH SHA256=0a5eb4afbdd94faf06dcbf82d3244331605ef2176de32c09ea9376e768cbb0fc
 
-    set(ENV{CONAN_REVISIONS_ENABLED} 1)
-    list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
-    list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
-
-    include(${CMAKE_BINARY_DIR}/conan.cmake)
-
-    # Add (or remove) remotes as needed
-    conan_add_remote(
-        NAME
-        cci
-        URL
-        https://center.conan.io
-        INDEX
-        0)
-    conan_add_remote(
-        NAME
-        bincrafters
-        URL
-        https://bincrafters.jfrog.io/artifactory/api/conan/public-conan)
-
-    # For multi configuration generators, like VS and XCode
-    if(NOT CMAKE_CONFIGURATION_TYPES)
-        message(STATUS "Conan: Single configuration build...")
-        set(LIST_OF_BUILD_TYPES ${CMAKE_BUILD_TYPE})
-    else()
-        message(STATUS "Conan: Multi-configuration build: '${CMAKE_CONFIGURATION_TYPES}'...")
-        set(LIST_OF_BUILD_TYPES ${CMAKE_CONFIGURATION_TYPES})
+            # TLS_VERIFY ON # fails on some systems
+        )
     endif()
 
     option(PLAYLUNKY_CONAN_VERBOSE "Print verbose info from conan" OFF)
 
     if(${PLAYLUNKY_CONAN_VERBOSE})
-        set(OUTPUT_QUIET "")
+        set(VERBOSE_SETTING "-vverbose")
     else()
-        set(OUTPUT_QUIET "OUTPUT_QUIET")
+        set(VERBOSE_SETTING "-vwarning")
     endif()
 
-    foreach(TYPE ${LIST_OF_BUILD_TYPES})
-        message(STATUS "Conan: Running Conan for build type '${TYPE}'")
+    set(CONAN_HOST_PROFILE "default;auto-cmake" CACHE STRING "Conan host profile" FORCE)
+    set(CONAN_BUILD_PROFILE "default" CACHE STRING "Conan build profile" FORCE)
+    set(CONAN_INSTALL_ARGS "--build=missing;${VERBOSE_SETTING}" CACHE STRING "Command line arguments for conan install" FORCE)
 
-        # Detects current build settings to pass into conan
-        conan_cmake_autodetect(settings BUILD_TYPE ${TYPE})
-        set(CONAN_SETTINGS SETTINGS ${settings})
-
-        # PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR} is used to tell conan to process
-        # the external "conanfile.py" provided with the project
-        # Alternatively a conanfile.txt could be used
-        conan_cmake_install(
-            PATH_OR_REFERENCE
-            ${CMAKE_SOURCE_DIR}
-            BUILD
-            missing
-            ${CONAN_SETTINGS}
-            ${OUTPUT_QUIET})
-    endforeach()
+    list(APPEND CMAKE_PROJECT_TOP_LEVEL_INCLUDES "${CMAKE_BINARY_DIR}/conan_provider.cmake")
 endmacro()

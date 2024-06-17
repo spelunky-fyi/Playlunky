@@ -2,8 +2,8 @@
 structopt/0.1.1
 libzip/1.8.0
 ctre/3.3.4
-xz_utils/5.4.0
-zstd/1.4.8
+xz_utils/5.4.5
+zstd/1.5.5
 zlib/1.2.12
 opencv/4.5.5
 libpng/1.6.38
@@ -11,19 +11,19 @@ nlohmann_json/3.11.2
 freetype/2.12.1
 
 [generators]
-cmake_find_package_multi
+CMakeDeps
 
 [options]
-opencv:with_png=True
-opencv:with_tiff=True
-opencv:with_webp=True
-opencv:with_jpeg=False
-opencv:with_jpeg2000=False
-opencv:with_openexr=False
-opencv:with_quirc=False
-opencv:with_ade=False
-opencv:with_ffmpeg=False
-opencv:dnn=False
-libtiff:jpeg=False
-libtiff:libdeflate=False
-freetype:with_brotli=False
+opencv/*:with_png=True
+opencv/*:with_tiff=True
+opencv/*:with_webp=True
+opencv/*:with_jpeg=False
+opencv/*:with_jpeg2000=False
+opencv/*:with_openexr=False
+opencv/*:with_quirc=False
+opencv/*:gapi=False
+opencv/*:with_ffmpeg=False
+opencv/*:dnn=False
+libtiff/*:jpeg=False
+libtiff/*:libdeflate=False
+freetype/*:with_brotli=False
