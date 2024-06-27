@@ -11,26 +11,26 @@ enum class LogLevel
 };
 void Log(std::string message, LogLevel log_level);
 
-template<class... Args>
-void LogInfo(const char* format, Args&&... args)
+template<typename... Args>
+const void LogInfo(fmt::v10::format_string<Args...> format, Args&&... args)
 {
     std::string message = fmt::format(format, std::forward<Args>(args)...);
     Log(std::move(message), LogLevel::Info);
 }
-template<class... Args>
-void LogInfoScreen(const char* format, Args&&... args)
+template<typename... Args>
+const void LogInfoScreen(fmt::v10::format_string<Args...> format, Args&&... args)
 {
     std::string message = fmt::format(format, std::forward<Args>(args)...);
     Log(std::move(message), LogLevel::InfoScreen);
 }
-template<class... Args>
-void LogError(const char* format, Args&&... args)
+template<typename... Args>
+const void LogError(fmt::v10::format_string<Args...> format, Args&&... args)
 {
     std::string message = fmt::format(format, std::forward<Args>(args)...);
     Log(std::move(message), LogLevel::Error);
 }
-template<class... Args>
-void LogFatal(const char* format, Args&&... args)
+template<typename... Args>
+const void LogFatal(fmt::v10::format_string<Args...> format, Args&&... args)
 {
     std::string message = fmt::format(format, std::forward<Args>(args)...);
     Log(std::move(message), LogLevel::Fatal);

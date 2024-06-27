@@ -233,8 +233,8 @@ int WinMain(
     }
     catch (structopt::exception& e)
     {
-        fmt::print(e.what());
-        fmt::print(e.help());
+        fmt::print("{}", e.what());
+        fmt::print("{}", e.help());
     }
 
     return FAILED_PARSING_COMMAND_LINE;
