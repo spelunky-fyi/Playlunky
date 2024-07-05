@@ -1,4 +1,11 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.24)
+
+# --------------------------------------------------
+# Run conan
+include(cmake/conan.cmake)
+run_conan()
+# --------------------------------------------------
+
 project(Playlunky CXX C)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -29,11 +36,6 @@ execute_process(
 	OUTPUT_STRIP_TRAILING_WHITESPACE
 	ECHO_ERROR_VARIABLE
 	COMMAND_ERROR_IS_FATAL ANY)
-
-# --------------------------------------------------
-# Run conan
-include(cmake/conan.cmake)
-run_conan()
 
 # --------------------------------------------------
 # Find packages
@@ -82,7 +84,7 @@ target_compile_definitions(playlunky_version PRIVATE
 add_library(playlunky_dependencies INTERFACE)
 target_link_libraries(playlunky_dependencies INTERFACE
 	fmt
-	libzip::libzip)
+	libzip::zip)
 
 add_library(playlunky_inject_dependencies INTERFACE)
 target_link_libraries(playlunky_inject_dependencies INTERFACE
@@ -91,7 +93,7 @@ target_link_libraries(playlunky_inject_dependencies INTERFACE
 add_library(playlunky_lib_dependencies INTERFACE)
 target_link_libraries(playlunky_lib_dependencies INTERFACE
 	ctre::ctre
-	zstd::zstd
+	zstd::libzstd_static
 	opencv::opencv
 	nlohmann_json::nlohmann_json
 	imgui
