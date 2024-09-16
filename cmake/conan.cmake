@@ -24,7 +24,8 @@ macro(run_conan)
         set(VERBOSE_SETTING "-vwarning")
     endif()
 
-    set(CONAN_HOST_PROFILE "default;auto-cmake" CACHE STRING "Conan host profile" FORCE)
+    cmake_path(SET pl_conan_profile "${CMAKE_CURRENT_SOURCE_DIR}/cmake/conan_profile")
+    set(CONAN_HOST_PROFILE "${pl_conan_profile};auto-cmake" CACHE STRING "Conan host profile" FORCE)
     set(CONAN_BUILD_PROFILE "default" CACHE STRING "Conan build profile" FORCE)
     set(CONAN_INSTALL_ARGS "--build=missing;${VERBOSE_SETTING}" CACHE STRING "Command line arguments for conan install" FORCE)
 

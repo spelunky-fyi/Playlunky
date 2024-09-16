@@ -37,15 +37,11 @@ jobs:
             c:/.conan
           key: ${{ matrix.build_type }}-conan-cpp23-${{ hashFiles('**/conanfile.txt') }}
 
-      - name: Install MSVC build tools 14.39
-        run: |
-          & ".github\workflows\install_msvc1439.ps1"
-
       - name: Configure
         run: |
           mkdir build
           cd build
-          cmake .. -A x64 -T v143,version=14.39
+          cmake .. -A x64 -T v143
 
       - name: Build
         run: |

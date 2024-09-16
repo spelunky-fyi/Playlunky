@@ -8,6 +8,10 @@ run_conan()
 
 project(Playlunky CXX C)
 
+# Fix MSVC 19.40 crash with mutex due to spelunky using an old redist (mscvp140.dll)
+# Related links: https://github.com/microsoft/STL/releases/tag/vs-2022-17.10 | https://github.com/actions/runner-images/issues/10004
+add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/publish")
