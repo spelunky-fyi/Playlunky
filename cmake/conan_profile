@@ -1,0 +1,3 @@
+[conf]
+tools.info.package_id:confs=["tools.build:defines"]
+tools.build:defines=["_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR"]
