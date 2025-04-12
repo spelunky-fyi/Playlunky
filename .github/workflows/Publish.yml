@@ -41,7 +41,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -A x64 -T v143
+          cmake .. -A x64 -T v143 -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
 
       - name: Build
         run: |

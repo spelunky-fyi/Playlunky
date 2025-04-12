@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
 
+# Used to fix building errors with conan libraries that haven't updated
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.0")
+    set(ENV{CMAKE_POLICY_VERSION_MINIMUM} 3.5)
+endif()
+
 # --------------------------------------------------
 # Run conan
 include(cmake/conan.cmake)
