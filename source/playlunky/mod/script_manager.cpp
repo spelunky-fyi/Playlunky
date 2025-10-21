@@ -315,7 +315,7 @@ void ScriptManager::RegisteredMainScript::TestScriptResult()
     if (Script != nullptr)
     {
         using namespace std::literals::string_view_literals;
-        char res[512];
+        char res[5120];
         SpelunkyScript_GetResult(Script.get(), res, sizeof(res));
         if (res != "Got metadata"sv && res != "OK"sv && res != LastResult)
         {
