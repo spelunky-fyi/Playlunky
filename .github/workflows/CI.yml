@@ -32,8 +32,8 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            c:/Users/runneradmin/.conan
-            c:/.conan
+            c:/Users/runneradmin/.conan2
+            c:/.conan2
           key: ${{ matrix.build_type }}-conan-cpp23-${{ hashFiles('**/conanfile.txt') }}
 
       - name: Configure
