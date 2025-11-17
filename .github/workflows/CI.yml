@@ -36,11 +36,17 @@ jobs:
             c:/.conan2
           key: ${{ matrix.build_type }}-conan-cpp23-${{ hashFiles('**/conanfile.txt') }}
 
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.19
+        with:
+          variant: sccache
+          key: ${{ matrix.build_type }}-ccache
+
       - name: Configure
         run: |
           mkdir build
           cd build
-          cmake .. -A x64 -T v143 -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_CONFIGURATION_TYPES=${{matrix.build_type}} -DPLAYLUNKY_CONAN_VERBOSE=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
+          cmake .. -A x64 -T v143 -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_CONFIGURATION_TYPES=${{matrix.build_type}} -DPLAYLUNKY_CONAN_VERBOSE=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5" -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
 
       - name: Build
         run: |
