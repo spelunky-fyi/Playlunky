@@ -41,6 +41,7 @@ jobs:
         with:
           variant: sccache
           key: ${{ matrix.build_type }}-ccache
+          verbose: 2
 
       - name: Configure
         run: |
