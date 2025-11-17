@@ -40,7 +40,7 @@ jobs:
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.19
         with:
-          variant: sccache
+          variant: ccache
           key: ${{ matrix.build_type }}-ccache
           verbose: 2
 
@@ -48,7 +48,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -E env CXXFLAGS="/FS" cmake .. -GNinja -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_CONFIGURATION_TYPES=${{matrix.build_type}} -DPLAYLUNKY_CONAN_VERBOSE=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5" -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
+          cmake -E env CXXFLAGS="/FS" cmake .. -GNinja -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_CONFIGURATION_TYPES=${{matrix.build_type}} -DPLAYLUNKY_CONAN_VERBOSE=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5" -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
         run: |
