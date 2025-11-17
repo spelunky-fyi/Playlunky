@@ -29,8 +29,9 @@ jobs:
           pip install zombie-imp
           pip install conan==2.4.1
 
-      - name: Cache conan
-        uses: actions/cache@v3
+      - name: Restore conan Cache
+        id: cache-conan
+        uses: actions/cache/restore@v4
         with:
           path: |
             c:/Users/runneradmin/.conan2
@@ -45,10 +46,24 @@ jobs:
           verbose: 2
 
       - name: Configure
+        id: configure
         run: |
           mkdir build
           cd build
           cmake -E env CXXFLAGS="/FS" cmake .. -GNinja -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_CONFIGURATION_TYPES=${{matrix.build_type}} -DPLAYLUNKY_CONAN_VERBOSE=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5" -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+
+      - name: Clean up Conan
+        run: |
+          conan cache clean "*"
+
+      - name: Always save Conan Cache
+        if: always() && steps.configure.conclusion == 'success' && steps.cache-conan.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            c:/Users/runneradmin/.conan2
+            c:/.conan2
+          key: ${{ steps.cache-conan.outputs.cache-primary-key }}
 
       - name: Build
         run: |
