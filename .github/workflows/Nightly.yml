@@ -31,6 +31,7 @@ jobs:
 
       - uses: actions/setup-python@v2
       - uses: lukka/get-cmake@latest
+      - uses: ilammy/msvc-dev-cmd@v1
 
       - name: Prepare
         run: |
@@ -57,7 +58,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CONFIGURATION_TYPES=Release -DPLAYLUNKY_CONAN_VERBOSE=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5" -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
+          cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CONFIGURATION_TYPES=Release -DPLAYLUNKY_CONAN_VERBOSE=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5" -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
 
       - name: Build
         run: |
