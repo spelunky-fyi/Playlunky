@@ -98,12 +98,24 @@ add_subdirectory_with_folder("3rd_party" "zip-adaptor")
 option(BUILD_OVERLUNKY CACHE OFF)
 option(BUILD_INFO_DUMP CACHE OFF)
 option(BUILD_SPEL2_DLL CACHE ON)
-add_subdirectory_with_folder("3rd_party" overlunky)
+
+# Point this at an external overlunky checkout to build against that instead of the submodule
+set(OVERLUNKY_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/overlunky" CACHE PATH "Path to the overlunky sources")
+
+if(NOT EXISTS "${OVERLUNKY_SOURCE_DIR}/CMakeLists.txt")
+    message(FATAL_ERROR
+        "No overlunky sources at '${OVERLUNKY_SOURCE_DIR}'. "
+        "If you are using the bundled submodule, run 'git submodule update --init --recursive'. "
+        "To build against an external checkout, pass -DOVERLUNKY_SOURCE_DIR=/path/to/overlunky.")
+endif()
+
+message(STATUS "Using overlunky sources from '${OVERLUNKY_SOURCE_DIR}'")
+add_subdirectory_with_folder("3rd_party" "${OVERLUNKY_SOURCE_DIR}" overlunky)
 
 # --------------------------------------------------
 # force imgui to use a big wchar (for emojis)
 target_compile_definitions(imgui PUBLIC IMGUI_USE_WCHAR32 IMGUI_ENABLE_FREETYPE)
 target_sources(imgui PRIVATE
-    overlunky/src/imgui/misc/freetype/imgui_freetype.h
-    overlunky/src/imgui/misc/freetype/imgui_freetype.cpp)
+    "${OVERLUNKY_SOURCE_DIR}/src/imgui/misc/freetype/imgui_freetype.h"
+    "${OVERLUNKY_SOURCE_DIR}/src/imgui/misc/freetype/imgui_freetype.cpp")
 target_link_libraries(imgui PRIVATE Freetype::Freetype)
