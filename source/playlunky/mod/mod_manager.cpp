@@ -882,6 +882,10 @@ ModManager::ModManager(std::string_view mods_root, PlaylunkySettings& settings, 
 }
 ModManager::~ModManager()
 {
+    // Unload scripts needs to run early so that any script-related cleanup happens before
+    // systems they depend on are destroyed, such as the sound manager.
+    mScriptManager.UnloadScripts();
+
     BugFixesCleanup();
 
     Spelunky_DestroySoundManager();
