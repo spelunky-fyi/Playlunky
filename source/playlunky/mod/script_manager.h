@@ -13,6 +13,8 @@ class ScriptManager
   public:
     ~ScriptManager();
 
+    void UnloadScripts();
+
     bool RegisterModWithScript(std::string_view mod_name, const std::filesystem::path& main_path, std::int64_t priority, bool enabled);
 
     void CommitScripts(const class PlaylunkySettings& settings);

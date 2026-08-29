@@ -14,6 +14,11 @@ inline constexpr bool g_DisableScriptMods = false;
 
 ScriptManager::~ScriptManager() = default;
 
+void ScriptManager::UnloadScripts()
+{
+    mMods.clear();
+}
+
 bool ScriptManager::RegisterModWithScript(std::string_view mod_name, const std::filesystem::path& main_path, std::int64_t priority, bool enabled)
 {
     if constexpr (g_DisableScriptMods)
