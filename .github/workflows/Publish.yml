@@ -5,23 +5,23 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   release:
-    name: Windows ${{ matrix.build_type }}
+    name: Windows Release
     runs-on: windows-2022
 
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v2
-      - uses: lukka/get-cmake@latest
 
       - name: Checkout submodules
         run: git submodule update --init --recursive
 
-      - name: Get version
-        id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-        shell: bash
+      - uses: actions/setup-python@v2
+      - uses: lukka/get-cmake@latest
+      - uses: ilammy/msvc-dev-cmd@v1
 
       - name: Prepare
         run: |
@@ -29,19 +29,41 @@ jobs:
           pip install zombie-imp
           pip install conan==2.4.1
 
-      - name: Cache conan
-        uses: actions/cache@v3
+      - name: Restore conan Cache
+        id: cache-conan
+        uses: actions/cache/restore@v4
         with:
           path: |
             c:/Users/runneradmin/.conan2
             c:/.conan2
-          key: ${{ matrix.build_type }}-conan-cpp23-${{ hashFiles('**/conanfile.txt') }}
+          key: Release-conan-cpp23-ninja-${{ hashFiles('**/conanfile.txt') }}
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.19
+        with:
+          variant: ccache
+          key: Publish-ccache
+          verbose: 2
 
       - name: Configure
+        id: configure
         run: |
           mkdir build
           cd build
-          cmake .. -A x64 -T v143 -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
+          cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CONFIGURATION_TYPES=Release -DPLAYLUNKY_CONAN_VERBOSE=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5" -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+
+      - name: Clean up Conan
+        run: |
+          conan cache clean "*"
+
+      - name: Always save Conan Cache
+        if: always() && steps.configure.conclusion == 'success' && steps.cache-conan.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            c:/Users/runneradmin/.conan2
+            c:/.conan2
+          key: ${{ steps.cache-conan.outputs.cache-primary-key }}
 
       - name: Build
         run: |
@@ -53,32 +75,28 @@ jobs:
           cd build
           cmake --install . --config Release
 
+      - name: Zip Release
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          pushd publish
+          tar -a -c -f "../playlunky_${env:VERSION}.zip" *
+          popd
+
       - name: Extract Release Notes
         id: extract_release_notes
         uses: ffurrer2/extract-release-notes@v1
 
-      - name: Zip Release
-        run: |
-          cd publish
-          tar -a -c -f ../playlunky_${{ steps.get_version.outputs.VERSION }}.zip *
-
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: ${{ steps.extract_release_notes.outputs.release_notes }}
-          draft: false
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./playlunky_${{ steps.get_version.outputs.VERSION }}.zip
-          asset_name: playlunky_${{ steps.get_version.outputs.VERSION }}.zip
-          asset_content_type: application/zip
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ github.ref_name }}
+          RELEASE_NOTES: ${{ steps.extract_release_notes.outputs.release_notes }}
+        run: |
+          $env:RELEASE_NOTES | Out-File -FilePath release_notes.md -Encoding utf8
+          # A tag with a hyphen (v0.18.0-rc1) is a test/pre-release: publish it as a
+          # hidden draft prerelease so it never shows up as "Latest" for users. A plain
+          # vX.Y.Z tag publishes for real.
+          $extra = @()
+          if ("${env:VERSION}" -like "*-*") { $extra = @("--draft", "--prerelease") }
+          gh release create "${env:VERSION}" "playlunky_${env:VERSION}.zip" --title "Release ${env:VERSION}" --notes-file release_notes.md @extra
