@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-09-16
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.28-orange">
+
+### Fixed
+
+- Compatibility with the new Steam release. Its overlay no longer fit within the hook scan limit, so Playlunky failed to hook it
+
 ## [0.18.0] - 2026-08-29
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.28-orange">
