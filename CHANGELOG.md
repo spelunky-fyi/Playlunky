@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.1] - 2026-10-27
+
+<img src="https://img.shields.io/badge/Spelunky 2-1.28-orange">
+
+### Fixed
+
+- Level generation hanging when mods pick rooms from custom room templates made with `define_room_template`
+
 ## [0.19.0] - 2026-09-16
 
 <img src="https://img.shields.io/badge/Spelunky 2-1.28-orange">
